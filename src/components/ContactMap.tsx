@@ -12,6 +12,25 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// Create custom icons for different marker types
+const qthIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const contactIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
 interface Contact {
   id: number;
   callsign: string;
@@ -83,9 +102,11 @@ export default function ContactMap({ contacts, user, height = '400px' }: Contact
 
   // Filter contacts that have location data
   const contactsWithLocation = contacts.filter(contact => {
-    return (contact.latitude && contact.longitude) || 
-           (contact.grid_locator && contact.grid_locator.length >= 4);
+    const hasCoords = contact.latitude && contact.longitude;
+    const hasGrid = contact.grid_locator && contact.grid_locator.length >= 4;
+    return hasCoords || hasGrid;
   });
+
 
   // Determine map center - use user's grid locator if available, otherwise default to US center
   const getMapCenter = (): [number, number] => {
@@ -117,10 +138,10 @@ export default function ContactMap({ contacts, user, height = '400px' }: Contact
           const userLocation = gridToLatLng(user.grid_locator);
           if (userLocation) {
             return (
-              <Marker position={userLocation}>
+              <Marker position={userLocation} icon={qthIcon}>
                 <Popup>
                   <div className="min-w-[200px]">
-                    <h3 className="font-semibold text-lg text-blue-600">📍 Your QTH</h3>
+                    <h3 className="font-semibold text-lg text-red-600">🏠 Your QTH</h3>
                     <div className="mt-2 space-y-1 text-sm">
                       <p><strong>Callsign:</strong> {user.callsign || 'Not set'}</p>
                       <p><strong>Name:</strong> {user.name}</p>
@@ -150,10 +171,10 @@ export default function ContactMap({ contacts, user, height = '400px' }: Contact
           if (!position) return null;
           
           return (
-            <Marker key={contact.id} position={position}>
+            <Marker key={contact.id} position={position} icon={contactIcon}>
               <Popup>
                 <div className="min-w-[200px]">
-                  <h3 className="font-semibold text-lg">{contact.callsign}</h3>
+                  <h3 className="font-semibold text-lg text-blue-600">📻 {contact.callsign}</h3>
                   {contact.name && <p className="text-sm text-gray-600">{contact.name}</p>}
                   <div className="mt-2 space-y-1 text-sm">
                     <p><strong>Date:</strong> {new Date(contact.datetime).toLocaleDateString()}</p>

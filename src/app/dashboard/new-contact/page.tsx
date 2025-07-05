@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Search, Check, AlertCircle } from 'lucide-react';
 
 export default function NewContactPage() {
   const [formData, setFormData] = useState({
@@ -23,15 +23,55 @@ export default function NewContactPage() {
     name: '',
     qth: '',
     gridLocator: '',
+    latitude: undefined as number | undefined,
+    longitude: undefined as number | undefined,
     power: '',
     notes: ''
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupResult, setLookupResult] = useState<{
+    found: boolean;
+    name?: string;
+    qth?: string;
+    grid_locator?: string;
+    latitude?: number;
+    longitude?: number;
+    error?: string;
+  } | null>(null);
   const router = useRouter();
 
   const modes = ['SSB', 'CW', 'FM', 'AM', 'RTTY', 'PSK31', 'FT8', 'FT4', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'CONTESTIA'];
   const bands = ['160M', '80M', '60M', '40M', '30M', '20M', '17M', '15M', '12M', '10M', '6M', '2M', '1.25M', '70CM', '33CM', '23CM'];
+
+  // Function to convert grid locator to lat/lng
+  const gridToLatLng = (grid: string): [number, number] | null => {
+    if (!grid || grid.length < 4) return null;
+    
+    const grid_upper = grid.toUpperCase();
+    const lon_field = grid_upper.charCodeAt(0) - 65;
+    const lat_field = grid_upper.charCodeAt(1) - 65;
+    const lon_square = parseInt(grid_upper.charAt(2));
+    const lat_square = parseInt(grid_upper.charAt(3));
+    
+    let lon = -180 + (lon_field * 20) + (lon_square * 2);
+    let lat = -90 + (lat_field * 10) + (lat_square * 1);
+    
+    // Add subsquare precision if available
+    if (grid.length >= 6) {
+      const lon_subsquare = grid_upper.charCodeAt(4) - 65;
+      const lat_subsquare = grid_upper.charCodeAt(5) - 65;
+      lon += (lon_subsquare * 2/24) + (1/24);
+      lat += (lat_subsquare * 1/24) + (1/48);
+    } else {
+      // Default to center of square
+      lon += 1;
+      lat += 0.5;
+    }
+    
+    return [lat, lon];
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -39,6 +79,59 @@ export default function NewContactPage() {
       ...prev,
       [name]: value
     }));
+    
+    // Clear lookup result when callsign changes
+    if (name === 'callsign') {
+      setLookupResult(null);
+    }
+  };
+
+  const handleCallsignLookup = async () => {
+    if (!formData.callsign.trim()) return;
+
+    setLookupLoading(true);
+    setLookupResult(null);
+
+    try {
+      const response = await fetch('/api/lookup/callsign', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ callsign: formData.callsign }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setLookupResult(data);
+        
+        // Auto-fill form if lookup was successful
+        if (data.found) {
+          setFormData(prev => ({
+            ...prev,
+            name: data.name || prev.name,
+            qth: data.qth || prev.qth,
+            gridLocator: data.grid_locator || prev.gridLocator,
+            // Use lat/lng from QRZ directly (already calculated in the lookup)
+            latitude: data.latitude,
+            longitude: data.longitude
+          }));
+        }
+      } else {
+        setLookupResult({
+          found: false,
+          error: data.error || 'Lookup failed'
+        });
+      }
+    } catch (error) {
+      setLookupResult({
+        found: false,
+        error: 'Network error during lookup'
+      });
+    } finally {
+      setLookupLoading(false);
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -95,6 +188,9 @@ export default function NewContactPage() {
         },
         body: JSON.stringify({
           ...formData,
+          grid_locator: formData.gridLocator, // Map camelCase to snake_case
+          latitude: formData.latitude,
+          longitude: formData.longitude,
           frequency: parseFloat(formData.frequency),
           power: formData.power ? parseFloat(formData.power) : undefined,
           datetime: new Date(formData.datetime).toISOString()
@@ -154,15 +250,53 @@ export default function NewContactPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="callsign">Callsign *</Label>
-                    <Input
-                      type="text"
-                      name="callsign"
-                      id="callsign"
-                      required
-                      value={formData.callsign}
-                      onChange={handleChange}
-                      placeholder="e.g., W1AW"
-                    />
+                    <div className="flex space-x-2">
+                      <Input
+                        type="text"
+                        name="callsign"
+                        id="callsign"
+                        required
+                        value={formData.callsign}
+                        onChange={handleChange}
+                        placeholder="e.g., W1AW"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={handleCallsignLookup}
+                        disabled={!formData.callsign.trim() || lookupLoading}
+                        title="Lookup callsign on QRZ.com"
+                      >
+                        {lookupLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Search className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    
+                    {/* Lookup result indicator */}
+                    {lookupResult && (
+                      <div className={`flex items-center text-sm ${
+                        lookupResult.found 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : 'text-red-600 dark:text-red-400'
+                      }`}>
+                        {lookupResult.found ? (
+                          <>
+                            <Check className="h-4 w-4 mr-1" />
+                            Callsign found and information auto-filled
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="h-4 w-4 mr-1" />
+                            {lookupResult.error || 'Callsign not found'}
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
