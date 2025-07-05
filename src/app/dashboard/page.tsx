@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, LogOut, Loader2, Map } from 'lucide-react';
+import { Plus, LogOut, Loader2, Map, Settings } from 'lucide-react';
 import DynamicContactMap from '@/components/DynamicContactMap';
 
 interface Contact {
@@ -84,16 +84,17 @@ export default function DashboardPage() {
         setUser(data.user);
       }
     } catch (error) {
-      console.error('Failed to fetch user:', error);
+      // Silent error handling for user fetch
     }
   };
+
 
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       router.push('/');
     } catch (error) {
-      console.error('Logout error:', error);
+      // Silent error handling for logout
     }
   };
 
@@ -133,6 +134,12 @@ export default function DashboardPage() {
                 <Link href="/dashboard/new-contact">
                   <Plus className="h-4 w-4 mr-2" />
                   New Contact
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/dashboard/profile">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Profile
                 </Link>
               </Button>
               <Button variant="outline" onClick={handleLogout}>

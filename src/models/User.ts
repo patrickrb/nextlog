@@ -1,4 +1,5 @@
 import pool from '../lib/db';
+import { encrypt, decrypt } from '../lib/crypto';
 
 export interface IUser {
   id: number;
@@ -7,23 +8,30 @@ export interface IUser {
   name: string;
   callsign?: string;
   grid_locator?: string;
+  qrz_username?: string;
+  qrz_password?: string;
   created_at: Date;
   updated_at: Date;
 }
 
 export class User {
+  static getDecryptedQrzPassword(user: IUser): string | null {
+    return user.qrz_password ? decrypt(user.qrz_password) : null;
+  }
   static async create(userData: {
     email: string;
     password: string;
     name: string;
     callsign?: string;
     grid_locator?: string;
+    qrz_username?: string;
+    qrz_password?: string;
   }): Promise<IUser> {
-    const { email, password, name, callsign, grid_locator } = userData;
+    const { email, password, name, callsign, grid_locator, qrz_username, qrz_password } = userData;
     
     const query = `
-      INSERT INTO users (email, password, name, callsign, grid_locator)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO users (email, password, name, callsign, grid_locator, qrz_username, qrz_password)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `;
     
@@ -32,7 +40,9 @@ export class User {
       password,
       name.trim(),
       callsign ? callsign.toUpperCase().trim() : null,
-      grid_locator ? grid_locator.toUpperCase().trim() : null
+      grid_locator ? grid_locator.toUpperCase().trim() : null,
+      qrz_username ? qrz_username.trim() : null,
+      qrz_password ? encrypt(qrz_password.trim()) : null
     ]);
     
     return result.rows[0];
@@ -60,7 +70,11 @@ export class User {
     for (const [key, value] of Object.entries(userData)) {
       if (value !== undefined && key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
         fields.push(`${key} = $${paramCount}`);
-        values.push(value);
+        if (key === 'qrz_password' && value) {
+          values.push(encrypt(value as string));
+        } else {
+          values.push(value);
+        }
         paramCount++;
       }
     }
