@@ -1,0 +1,14 @@
+# Development overrides for docker-compose.yml
+version: '3.8'
+
+services:
+  nodelog-app:
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    stdin_open: true
+    tty: true

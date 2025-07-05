@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: nodelog-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nodelog
+      POSTGRES_USER: nodelog
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init.sql:/docker-entrypoint-initdb.d/postgres-init.sql:ro
+    networks:
+      - nodelog-network
+
+  # Next.js Application (Development)
+  nodelog-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: nodelog-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://nodelog:password@postgres:5432/nodelog
+      - JWT_SECRET=your-jwt-secret-key-for-development
+      - NEXT_PUBLIC_API_URL=http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./tailwind.config.ts:/app/tailwind.config.ts
+      - ./next.config.ts:/app/next.config.ts
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./postcss.config.mjs:/app/postcss.config.mjs
+      - ./components.json:/app/components.json
+      - ./eslint.config.mjs:/app/eslint.config.mjs
+      - /app/.next
+      - /app/node_modules
+    depends_on:
+      - postgres
+    networks:
+      - nodelog-network
+    command: npm run dev
+
+  # PostgreSQL Admin Interface (Optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: nodelog-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@nodelog.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "8081:80"
+    depends_on:
+      - postgres
+    networks:
+      - nodelog-network
+
+volumes:
+  postgres_data:
+
+networks:
+  nodelog-network:
+    driver: bridge

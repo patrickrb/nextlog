@@ -1,0 +1,36 @@
+# Production configuration for docker-compose
+version: '3.8'
+
+services:
+  # Production Next.js Application
+  nodelog-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MONGODB_URI: ${MONGODB_URI}
+        JWT_SECRET: ${JWT_SECRET}
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=${MONGODB_URI}
+      - JWT_SECRET=${JWT_SECRET}
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    volumes: []
+    command: ["node", "server.js"]
+
+  # Production MongoDB with authentication
+  mongodb:
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: nodelog
+    volumes:
+      - mongodb_data:/data/db
+    ports: []
+
+  # Remove mongo-express in production
+  mongo-express:
+    deploy:
+      replicas: 0
