@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, LogOut, Loader2 } from 'lucide-react';
+import { Plus, LogOut, Loader2, Map } from 'lucide-react';
+import DynamicContactMap from '@/components/DynamicContactMap';
 
 interface Contact {
   id: number;
@@ -20,18 +21,34 @@ interface Contact {
   rst_received?: string;
   name?: string;
   qth?: string;
+  grid_locator?: string;
+  latitude?: number;
+  longitude?: number;
   confirmed?: boolean;
+}
+
+interface User {
+  id: number;
+  email: string;
+  name: string;
+  callsign?: string;
+  grid_locator?: string;
 }
 
 export default function DashboardPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    fetchContacts();
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    await Promise.all([fetchContacts(), fetchUser()]);
+  };
 
   const fetchContacts = async () => {
     try {
@@ -51,6 +68,23 @@ export default function DashboardPage() {
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUser = async () => {
+    try {
+      const response = await fetch('/api/user');
+      if (response.status === 401) {
+        router.push('/login');
+        return;
+      }
+      
+      const data = await response.json();
+      if (response.ok) {
+        setUser(data.user);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
     }
   };
 
@@ -111,12 +145,13 @@ export default function DashboardPage() {
       </nav>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+        <div className="px-4 py-6 sm:px-0 space-y-6">
+          {/* Contact Map */}
           <Card>
             <CardHeader>
-              <CardTitle>Recent Contacts</CardTitle>
+              <CardTitle>Contact Map</CardTitle>
               <CardDescription>
-                Your amateur radio contact log
+                Geographic view of your contacts
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -126,6 +161,19 @@ export default function DashboardPage() {
                 </div>
               )}
 
+              <DynamicContactMap contacts={contacts} user={user} height="400px" />
+            </CardContent>
+          </Card>
+
+          {/* Recent Contacts Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Contacts</CardTitle>
+              <CardDescription>
+                Your amateur radio contact log
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               {contacts.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">

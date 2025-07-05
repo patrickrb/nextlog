@@ -13,6 +13,8 @@ export interface IContact {
   rst_received?: string;
   qth?: string;
   grid_locator?: string;
+  latitude?: number;
+  longitude?: number;
   notes?: string;
   created_at: Date;
   updated_at: Date;
@@ -31,6 +33,8 @@ export class Contact {
     rst_received?: string;
     qth?: string;
     grid_locator?: string;
+    latitude?: number;
+    longitude?: number;
     notes?: string;
   }): Promise<IContact> {
     const {
@@ -45,15 +49,17 @@ export class Contact {
       rst_received,
       qth,
       grid_locator,
+      latitude,
+      longitude,
       notes
     } = contactData;
     
     const query = `
       INSERT INTO contacts (
         user_id, callsign, name, frequency, mode, band, datetime,
-        rst_sent, rst_received, qth, grid_locator, notes
+        rst_sent, rst_received, qth, grid_locator, latitude, longitude, notes
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
       RETURNING *
     `;
     
@@ -69,6 +75,8 @@ export class Contact {
       rst_received ? rst_received.trim() : null,
       qth ? qth.trim() : null,
       grid_locator ? grid_locator.toUpperCase().trim() : null,
+      latitude || null,
+      longitude || null,
       notes ? notes.trim() : null
     ]);
     
