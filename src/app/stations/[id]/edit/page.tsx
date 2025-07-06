@@ -8,10 +8,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Save, Radio } from 'lucide-react';
 import { Combobox } from '@/components/ui/combobox';
-import { CreateStationData } from '@/models/Station';
+import { ArrowLeft, Save, Radio, Loader2 } from 'lucide-react';
+
+interface Station {
+  id: number;
+  callsign: string;
+  station_name: string;
+  operator_name?: string;
+  qth_name?: string;
+  street_address?: string;
+  city?: string;
+  county?: string;
+  state_province?: string;
+  postal_code?: string;
+  country?: string;
+  dxcc_entity_code?: number;
+  grid_locator?: string;
+  latitude?: number;
+  longitude?: number;
+  itu_zone?: number;
+  cq_zone?: number;
+  power_watts?: number;
+  rig_info?: string;
+  antenna_info?: string;
+  station_equipment?: string;
+  is_active: boolean;
+  is_default: boolean;
+  qrz_api_key?: string;
+  club_callsign?: string;
+}
 
 interface DxccEntity {
   adif: number;
@@ -34,6 +60,7 @@ interface StationFormData {
   callsign: string;
   station_name: string;
   operator_name: string;
+  qth_name: string;
   street_address: string;
   city: string;
   county: string;
@@ -56,13 +83,18 @@ interface StationFormData {
   club_callsign: string;
 }
 
-export default function NewStationPage() {
+export default function EditStationPage({ params }: { params: Promise<{ id: string }> }) {
+  const [stationId, setStationId] = useState<string>('');
+  const [station, setStation] = useState<Station | null>(null);
   const [dxccEntities, setDxccEntities] = useState<DxccEntity[]>([]);
   const [statesProvinces, setStatesProvinces] = useState<StateProvince[]>([]);
+  const [selectedDxcc, setSelectedDxcc] = useState<string>('');
+  const [selectedState, setSelectedState] = useState<string>('');
   const [formData, setFormData] = useState<StationFormData>({
     callsign: '',
     station_name: '',
     operator_name: '',
+    qth_name: '',
     street_address: '',
     city: '',
     county: '',
@@ -85,22 +117,88 @@ export default function NewStationPage() {
     club_callsign: '',
   });
   
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
-    fetchDxccEntities();
-  }, []);
+    params.then(({ id }) => {
+      setStationId(id);
+    });
+  }, [params]);
 
   useEffect(() => {
-    if (formData.dxcc_entity_code) {
-      fetchStatesProvinces(parseInt(formData.dxcc_entity_code));
+    if (stationId) {
+      fetchStation();
+      fetchDxccEntities();
+    }
+  }, [stationId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (selectedDxcc) {
+      fetchStatesProvinces(selectedDxcc);
     } else {
       setStatesProvinces([]);
-      setFormData(prev => ({ ...prev, state_province: '' }));
+      setSelectedState('');
     }
-  }, [formData.dxcc_entity_code]);
+  }, [selectedDxcc]);
+
+  const fetchStation = async () => {
+    try {
+      const response = await fetch(`/api/stations/${stationId}`);
+      if (response.status === 401) {
+        router.push('/login');
+        return;
+      }
+      
+      const data = await response.json();
+      if (response.ok) {
+        setStation(data);
+        // Populate form with station data
+        setFormData({
+          callsign: data.callsign || '',
+          station_name: data.station_name || '',
+          operator_name: data.operator_name || '',
+          qth_name: data.qth_name || '',
+          street_address: data.street_address || '',
+          city: data.city || '',
+          county: data.county || '',
+          state_province: data.state_province || '',
+          postal_code: data.postal_code || '',
+          country: data.country || '',
+          dxcc_entity_code: data.dxcc_entity_code?.toString() || '',
+          grid_locator: data.grid_locator || '',
+          latitude: data.latitude?.toString() || '',
+          longitude: data.longitude?.toString() || '',
+          itu_zone: data.itu_zone?.toString() || '',
+          cq_zone: data.cq_zone?.toString() || '',
+          power_watts: data.power_watts?.toString() || '',
+          rig_info: data.rig_info || '',
+          antenna_info: data.antenna_info || '',
+          station_equipment: data.station_equipment || '',
+          is_active: data.is_active ?? true,
+          is_default: data.is_default ?? false,
+          qrz_api_key: data.qrz_api_key || '',
+          club_callsign: data.club_callsign || '',
+        });
+        
+        // Set initial DXCC and state selections
+        if (data.dxcc_entity_code) {
+          setSelectedDxcc(data.dxcc_entity_code.toString());
+        }
+        if (data.state_province) {
+          setSelectedState(data.state_province);
+        }
+      } else {
+        setError(data.error || 'Failed to fetch station');
+      }
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchDxccEntities = async () => {
     try {
@@ -109,20 +207,20 @@ export default function NewStationPage() {
         const data = await response.json();
         setDxccEntities(data.entities || []);
       }
-    } catch {
-      // Silent error handling for DXCC fetch
+    } catch (error) {
+      console.error('Error fetching DXCC entities:', error);
     }
   };
 
-  const fetchStatesProvinces = async (dxccId: number) => {
+  const fetchStatesProvinces = async (dxccCode: string) => {
     try {
-      const response = await fetch(`/api/states?dxcc=${dxccId}`);
+      const response = await fetch(`/api/states?dxcc=${dxccCode}`);
       if (response.ok) {
         const data = await response.json();
         setStatesProvinces(data.states || []);
       }
-    } catch {
-      // Silent error handling for states fetch
+    } catch (error) {
+      console.error('Error fetching states/provinces:', error);
     }
   };
 
@@ -130,7 +228,15 @@ export default function NewStationPage() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleDxccChange = (dxccCode: string) => {
+    setSelectedDxcc(dxccCode);
+    setSelectedState('');
+    handleInputChange('dxcc_entity_code', dxccCode);
+    handleInputChange('state_province', '');
+  };
+
   const handleStateChange = (stateCode: string) => {
+    setSelectedState(stateCode);
     handleInputChange('state_province', stateCode);
     
     // Auto-populate zones if available
@@ -147,81 +253,77 @@ export default function NewStationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
     setError('');
 
     try {
       // Prepare data for submission
-      const submitData: Partial<CreateStationData> = {
-        callsign: formData.callsign.trim().toUpperCase(),
-        station_name: formData.station_name.trim(),
-        is_active: formData.is_active,
-        is_default: formData.is_default,
-      };
+      const submitData: Partial<StationFormData & { [key: string]: unknown }> = {};
 
-      // Add optional string fields only if they have values
-      if (formData.operator_name && formData.operator_name.trim()) {
-        submitData.operator_name = formData.operator_name.trim();
+      // Only include fields that have changed
+      if (formData.callsign.trim().toUpperCase() !== station?.callsign) {
+        submitData.callsign = formData.callsign.trim().toUpperCase();
       }
-      if (formData.street_address && formData.street_address.trim()) {
-        submitData.street_address = formData.street_address.trim();
+      if (formData.station_name.trim() !== station?.station_name) {
+        submitData.station_name = formData.station_name.trim();
       }
-      if (formData.city && formData.city.trim()) {
-        submitData.city = formData.city.trim();
+      if (formData.is_active !== station?.is_active) {
+        submitData.is_active = formData.is_active;
       }
-      if (formData.county && formData.county.trim()) {
-        submitData.county = formData.county.trim();
+      if (formData.is_default !== station?.is_default) {
+        submitData.is_default = formData.is_default;
       }
-      if (formData.state_province && formData.state_province.trim()) {
-        submitData.state_province = formData.state_province.trim();
-      }
-      if (formData.postal_code && formData.postal_code.trim()) {
-        submitData.postal_code = formData.postal_code.trim();
-      }
-      if (formData.country && formData.country.trim()) {
-        submitData.country = formData.country.trim();
-      }
-      if (formData.grid_locator && formData.grid_locator.trim()) {
-        submitData.grid_locator = formData.grid_locator.trim();
-      }
-      if (formData.rig_info && formData.rig_info.trim()) {
-        submitData.rig_info = formData.rig_info.trim();
-      }
-      if (formData.antenna_info && formData.antenna_info.trim()) {
-        submitData.antenna_info = formData.antenna_info.trim();
-      }
-      if (formData.station_equipment && formData.station_equipment.trim()) {
-        submitData.station_equipment = formData.station_equipment.trim();
-      }
-      if (formData.qrz_api_key && formData.qrz_api_key.trim()) {
-        submitData.qrz_api_key = formData.qrz_api_key.trim();
-      }
-      if (formData.club_callsign && formData.club_callsign.trim()) {
-        submitData.club_callsign = formData.club_callsign.trim();
-      }
+
+      // Handle optional string fields
+      const optionalFields = [
+        'operator_name', 'qth_name', 'street_address', 'city', 'county',
+        'state_province', 'postal_code', 'country', 'grid_locator',
+        'rig_info', 'antenna_info', 'station_equipment', 'qrz_api_key',
+        'club_callsign'
+      ];
+
+      optionalFields.forEach(field => {
+        const formValue = formData[field as keyof StationFormData] as string;
+        const stationValue = station?.[field as keyof Station] as string;
+        const trimmedValue = formValue?.trim() || '';
+        
+        if (trimmedValue !== (stationValue || '')) {
+          submitData[field] = trimmedValue || null;
+        }
+      });
 
       // Handle numeric fields
-      if (formData.dxcc_entity_code && formData.dxcc_entity_code.trim()) {
-        submitData.dxcc_entity_code = parseInt(formData.dxcc_entity_code);
-      }
-      if (formData.latitude && formData.latitude.trim()) {
-        submitData.latitude = parseFloat(formData.latitude);
-      }
-      if (formData.longitude && formData.longitude.trim()) {
-        submitData.longitude = parseFloat(formData.longitude);
-      }
-      if (formData.itu_zone && formData.itu_zone.trim()) {
-        submitData.itu_zone = parseInt(formData.itu_zone);
-      }
-      if (formData.cq_zone && formData.cq_zone.trim()) {
-        submitData.cq_zone = parseInt(formData.cq_zone);
-      }
-      if (formData.power_watts && formData.power_watts.trim()) {
-        submitData.power_watts = parseInt(formData.power_watts);
+      const numericFields = [
+        { key: 'dxcc_entity_code', parser: parseInt },
+        { key: 'latitude', parser: parseFloat },
+        { key: 'longitude', parser: parseFloat },
+        { key: 'itu_zone', parser: parseInt },
+        { key: 'cq_zone', parser: parseInt },
+        { key: 'power_watts', parser: parseInt }
+      ];
+
+      numericFields.forEach(({ key, parser }) => {
+        const formValue = formData[key as keyof StationFormData] as string;
+        const stationValue = station?.[key as keyof Station] as number;
+        
+        if (formValue && formValue.trim()) {
+          const parsedValue = parser(formValue);
+          if (parsedValue !== stationValue) {
+            submitData[key] = parsedValue;
+          }
+        } else if (stationValue !== undefined && stationValue !== null) {
+          submitData[key] = null;
+        }
+      });
+
+      // Only proceed if there are changes
+      if (Object.keys(submitData).length === 0) {
+        router.push('/stations');
+        return;
       }
 
-      const response = await fetch('/api/stations', {
-        method: 'POST',
+      const response = await fetch(`/api/stations/${stationId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -233,14 +335,42 @@ export default function NewStationPage() {
       if (response.ok) {
         router.push('/dashboard/stations');
       } else {
-        setError(data.error || 'Failed to create station');
+        setError(data.error || 'Failed to update station');
       }
     } catch {
       setError('Network error. Please try again.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span className="text-lg">Loading station...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!station) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">Station Not Found</h2>
+          <p className="text-muted-foreground mb-4">The requested station could not be found.</p>
+          <Button asChild>
+            <Link href="/dashboard/stations">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Stations
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -256,7 +386,7 @@ export default function NewStationPage() {
                 Stations
               </Link>
               <span className="mx-2 text-muted-foreground">/</span>
-              <h1 className="text-xl font-semibold">Add Station</h1>
+              <h1 className="text-xl font-semibold">Edit {station.station_name}</h1>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" asChild>
@@ -279,6 +409,7 @@ export default function NewStationPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Same form structure as new station form, but with pre-filled data */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -349,6 +480,7 @@ export default function NewStationPage() {
               </CardContent>
             </Card>
 
+            {/* Location Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Location Information</CardTitle>
@@ -358,17 +490,17 @@ export default function NewStationPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="dxcc_entity">DXCC Entity</Label>
+                  <Label htmlFor="dxcc_entity">DXCC Entity *</Label>
                   <Combobox
                     options={dxccEntities.map(entity => ({
                       value: entity.adif.toString(),
                       label: entity.name,
-                      secondary: `${entity.prefix} (${entity.adif})`
+                      secondary: entity.prefix
                     }))}
-                    value={formData.dxcc_entity_code}
-                    onValueChange={(value) => handleInputChange('dxcc_entity_code', value)}
+                    value={selectedDxcc}
+                    onValueChange={handleDxccChange}
                     placeholder="Select DXCC entity..."
-                    searchPlaceholder="Search countries..."
+                    searchPlaceholder="Search DXCC entities..."
                     emptyText="No DXCC entity found."
                   />
                 </div>
@@ -404,33 +536,19 @@ export default function NewStationPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="state_province">State/Province</Label>
-                    {statesProvinces.length > 0 ? (
-                      <Select value={formData.state_province} onValueChange={handleStateChange}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select state/province" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statesProvinces.map(state => (
-                            <SelectItem key={state.id} value={state.code}>
-                              {state.name} ({state.code})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Input
-                        id="state_province"
-                        value={formData.state_province}
-                        onChange={(e) => handleInputChange('state_province', e.target.value)}
-                        placeholder="State or Province"
-                        disabled={!formData.dxcc_entity_code}
-                      />
-                    )}
-                    {formData.dxcc_entity_code && statesProvinces.length === 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        No predefined states/provinces for this DXCC entity
-                      </p>
-                    )}
+                    <Combobox
+                      options={statesProvinces.map(state => ({
+                        value: state.code,
+                        label: state.name,
+                        secondary: state.code
+                      }))}
+                      value={selectedState}
+                      onValueChange={handleStateChange}
+                      placeholder="Select state/province..."
+                      searchPlaceholder="Search states/provinces..."
+                      emptyText="No state/province found."
+                      disabled={!selectedDxcc}
+                    />
                   </div>
                 </div>
 
@@ -477,17 +595,7 @@ export default function NewStationPage() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="dxcc_entity_code">DXCC Entity Code</Label>
-                    <Input
-                      id="dxcc_entity_code"
-                      type="number"
-                      value={formData.dxcc_entity_code}
-                      onChange={(e) => handleInputChange('dxcc_entity_code', e.target.value)}
-                      placeholder="e.g., 291"
-                    />
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="itu_zone">ITU Zone</Label>
                     <Input
@@ -522,6 +630,7 @@ export default function NewStationPage() {
               </CardContent>
             </Card>
 
+            {/* Equipment and Integration cards - same as new form */}
             <Card>
               <CardHeader>
                 <CardTitle>Station Equipment</CardTitle>
@@ -625,16 +734,16 @@ export default function NewStationPage() {
               <Button type="button" variant="outline" asChild>
                 <Link href="/dashboard/stations">Cancel</Link>
               </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? (
+              <Button type="submit" disabled={saving}>
+                {saving ? (
                   <>
                     <Radio className="h-4 w-4 mr-2 animate-spin" />
-                    Creating Station...
+                    Updating Station...
                   </>
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Create Station
+                    Update Station
                   </>
                 )}
               </Button>

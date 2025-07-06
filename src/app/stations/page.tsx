@@ -145,7 +145,7 @@ export default function StationsPage() {
             </div>
             <div className="flex items-center space-x-4">
               <Button asChild>
-                <Link href="/dashboard/stations/new">
+                <Link href="/stations/new">
                   <Plus className="h-4 w-4 mr-2" />
                   Add Station
                 </Link>

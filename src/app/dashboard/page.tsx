@@ -122,13 +122,13 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" asChild>
-                <Link href="/dashboard/stations">
+                <Link href="/stations">
                   <Radio className="h-4 w-4 mr-2" />
                   Stations
                 </Link>
               </Button>
               <Button asChild>
-                <Link href="/dashboard/new-contact">
+                <Link href="/new-contact">
                   <Plus className="h-4 w-4 mr-2" />
                   New Contact
                 </Link>

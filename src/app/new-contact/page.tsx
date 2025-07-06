@@ -307,7 +307,7 @@ export default function NewContactPage() {
                         </p>
                         <div className="mt-3">
                           <Button asChild size="sm" variant="outline">
-                            <Link href="/dashboard/stations/new">
+                            <Link href="/stations/new">
                               <Radio className="h-4 w-4 mr-2" />
                               Add Your First Station
                             </Link>
