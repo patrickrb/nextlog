@@ -1,18 +1,3 @@
-interface QRZResponse {
-  callsign?: string;
-  name?: string;
-  addr1?: string;
-  addr2?: string;
-  state?: string;
-  zip?: string;
-  country?: string;
-  grid?: string;
-  email?: string;
-  url?: string;
-  qslmgr?: string;
-  fname?: string;
-  lname?: string;
-}
 
 export interface QRZLookupResult {
   callsign: string;
@@ -116,7 +101,6 @@ export async function lookupCallsign(callsign: string, username: string, passwor
         : parseXmlField(lookupXml, 'name'));
 
     // Build QTH from available address components
-    const addr1 = parseXmlField(lookupXml, 'addr1');
     const addr2 = parseXmlField(lookupXml, 'addr2');
     const state = parseXmlField(lookupXml, 'state');
     const country = parseXmlField(lookupXml, 'country');
@@ -160,7 +144,7 @@ export async function lookupCallsign(callsign: string, username: string, passwor
       found: true
     };
 
-  } catch (error) {
+  } catch {
     return {
       callsign,
       found: false,

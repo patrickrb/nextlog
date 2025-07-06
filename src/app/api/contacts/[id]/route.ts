@@ -2,16 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Contact } from '@/models/Contact';
 import { verifyToken } from '@/lib/auth';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await verifyToken(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const contact = await Contact.findById(parseInt(params.id));
+    const { id } = await params;
+    const contact = await Contact.findById(parseInt(id));
 
-    if (!contact || contact.user_id !== user.userId) {
+    if (!contact || contact.user_id !== Number(user.userId)) {
       return NextResponse.json(
         { error: 'Contact not found' },
         { status: 404 }
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await verifyToken(request);
     if (!user) {
@@ -36,16 +37,17 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 
     const data = await request.json();
+    const { id } = await params;
     
-    const existingContact = await Contact.findById(parseInt(params.id));
-    if (!existingContact || existingContact.user_id !== user.userId) {
+    const existingContact = await Contact.findById(parseInt(id));
+    if (!existingContact || existingContact.user_id !== Number(user.userId)) {
       return NextResponse.json(
         { error: 'Contact not found' },
         { status: 404 }
       );
     }
 
-    const contact = await Contact.update(parseInt(params.id), data);
+    const contact = await Contact.update(parseInt(id), data);
 
     if (!contact) {
       return NextResponse.json(
@@ -64,22 +66,23 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await verifyToken(request);
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const existingContact = await Contact.findById(parseInt(params.id));
-    if (!existingContact || existingContact.user_id !== user.userId) {
+    const { id } = await params;
+    const existingContact = await Contact.findById(parseInt(id));
+    if (!existingContact || existingContact.user_id !== Number(user.userId)) {
       return NextResponse.json(
         { error: 'Contact not found' },
         { status: 404 }
       );
     }
 
-    const deleted = await Contact.delete(parseInt(params.id));
+    const deleted = await Contact.delete(parseInt(id));
 
     if (!deleted) {
       return NextResponse.json(

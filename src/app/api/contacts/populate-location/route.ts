@@ -4,33 +4,6 @@ import { User } from '@/models/User';
 import { Contact } from '@/models/Contact';
 import { lookupCallsign } from '@/lib/qrz';
 
-// Function to convert grid locator to lat/lng
-const gridToLatLng = (grid: string): [number, number] | null => {
-  if (!grid || grid.length < 4) return null;
-  
-  const grid_upper = grid.toUpperCase();
-  const lon_field = grid_upper.charCodeAt(0) - 65;
-  const lat_field = grid_upper.charCodeAt(1) - 65;
-  const lon_square = parseInt(grid_upper.charAt(2));
-  const lat_square = parseInt(grid_upper.charAt(3));
-  
-  let lon = -180 + (lon_field * 20) + (lon_square * 2);
-  let lat = -90 + (lat_field * 10) + (lat_square * 1);
-  
-  // Add subsquare precision if available
-  if (grid.length >= 6) {
-    const lon_subsquare = grid_upper.charCodeAt(4) - 65;
-    const lat_subsquare = grid_upper.charCodeAt(5) - 65;
-    lon += (lon_subsquare * 2/24) + (1/24);
-    lat += (lat_subsquare * 1/24) + (1/48);
-  } else {
-    // Default to center of square
-    lon += 1;
-    lat += 0.5;
-  }
-  
-  return [lat, lon];
-};
 
 export async function POST(request: NextRequest) {
   try {
@@ -86,9 +59,6 @@ export async function POST(request: NextRequest) {
             longitude: qrzResult.longitude
           });
           
-          const locationInfo = qrzResult.latitude 
-            ? `precise coords (${qrzResult.latitude}, ${qrzResult.longitude})`
-            : `grid locator: ${qrzResult.grid_locator}`;
           
           updated++;
         } else {
@@ -98,7 +68,7 @@ export async function POST(request: NextRequest) {
         // Add a small delay to be respectful to QRZ's servers
         await new Promise(resolve => setTimeout(resolve, 500));
         
-      } catch (error) {
+      } catch {
         failed++;
       }
     }
@@ -110,7 +80,7 @@ export async function POST(request: NextRequest) {
       total: contactsWithoutLocation.length
     });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to populate location data' }, { status: 500 });
   }
 }

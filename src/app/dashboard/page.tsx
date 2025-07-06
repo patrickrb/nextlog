@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, LogOut, Loader2, Map, Settings } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import UserMenu from '@/components/UserMenu';
 
@@ -43,53 +43,51 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  const fetchData = useCallback(async () => {
+    const fetchContacts = async () => {
+      try {
+        const response = await fetch('/api/contacts');
+        if (response.status === 401) {
+          router.push('/login');
+          return;
+        }
+        
+        const data = await response.json();
+        if (response.ok) {
+          setContacts(data.contacts || []);
+        } else {
+          setError(data.error || 'Failed to fetch contacts');
+        }
+      } catch {
+        setError('Network error. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('/api/user');
+        if (response.status === 401) {
+          router.push('/login');
+          return;
+        }
+        
+        const data = await response.json();
+        if (response.ok) {
+          setUser(data.user);
+        }
+      } catch {
+        // Silent error handling for user fetch
+      }
+    };
+    
+    await Promise.all([fetchContacts(), fetchUser()]);
+  }, [router]);
+
   useEffect(() => {
     fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    await Promise.all([fetchContacts(), fetchUser()]);
-  };
-
-  const fetchContacts = async () => {
-    try {
-      const response = await fetch('/api/contacts');
-      if (response.status === 401) {
-        router.push('/login');
-        return;
-      }
-      
-      const data = await response.json();
-      if (response.ok) {
-        setContacts(data.contacts || []);
-      } else {
-        setError(data.error || 'Failed to fetch contacts');
-      }
-    } catch (error) {
-      setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchUser = async () => {
-    try {
-      const response = await fetch('/api/user');
-      if (response.status === 401) {
-        router.push('/login');
-        return;
-      }
-      
-      const data = await response.json();
-      if (response.ok) {
-        setUser(data.user);
-      }
-    } catch (error) {
-      // Silent error handling for user fetch
-    }
-  };
-
-
+  }, [fetchData]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

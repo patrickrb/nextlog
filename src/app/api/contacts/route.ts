@@ -14,8 +14,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = (page - 1) * limit;
 
-    const contacts = await Contact.findByUserId(user.userId, limit, offset);
-    const total = await Contact.countByUserId(user.userId);
+    const userId = typeof user.userId === 'string' ? parseInt(user.userId, 10) : user.userId;
+    const contacts = await Contact.findByUserId(userId, limit, offset);
+    const total = await Contact.countByUserId(userId);
 
     return NextResponse.json({
       contacts,

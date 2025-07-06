@@ -1,7 +1,6 @@
 import { createCipheriv, createDecipheriv, randomBytes, pbkdf2Sync } from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';
-const SALT_LENGTH = 32;
 const IV_LENGTH = 16;
 const TAG_LENGTH = 16;
 const KEY_LENGTH = 32;
