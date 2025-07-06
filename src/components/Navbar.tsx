@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Plus, Radio } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import UserMenu from '@/components/UserMenu';
 

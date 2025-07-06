@@ -9,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Loader2, User, Key, MapPin } from 'lucide-react';
 import Navbar from '@/components/Navbar';
-import { useUser } from '@/contexts/UserContext';
 
 interface User {
   id: number;
