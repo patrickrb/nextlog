@@ -3,6 +3,7 @@ import pool from '../lib/db';
 export interface IContact {
   id: number;
   user_id: number;
+  station_id?: number;
   callsign: string;
   name?: string;
   frequency: number;
@@ -23,6 +24,7 @@ export interface IContact {
 export class Contact {
   static async create(contactData: {
     user_id: number;
+    station_id?: number;
     callsign: string;
     name?: string;
     frequency: number;
@@ -39,6 +41,7 @@ export class Contact {
   }): Promise<IContact> {
     const {
       user_id,
+      station_id,
       callsign,
       name,
       frequency,
@@ -56,15 +59,16 @@ export class Contact {
     
     const query = `
       INSERT INTO contacts (
-        user_id, callsign, name, frequency, mode, band, datetime,
+        user_id, station_id, callsign, name, frequency, mode, band, datetime,
         rst_sent, rst_received, qth, grid_locator, latitude, longitude, notes
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING *
     `;
     
     const result = await pool.query(query, [
       user_id,
+      station_id || null,
       callsign.toUpperCase().trim(),
       name ? name.trim() : null,
       frequency,
@@ -149,5 +153,83 @@ export class Contact {
     const result = await pool.query(query, [userId]);
     
     return parseInt(result.rows[0].count);
+  }
+
+  static async findByStationId(stationId: number, limit?: number, offset?: number): Promise<IContact[]> {
+    let query = 'SELECT * FROM contacts WHERE station_id = $1 ORDER BY datetime DESC';
+    const params = [stationId];
+    
+    if (limit) {
+      query += ` LIMIT $${params.length + 1}`;
+      params.push(limit);
+    }
+    
+    if (offset) {
+      query += ` OFFSET $${params.length + 1}`;
+      params.push(offset);
+    }
+    
+    const result = await pool.query(query, params);
+    return result.rows;
+  }
+
+  static async findByUserIdAndStationId(userId: number, stationId: number, limit?: number, offset?: number): Promise<IContact[]> {
+    let query = 'SELECT * FROM contacts WHERE user_id = $1 AND station_id = $2 ORDER BY datetime DESC';
+    const params = [userId, stationId];
+    
+    if (limit) {
+      query += ` LIMIT $${params.length + 1}`;
+      params.push(limit);
+    }
+    
+    if (offset) {
+      query += ` OFFSET $${params.length + 1}`;
+      params.push(offset);
+    }
+    
+    const result = await pool.query(query, params);
+    return result.rows;
+  }
+
+  static async countByStationId(stationId: number): Promise<number> {
+    const query = 'SELECT COUNT(*) FROM contacts WHERE station_id = $1';
+    const result = await pool.query(query, [stationId]);
+    
+    return parseInt(result.rows[0].count);
+  }
+
+  static async findWithStation(userId: number, limit?: number, offset?: number): Promise<(IContact & { station?: { id: number; callsign: string; station_name: string } })[]> {
+    let query = `
+      SELECT 
+        c.*,
+        s.id as station_id,
+        s.callsign as station_callsign,
+        s.station_name as station_name
+      FROM contacts c
+      LEFT JOIN stations s ON c.station_id = s.id
+      WHERE c.user_id = $1
+      ORDER BY c.datetime DESC
+    `;
+    const params = [userId];
+    
+    if (limit) {
+      query += ` LIMIT $${params.length + 1}`;
+      params.push(limit);
+    }
+    
+    if (offset) {
+      query += ` OFFSET $${params.length + 1}`;
+      params.push(offset);
+    }
+    
+    const result = await pool.query(query, params);
+    return result.rows.map(row => ({
+      ...row,
+      station: row.station_id ? {
+        id: row.station_id,
+        callsign: row.station_callsign,
+        station_name: row.station_name
+      } : undefined
+    }));
   }
 }

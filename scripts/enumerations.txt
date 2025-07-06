@@ -1,0 +1,2289 @@
+Enumeration for Country Code 1 (Canada)
+Code	Primary Administrative Subdivision	CQ Zone	ITU Zone
+NS	Nova Scotia	05	09
+QC	Québec	02,05	04,09
+ON	Ontario	04	03,04
+MB	Manitoba	04	03,04
+SK	Saskatchewan	04	03
+AB	Alberta	04	02
+BC	British Columbia	03	02
+NT	Northwest Territories	01,02,04	03,04,75
+NB	New Brunswick	05	09
+NL	Newfoundland and Labrador	02,05	09
+YT	Yukon	01	02
+PE	Prince Edward Island	05	09
+NU	Nunavut	02	04,09
+ 
+
+ 
+
+Enumeration for Country Code 5 (Aland Is.)
+Code	Primary Administrative Subdivision	Deleted
+001	Brändö	 
+002	Eckerö	 
+003	Finström	 
+004	Föglö	 
+005	Geta	 
+006	Hammarland	 
+007	Jomala	 
+008	Kumlinge	 
+009	Kökar	 
+010	Lemland	 
+011	Lumparland	 
+012	Maarianhamina	 
+013	Saltvik	 
+014	Sottunga	 
+015	Sund	 
+016	Vårdö	 
+051	Märket	Y
+ 
+
+ 
+
+Enumeration for Country Code 6 (Alaska)
+Code	Primary Administrative Subdivision
+AK	Alaska
+ 
+
+ 
+
+Enumeration for Country Code 15 (Asiatic Russia)
+Code	Primary Administrative Subdivision	Oblast #	CQ Zone	ITU Zone
+UO	Ust’-Ordynsky Autonomous Okrug - for contacts made before 2008-01-01	174	18	32
+AB	Aginsky Buryatsky Autonomous Okrug - for contacts made before 2008-03-01	175	18	33
+CB	Chelyabinsk (Chelyabinskaya oblast)	165	17	30
+SV	Sverdlovskaya oblast	154	17	30
+PM	Perm (Permskaya oblast) - for contacts made on or after 2005-12-01	140	17	30
+PM	Permskaya Kraj - for contacts made before 2005-12-01	140	17	30
+KP	Komi-Permyatsky Autonomous Okrug - for contacts made before 2005-12-01	141	17	30
+TO	Tomsk (Tomskaya oblast)	158	18	30
+HM	Khanty-Mansyisky Autonomous Okrug	162	17	21
+YN	Yamalo-Nenetsky Autonomous Okrug	163	17	21
+TN	Tyumen' (Tyumenskaya oblast)	161	17	30
+OM	Omsk (Omskaya oblast)	146	17	30
+NS	Novosibirsk (Novosibirskaya oblast)	145	18	31
+KN	Kurgan (Kurganskaya oblast)	134	17	30
+OB	Orenburg (Orenburgskaya oblast)	167	S=16 T=17	30
+KE	Kemerovo (Kemerovskaya oblast)	130	18	31
+BA	Republic of Bashkortostan	84	16	30
+KO	Republic of Komi	90	17	20
+AL	Altaysky Kraj	99	18	31
+GA	Republic Gorny Altay	100	18	31
+KK	Krasnoyarsk (Krasnoyarsk Kraj)	103	18	32
+TM	Taymyr Autonomous Okrug - for contacts made before 2007-01-01	105	18	32
+HK	Khabarovsk (Khabarovsky Kraj)	110	19	34
+EA	Yevreyskaya Autonomous Oblast	111	19	33
+SL	Sakhalin (Sakhalinskaya oblast)	153	19	34
+EV	Evenkiysky Autonomous Okrug - for contacts made before 2007-01-01	106	18	22
+MG	Magadan (Magadanskaya oblast)	138	19	24
+AM	Amurskaya oblast	112	19	33
+CK	Chukotka Autonomous Okrug	139	19	26
+PK	Primorsky Kraj	107	19	34
+BU	Republic of Buryatia	85	18	32
+YA	Sakha (Yakut) Republic	98	19	32
+IR	Irkutsk (Irkutskaya oblast)	124	18	32
+CT	Zabaykalsky Kraj - referred to as Chita (Chitinskaya oblast) before 2008-03-01	166	18	33
+HA	Republic of Khakassia	104	18	32
+KY	Koryaksky Autonomous Okrug - for contacts made before 2007-01-01	129	19	25
+TU	Republic of Tuva	159	23	32
+KT	Kamchatka (Kamchatskaya oblast)	128	19	35
+ 
+
+ 
+
+Enumeration for Country Code 21 (Baleric Is.)
+Code	Primary Administrative Subdivision
+IB	Baleares
+ 
+
+ 
+
+Enumeration for Country Code 27 (Belarus)
+Code	Primary Administrative Subdivision
+MI	Minsk (Minskaya voblasts')
+BR	Brest (Brestskaya voblasts')
+HR	Grodno (Hrodzenskaya voblasts')
+VI	Vitebsk (Vitsyebskaya voblasts')
+MA	Mogilev (Mahilyowskaya voblasts')
+HO	Gomel (Homyel'skaya voblasts')
+HM	Horad Minsk
+ 
+
+ 
+
+Enumeration for Country Code 29 (Canary Is.)
+Code	Primary Administrative Subdivision
+GC	Las Palmas
+TF	Tenerife
+ 
+
+ 
+
+Enumeration for Country Code 32 (Cetua & Melilla)
+Code	Primary Administrative Subdivision
+CE	Ceuta
+ML	Melilla
+ 
+
+ 
+
+Enumeration for Country Code 50 (Mexico)
+Code	Primary Administrative Subdivision
+COL	Colima
+DF	Distrito Federal
+EMX	Estado de México
+GTO	Guanajuato
+HGO	Hidalgo
+JAL	Jalisco
+MIC	Michoacán de Ocampo
+MOR	Morelos
+NAY	Nayarit
+PUE	Puebla
+QRO	Querétaro de Arteaga
+TLX	Tlaxcala
+VER	Veracruz-Llave
+AGS	Aguascalientes
+BC	Baja California
+BCS	Baja California Sur
+CHH	Chihuahua
+COA	Coahuila de Zaragoza
+DGO	Durango
+NL	Nuevo Leon
+SLP	San Luis Potosí
+SIN	Sinaloa
+SON	Sonora
+TMS	Tamaulipas
+ZAC	Zacatecas
+CAM	Campeche
+CHS	Chiapas
+GRO	Guerrero
+OAX	Oaxaca
+QTR	Quintana Roo
+TAB	Tabasco
+YUC	Yucatán
+ 
+
+ 
+
+Enumeration for Country Code 54 (European Russia)
+Code	Primary Administrative Subdivision	Oblast #	CQ Zone	ITU Zone
+SP	City of St. Petersburg	169	16	29
+LO	Leningradskaya oblast	136	16	29
+KL	Republic of Karelia	88	16	19
+AR	Arkhangelsk (Arkhangelskaya oblast)	113	16	19
+NO	Nenetsky Autonomous Okrug	114	16	20
+VO	Vologda (Vologodskaya oblast)	120	16	29
+NV	Novgorodskaya oblast	144	16	29
+PS	Pskov (Pskovskaya oblast)	149	16	29
+MU	Murmansk (Murmanskaya oblast)	143	16	19
+MA	City of Moscow	170	16	29
+MO	Moscowskaya oblast	142	16	29
+OR	Oryel (Orlovskaya oblast)	147	16	29
+LP	Lipetsk (Lipetskaya oblast)	137	16	29
+TV	Tver' (Tverskaya oblast)	126	16	29
+SM	Smolensk (Smolenskaya oblast)	155	16	29
+YR	Yaroslavl (Yaroslavskaya oblast)	168	16	29
+KS	Kostroma (Kostromskaya oblast)	132	16	29
+TL	Tula (Tul'skaya oblast)	160	16	29
+VR	Voronezh (Voronezhskaya oblast)	121	16	29
+TB	Tambov (Tambovskaya oblast)	157	16	29
+RA	Ryazan' (Ryazanskaya oblast)	151	16	29
+NN	Nizhni Novgorod (Nizhegorodskaya oblast)	122	16	29
+IV	Ivanovo (Ivanovskaya oblast)	123	16	29
+VL	Vladimir (Vladimirskaya oblast)	119	16	29
+KU	Kursk (Kurskaya oblast)	135	16	29
+KG	Kaluga (Kaluzhskaya oblast)	127	16	29
+BR	Bryansk (Bryanskaya oblast)	118	16	29
+BO	Belgorod (Belgorodskaya oblast)	117	16	29
+VG	Volgograd (Volgogradskaya oblast)	156	16	29
+SA	Saratov (Saratovskaya oblast)	152	16	29
+PE	Penza (Penzenskaya oblast)	148	16	29
+SR	Samara (Samarskaya oblast)	133	16	30
+UL	Ulyanovsk (Ulyanovskaya oblast)	164	16	29
+KI	Kirov (Kirovskaya oblast)	131	16	30
+TA	Republic of Tataria	94	16	30
+MR	Republic of Marij-El	91	16	29
+MD	Republic of Mordovia	92	16	29
+UD	Republic of Udmurtia	95	16	30
+CU	Republic of Chuvashia	97	16	29
+KR	Krasnodar (Krasnodarsky Kraj)	101	16	29
+KC	Republic of Karachaevo-Cherkessia	109	16	29
+ST	Stavropol' (Stavropolsky Kraj)	108	16	29
+KM	Republic of Kalmykia	89	16	29
+SO	Republic of Northern Ossetia	93	16	29
+RO	Rostov-on-Don (Rostovskaya oblast)	150	16	29
+CN	Republic Chechnya	96	16	29
+IN	Republic of Ingushetia	96	16	29
+AO	Astrakhan' (Astrakhanskaya oblast)	115	16	29
+DA	Republic of Daghestan	86	16	29
+KB	Republic of Kabardino-Balkaria	87	16	29
+AD	Republic of Adygeya	102	16	29
+ 
+
+ 
+
+Enumeration for Country Code 61 (Franz Josef Land)
+Code	Primary Administrative Subdivision
+AR	Arkhangelsk (Arkhangelskaya oblast)
+FJL	Franz Josef Land (import-only)
+ 
+
+ 
+
+Enumeration for Country Code 100 (Argentina)
+Code	Primary Administrative Subdivision
+C	Capital federal (Buenos Aires City)
+B	Buenos Aires Province
+S	Santa Fe
+H	Chaco
+P	Formosa
+X	Cordoba
+N	Misiones
+E	Entre Rios
+T	Tucumán
+W	Corrientes
+M	Mendoza
+G	Santiago del Estero
+A	Salta
+J	San Juan
+D	San Luis
+K	Catamarca
+F	La Rioja
+Y	Jujuy
+L	La Pampa
+R	Rió Negro
+U	Chubut
+Z	Santa Cruz
+V	Tierra del Fuego
+Q	Neuquén
+ 
+
+ 
+
+Enumeration for Country Code 108 (Brazil)
+Code	Primary Administrative Subdivision
+ES	Espírito Santo
+GO	Goiás
+SC	Santa Catarina
+SE	Sergipe
+AL	Alagoas
+AM	Amazonas
+TO	Tocantins
+AP	Amapã
+PB	Paraíba
+MA	Maranhao
+RN	Rio Grande do Norte
+PI	Piaui
+DF	Oietrito Federal (Brasila)
+CE	Ceará
+AC	Acre
+MS	Mato Grosso do Sul
+RR	Roraima
+RO	Rondônia
+RJ	Rio de Janeiro
+SP	Sao Paulo
+RS	Rio Grande do Sul
+MG	Minas Gerais
+PR	Paranã
+BA	Bahia
+PE	Pernambuco
+PA	Parã
+MT	Mato Grosso
+ 
+
+ 
+
+Enumeration for Country Code 110 (Hawaii)
+Code	Primary Administrative Subdivision
+HI	Hawaii
+ 
+
+ 
+
+Enumeration for Country Code 112 (Chile)
+Code	Primary Administrative Subdivision
+II	Antofagasta
+III	Atacama
+I	Tarapacá
+XV	Arica y Parinacota
+IV	Coquimbo
+V	Valparaíso
+RM	Region Metropolitana de Santiago
+VI	Libertador General Bernardo O'Higgins
+VII	Maule
+VIII	Bío-Bío
+IX	La Araucanía
+XIV	Los Ríos
+X	Los Lagos
+XI	Aisén del General Carlos Ibáñez del Campo
+XII	Magallanes
+ 
+
+ 
+
+Enumeration for Country Code 126 (Kaliningrad)
+Code	Primary Administrative Subdivision	Oblast #	CQ Zone	ITU Zone
+KA	Kalingrad (Kaliningradskaya oblast)	125	15	29
+ 
+
+ 
+
+Enumeration for Country Code 132 (Paraguay)
+Code	Primary Administrative Subdivision
+16	Alto Paraguay
+19	Boquerón
+15	Presidente Hayes
+13	Amambay
+01	Concepción
+14	Canindeyú
+02	San Pedro
+ASU	Asunción
+11	Central
+03	Cordillera
+09	Paraguarí
+06	Caazapl
+05	Caeguazú
+04	Guairá
+08	Miaiones
+12	Ñeembucu
+10	Alto Paraná
+07	Itapua
+ 
+
+ 
+
+Enumeration for Country Code 137 (Republic of Korea)
+Code	Primary Administrative Subdivision
+A	Seoul (Seoul Teugbyeolsi)
+N	Inchon (Incheon Gwang'yeogsi)
+D	Kangwon-do (Gang 'weondo)
+C	Kyunggi-do (Gyeonggido)
+E	Choongchungbuk-do (Chungcheongbugdo)
+F	Choongchungnam-do (Chungcheongnamdo)
+R	Taejon (Daejeon Gwang'yeogsi)
+M	Cheju-do (Jejudo)
+G	Chollabuk-do (Jeonrabugdo)
+H	Chollanam-do (Jeonranamdo)
+Q	Kwangju (Gwangju Gwang'yeogsi)
+K	Kyungsangbuk-do (Gyeongsangbugdo)
+L	Kyungsangnam-do (Gyeongsangnamdo)
+B	Pusan (Busan Gwang'yeogsi)
+P	Taegu (Daegu Gwang'yeogsi)
+S	Ulsan (Ulsan Gwanq'yeogsi)
+T	Sejong
+IS	Special Island
+ 
+
+ 
+
+Enumeration for Country Code 138 (Kure Island)
+Code	Primary Administrative Subdivision
+KI	Kure Island
+ 
+
+ 
+
+Enumeration for Country Code 144 (Uruguay)
+Code	Primary Administrative Subdivision
+MO	Montevideo
+CA	Canelones
+SJ	San José
+CO	Colonia
+SO	Soriano
+RN	Rio Negro
+PA	Paysandu
+SA	Salto
+AR	Artigsa
+FD	Florida
+FS	Flores
+DU	Durazno
+TA	Tacuarembo
+RV	Rivera
+MA	Maldonado
+LA	Lavalleja
+RO	Rocha
+TT	Treinta y Tres
+CL	Cerro Largo
+ 
+
+ 
+
+Enumeration for Country Code 147 (Lord Howe Is)
+Code	Primary Administrative Subdivision
+LH	Lord Howe Is
+ 
+
+ 
+
+Enumeration for Country Code 148 (Venezuela)
+Code	Primary Administrative Subdivision
+AM	Amazonas
+AN	Anzoátegui
+AP	Apure
+AR	Aragua
+BA	Barinas
+BO	Bolívar
+CA	Carabobo
+CO	Cojedes
+DA	Delta Amacuro
+DC	Distrito Capital
+FA	Falcón
+GU	Guárico
+LA	Lara
+ME	Mérida
+MI	Miranda
+MO	Monagas
+NE	Nueva Esparta
+PO	Portuguesa
+SU	Sucre
+TA	Táchira
+TR	Trujillo
+VA	Vargas
+YA	Yaracuy
+ZU	Zulia
+ 
+
+ 
+
+Enumeration for Country Code 149 (Azores)
+Code	Primary Administrative Subdivision
+AC	Açores
+ 
+
+ 
+
+Enumeration for Country Code 150 (Australia)
+Code	Primary Administrative Subdivision
+ACT	Australian Capital Territory
+NSW	New South Wales
+VIC	Victoria
+QLD	Queensland
+SA	South Australia
+WA	Western Australia
+TAS	Tasmania
+NT	Northern Territory
+ 
+
+ 
+
+Enumeration for Country Code 151 (Malyj Vysotskij)
+Code	Primary Administrative Subdivision
+LO	Leningradskaya Oblast
+MV	Malyj Vysotskij (import-only)
+ 
+
+ 
+
+Enumeration for Country Code 153 (Macquarie Is)
+Code	Primary Administrative Subdivision
+MA	Macquarie Is
+ 
+
+ 
+
+Enumeration for Country Code 163 (Papua New Guinea)
+Code	Primary Administrative Subdivision
+NCD	National Capital District (Port Moresby)
+CPM	Central
+CPK	Chimbu
+EHG	Eastern Highlands
+EBR	East New Britain
+ESW	East Sepik
+EPW	Enga
+GPK	Gulf
+MPM	Madang
+MRL	Manus
+MBA	Milne Bay
+MPL	Morobe
+NIK	New Ireland
+NPP	Northern
+NSA	North Solomons
+SAN	Santaun
+SHM	Southern Highlands
+WPD	Western
+WHM	Western Highlands
+WBR	West New Britain
+ 
+
+ 
+
+Enumeration for Country Code 170 (New Zealand)
+Code	Primary Administrative Subdivision
+AUK	Auckland
+BOP	Bay of Plenty
+NTL	Northland
+WKO	Waikato
+GIS	Gisborne
+HKB	Hawkes Bay
+MWT	Manawatu-Wanganui
+TKI	Taranaki
+WGN	Wellington
+CAN	Canterbury
+MBH	Marlborough
+NSN	Nelson
+TAS	Tasman
+WTC	West Coast
+OTA	Otago
+STL	Southland
+ 
+
+ 
+
+Enumeration for Country Code 177 (Minami Torishima)
+Code	Primary Administrative Subdivision
+MT	Minami Torishima
+ 
+
+ 
+
+Enumeration for Country Code 192 (Ogasawara)
+Code	Primary Administrative Subdivision
+O	Ogasawara
+ 
+
+ 
+
+Enumeration for Country Code 206 (Austria)
+Code	Primary Administrative Subdivision
+Vienna (Wien)
+WC	Wien
+Salzburg
+HA	Hallein
+JO	St. Johann
+SC	Salzburg
+SL	Salzburg-Land
+TA	Tamsweg
+ZE	Zell Am See
+Lower Austria (Niederösterreich)
+AM	Amstetten
+BL	Bruck/Leitha
+BN	Baden
+GD	Gmünd
+GF	Gänserndorf
+HL	Hollabrunn
+HO	Horn
+KO	Korneuburg
+KR	Krems-Region
+KS	Krems
+LF	Lilienfeld
+MD	Mödling
+ME	Melk
+MI	Mistelbach
+NK	Neunkirchen
+PC	St. Pölten
+PL	St. Pölten-Land
+SB	Scheibbs
+SW	Schwechat
+TU	Tulln
+WB	Wr.Neustadt-Bezirk
+WN	Wr.Neustadt
+WT	Waidhofen/Thaya
+WU	Wien-Umgebung
+WY	Waidhofen/Ybbs
+ZT	Zwettl
+Burgenland
+EC	Eisenstadt
+EU	Eisenstadt-Umgebung
+GS	Güssing
+JE	Jennersdorf
+MA	Mattersburg
+ND	Neusiedl/See
+OP	Oberpullendorf
+OW	Oberwart
+Upper Austria (Oberösterreich)
+BR	Braunau/Inn
+EF	Eferding
+FR	Freistadt
+GM	Gmunden
+GR	Grieskirchen
+KI	Kirchdorf
+LC	Linz
+LL	Linz-Land
+PE	Perg
+RI	Ried/Innkreis
+RO	Rohrbach
+SD	Schärding
+SE	Steyr-Land
+SR	Steyr
+UU	Urfahr
+VB	Vöcklabruck
+WE	Wels
+WL	Wels-Land
+Styria (Steiermark)
+BA	Bad Aussee - for contacts made before 2012/01/01
+BM	Bruck/Mur - for contacts made before 2013/01/01
+BM	Bruck-Mürzzuschlag - for contacts made on or after 2013/01/01
+DL	Deutschlandsberg
+FB	Feldbach - for contacts made before 2013/01/01
+FF	Fürstenfeld - for contacts made before 2013/01/01
+GB	Gröbming
+GC	Graz
+GU	Graz-Umgebung
+HB	Hartberg - for contacts made before 2013/01/01
+HF	Hartberg-Fürstenfeld - for contacts made on or after 2013/01/01
+JU	Judenburg - for contacts made before 2012/01/01
+KF	Knittelfeld - for contacts made before 2012/01/01
+LB	Leibnitz
+LE	Leoben
+LI	Liezen
+LN	Leoben-Land
+MT	Murtal - for contacts made on or after 2012/01/01
+MU	Murau
+MZ	Mürzzuschlag - for contacts made before 2013/01/01
+RA	Radkersburg - for contacts made before 2013/01/01
+SO	Südoststeiermark - for contacts made on or after 2013/01/01
+VO	Voitsberg
+WZ	Weiz
+Tyrol (Tirol)
+IC	Innsbruck
+IL	Innsbruck-Land
+IM	Imst
+KB	Kitzbühel
+KU	Kufstein
+LA	Landeck
+LZ	Lienz
+RE	Reutte
+SZ	Schwaz
+Carinthia (Kärnten)
+FE	Feldkirchen
+HE	Hermagor
+KC	Klagenfurt
+KL	Klagenfurt-Land
+SP	Spittal/Drau
+SV	St.Veit/Glan
+VI	Villach
+VK	Völkermarkt
+VL	Villach-Land
+WO	Wolfsberg
+Vorarlberg
+BC	Bregenz
+BZ	Bludenz
+DO	Dornbirn
+FK	Feldkirch
+ 
+
+ 
+
+Enumeration for Country Code 209 (Belgium)
+Code	Primary Administrative Subdivision
+AN	Antwerpen
+BR	Brussels
+BW	Brabant Wallon
+HT	Hainaut
+LB	Limburg
+LG	Liêge
+NM	Namur
+LU	Luxembourg
+OV	Oost-Vlaanderen
+VB	Vlaams Brabant
+WV	West-Vlaanderen
+ 
+
+ 
+
+Enumeration for Country Code 212 (Bulgaria)
+Code	Primary Administrative Subdivision
+Burgas
+BU	Burgas
+SL	Sliven
+YA	Yambol (Jambol)
+City of Sofia
+SO	Sofija Grad
+Hashkovo
+HA	Haskovo
+KA	Kărdžali
+SZ	Stara Zagora
+Plovdiv
+PA	Pazardžik
+PD	Plovdiv
+SM	Smoljan
+Sofia
+BL	Blagoevgrad
+KD	Kjustendil
+PK	Pernik
+SF	Sofija (Sofia)
+Loveč
+GA	Gabrovo
+LV	Loveč (Lovech)
+PL	Pleven
+VT	Veliko Tărnovo
+Montanta
+MN	Montana
+VD	Vidin
+VR	Vraca
+Ruse
+RZ	Razgrad
+RS	Ruse
+SS	Silistra
+TA	Tărgovište
+Varna
+DO	Dobrič
+SN	Šumen
+VN	Varna
+ 
+
+ 
+
+Enumeration for Country Code 214 (Corsica)
+Code	Primary Administrative Subdivision
+2A	Corse-du-Sud
+2B	Haute-Corse
+ 
+
+ 
+
+Enumeration for Country Code 221 (Denmark)
+Code	Primary Administrative Subdivision
+015	Koebenhavns amt
+020	Frederiksborg amt
+025	Roskilde amt
+030	Vestsjaellands amt
+035	Storstrøm amt (Storstroems)
+040	Bornholms amt
+042	Fyns amt
+050	Sínderjylland amt (Sydjyllands)
+055	Ribe amt
+060	Vejle amt
+065	Ringkøbing amt (Ringkoebing)
+070	Århus amt (Aarhus)
+076	Viborg amt
+080	Nordjyllands amt
+101	Copenhagen City
+147	Frederiksberg
+ 
+
+ 
+
+Enumeration for Country Code 224 (Finland)
+Code	Primary Administrative Subdivision
+Turku-Pori (Turun ja Porin lääni)
+100	Somero
+102	Alastaro
+103	Askainen
+104	Aura
+105	Dragsfjärd
+106	Eura
+107	Eurajoki
+108	Halikko
+109	Harjavalta
+110	Honkajoki
+111	Houtskari
+112	Huittinen
+115	Iniö
+116	Jämijärvi
+117	Kaarina
+119	Kankaanpää
+120	Karinainen
+122	Karvia
+123	Äetsä
+124	Kemiö
+126	Kiikala
+128	Kiikoinen
+129	Kisko
+130	Kiukainen
+131	Kodisjoki
+132	Kokemäki
+133	Korppoo
+134	Koski tl
+135	Kullaa
+136	Kustavi
+137	Kuusjoki
+138	Köyliö
+139	Laitila
+140	Lappi
+141	Lavia
+142	Lemu
+143	Lieto
+144	Loimaa
+145	Loimaan kunta
+147	Luvia
+148	Marttila
+149	Masku
+150	Mellilä
+151	Merikarvia
+152	Merimasku
+154	Mietoinen
+156	Muurla
+157	Mynämäki
+158	Naantali
+159	Nakkila
+160	Nauvo
+161	Noormarkku
+162	Nousiainen
+163	Oripää
+164	Paimio
+165	Parainen
+167	Perniö
+168	Pertteli
+169	Piikkiö
+170	Pomarkku
+171	Pori
+172	Punkalaidun
+173	Pyhäranta
+174	Pöytyä
+175	Raisio
+176	Rauma
+178	Rusko
+179	Rymättylä
+180	Salo
+181	Sauvo
+182	Siikainen
+183	Suodenniemi
+184	Suomusjärvi
+185	Säkylä
+186	Särkisalo
+187	Taivassalo
+188	Tarvasjoki
+189	Turku
+190	Ulvila
+191	Uusikaupunki
+192	Vahto
+193	Vammala
+194	Vampula
+195	Vehmaa
+196	Velkua
+198	Västanfjärd
+199	Yläne
+Uudenmaa (Uudenmaan lääni)
+201	Artjärvi
+202	Askola
+204	Espoo
+205	Hanko
+206	Helsinki
+207	Hyvinkää
+208	Inkoo
+209	Järvenpää
+210	Karjaa
+211	Karjalohja
+212	Karkkila
+213	Kauniainen
+214	Kerava
+215	Kirkkonummi
+216	Lapinjärvi
+217	Liljendal
+218	Lohjan kaupunki
+220	Loviisa
+221	Myrskylä
+222	Mäntsälä
+223	Nummi-Pusula
+224	Nurmijärvi
+225	Orimattila
+226	Pernaja
+227	Pohja
+228	Pornainen
+229	Porvoo
+231	Pukkila
+233	Ruotsinpyhtää
+234	Sammatti
+235	Sipoo
+236	Siuntio
+238	Tammisaari
+241	Tuusula
+242	Vantaa
+243	Vihti
+Haeme (Hämeen lääni)
+301	Asikkala
+303	Forssa
+304	Hattula
+305	Hauho
+306	Hausjärvi
+307	Hollola
+308	Humppila
+309	Hämeenlinna
+310	Janakkala
+311	Jokioinen
+312	Juupajoki
+313	Kalvola
+314	Kangasala
+315	Hämeenkoski
+316	Kuhmalahti
+318	Kuru
+319	Kylmäkoski
+320	Kärkölä
+321	Lahti
+322	Lammi
+323	Lempäälä
+324	Loppi
+325	Luopioinen
+326	Längelmäki
+327	Mänttä
+328	Nastola
+329	Nokia
+330	Orivesi
+331	Padasjoki
+332	Pirkkala
+333	Pälkäne
+334	Renko
+335	Riihimäki
+336	Ruovesi
+337	Sahalahti
+340	Tammela
+341	Tampere
+342	Toijala
+344	Tuulos
+345	Urjala
+346	Valkeakoski
+347	Vesilahti
+348	Viiala
+349	Vilppula
+350	Virrat
+351	Ylöjärvi
+352	Ypäjä
+353	Hämeenkyrö
+354	Ikaalinen
+355	Kihniö
+356	Mouhijärvi
+357	Parkano
+358	Viljakkala
+Mikkeli (Mikkelin lääni)
+402	Enonkoski
+403	Hartola
+404	Haukivuori
+405	Heinola
+407	Heinävesi
+408	Hirvensalmi
+409	Joroinen
+410	Juva
+411	Jäppilä
+412	Kangaslampi
+413	Kangasniemi
+414	Kerimäki
+415	Mikkeli
+417	Mäntyharju
+418	Pertunmaa
+419	Pieksämäki
+420	Pieksänmaa
+421	Punkaharju
+422	Puumala
+423	Rantasalmi
+424	Ristiina
+425	Savonlinna
+426	Savonranta
+427	Sulkava
+428	Sysmä
+Kymi (Kymen lääni)
+502	Elimäki
+503	Hamina
+504	Iitti
+505	Imatra
+506	Jaala
+507	Joutseno
+509	Kotka
+510	Kouvola
+511	Kuusankoski
+513	Lappeenranta
+514	Lemi
+515	Luumäki
+516	Miehikkälä
+518	Parikkala
+519	Pyhtää
+520	Rautjärvi
+521	Ruokolahti
+522	Saari
+523	Savitaipale
+525	Suomenniemi
+526	Taipalsaari
+527	Uukuniemi
+528	Valkeala
+530	Virolahti
+531	Ylämaa
+532	Anjalankoski
+Keski-Suomi (Keski-Suomen lääni), Vaasa (Vaasan lääni)
+601	Alahärmä
+602	Alajärvi
+603	Alavus
+604	Evijärvi
+605	Halsua
+606	Hankasalmi
+607	Himanka
+608	Ilmajoki
+609	Isojoki
+610	Isokyrö
+611	Jalasjärvi
+612	Joutsa
+613	Jurva
+614	Jyväskylä
+615	Jyväskylän mlk
+616	Jämsä
+617	Jämsänkoski
+619	Kannonkoski
+620	Kannus
+621	Karijoki
+622	Karstula
+623	Kaskinen
+624	Kauhajoki
+625	Kauhava
+626	Kaustinen
+627	Keuruu
+628	Kinnula
+629	Kivijärvi
+630	Kokkola
+632	Konnevesi
+633	Korpilahti
+634	Korsnäs
+635	Kortesjärvi
+636	Kristiinankaupunki
+637	Kruunupyy
+638	Kuhmoinen
+639	Kuortane
+640	Kurikka
+641	Kyyjärvi
+642	Kälviä
+643	Laihia
+644	Lappajärvi
+645	Lapua
+646	Laukaa
+647	Lehtimäki
+648	Leivonmäki
+649	Lestijärvi
+650	Lohtaja
+651	Luhanka
+652	Luoto
+653	Maalahti
+654	Maksamaa
+655	Multia
+656	Mustasaari
+657	Muurame
+658	Nurmo
+659	Närpiö
+660	Oravainen
+661	Perho
+662	Peräseinäjoki
+663	Petäjävesi
+664	Pietarsaari
+665	Pedersöre
+666	Pihtipudas
+668	Pylkönmäki
+669	Saarijärvi
+670	Seinäjoki
+671	Soini
+672	Sumiainen
+673	Suolahti
+675	Teuva
+676	Toholampi
+677	Toivakka
+678	Töysä
+679	Ullava
+680	Uurainen
+681	Uusikaarlepyy
+682	Vaasa
+683	Veteli
+684	Viitasaari
+685	Vimpeli
+686	Vähäkyrö
+687	Vöyri
+688	Ylihärmä
+689	Ylistaro
+690	Ähtäri
+692	Äänekoski
+Kuopio (Kuopion lääni), Pohjois-Karjala (Pohjois-Karjalan lääni)
+701	Eno
+702	Iisalmi
+703	Ilomantsi
+704	Joensuu
+705	Juankoski
+706	Juuka
+707	Kaavi
+708	Karttula
+709	Keitele
+710	Kesälahti
+711	Kiihtelysvaara
+712	Kitee
+713	Kiuruvesi
+714	Kontiolahti
+715	Kuopio
+716	Lapinlahti
+717	Leppävirta
+718	Lieksa
+719	Liperi
+720	Maaninka
+721	Nilsiä
+722	Nurmes
+723	Outokumpu
+724	Pielavesi
+725	Polvijärvi
+726	Pyhäselkä
+727	Rautalampi
+728	Rautavaara
+729	Rääkkylä
+730	Siilinjärvi
+731	Sonkajärvi
+732	Suonenjoki
+733	Tervo
+734	Tohmajärvi
+735	Tuupovaara
+736	Tuusniemi
+737	Valtimo
+738	Varkaus
+739	Varpaisjärvi
+740	Vehmersalmi
+741	Vesanto
+742	Vieremä
+743	Värtsilä
+Oulu (Oulun lääni)
+801	Alavieska
+802	Haapajärvi
+803	Haapavesi
+804	Hailuoto
+805	Haukipudas
+806	Hyrynsalmi
+807	Ii
+808	Kajaani
+810	Kalajoki
+811	Kempele
+812	Kestilä
+813	Kiiminki
+814	Kuhmo
+815	Kuivaniemi
+816	Kuusamo
+817	Kärsämäki
+818	Liminka
+819	Lumijoki
+820	Merijärvi
+821	Muhos
+822	Nivala
+823	Oulainen
+824	Oulu
+825	Oulunsalo
+826	Paltamo
+827	Pattijoki
+828	Piippola
+829	Pudasjärvi
+830	Pulkkila
+831	Puolanka
+832	Pyhäjoki
+833	Pyhäjärvi
+834	Pyhäntä
+835	Raahe
+836	Rantsila
+837	Reisjärvi
+838	Ristijärvi
+839	Ruukki
+840	Sievi
+841	Siikajoki
+842	Sotkamo
+843	Suomussalmi
+844	Taivalkoski
+846	Tyrnävä
+847	Utajärvi
+848	Vaala
+849	Vihanti
+850	Vuolijoki
+851	Yli-Ii
+852	Ylikiiminki
+853	Ylivieska
+Lappi (Lapin lääni)
+901	Enontekiö
+902	Inari
+903	Kemi
+904	Keminmaa
+905	Kemijärvi
+907	Kittilä
+908	Kolari
+909	Muonio
+910	Pelkosenniemi
+911	Pello
+912	Posio
+913	Ranua
+914	Rovaniemi
+915	Rovaniemen mlk
+916	Salla
+917	Savukoski
+918	Simo
+919	Sodankylä
+920	Tervola
+921	Tornio
+922	Utsjoki
+923	Ylitornio
+ 
+
+ 
+
+Enumeration for Country Code 225 (Sardinia)
+Code	Primary Administrative Subdivision
+Sardinia (Sardegna)
+CA	Cagliari
+CI	Carbonia-Iglesias
+MD	Medio Campidano (import-only)
+NU	Nuoro
+OG	Ogliastra
+OR	Oristano
+OT	Olbia-Tempio
+SS	Sassari
+VS	MedioCampidano
+ 
+
+ 
+
+Enumeration for Country Code 227 (France)
+Code	Primary Administrative Subdivision
+01	Ain
+02	Aisne
+03	Allier
+04	Alpes-de-Haute-Provence
+05	Hautes-Alpes
+06	Alpes-Maritimes
+07	Ardèche
+08	Ardennes
+09	Ariège
+10	Aube
+11	Aude
+12	Aveyron
+13	Bouches-du-Rhone
+14	Calvados
+15	Cantal
+16	Charente
+17	Charente-Maritime
+18	Cher
+19	Corrèze
+21	Cote-d'Or
+22	Cotes-d'Armor
+23	Creuse
+24	Dordogne
+25	Doubs
+26	Drôme
+27	Eure
+28	Eure-et-Loir
+29	Finistère
+30	Gard
+31	Haute-Garonne
+32	Gere
+33	Gironde
+34	Hérault
+35	Ille-et-Vilaine
+36	Indre
+37	Indre-et-Loire
+38	Isère
+39	Jura
+40	Landes
+41	Loir-et-Cher
+42	Loire
+43	Haute-Loire
+44	Loire-Atlantique
+45	Loiret
+46	Lot
+47	Lot-et-Garonne
+48	Lozère
+49	Maine-et-Loire
+50	Manche
+51	Marne
+52	Haute-Marne
+53	Mayenne
+54	Meurthe-et-Moselle
+55	Meuse
+56	Morbihan
+57	Moselle
+58	Niëvre
+59	Nord
+60	Oise
+61	Orne
+62	Pas-de-Calais
+63	Puy-de-Dôme
+64	Pyrénées-Atlantiques
+65	Hautea-Pyrénées
+66	Pyrénées-Orientales
+67	Bas-Rhin
+68	Haut-Rhin
+69	Rhône
+70	Haute-Saône
+71	Saône-et-Loire
+72	Sarthe
+73	Savoie
+74	Haute-Savoie
+75	Paris
+76	Seine-Maritime
+77	Seine-et-Marne
+78	Yvelines
+79	Deux-Sèvres
+80	Somme
+81	Tarn
+82	Tarn-et-Garonne
+83	Var
+84	Vaucluse
+85	Vendée
+86	Vienne
+87	Haute-Vienne
+88	Vosges
+89	Yonne
+90	Territoire de Belfort
+91	Essonne
+92	Hauts-de-Selne
+93	Seine-Saint-Denis
+94	Val-de-Marne
+95	Val-d'Oise
+ 
+
+ 
+
+Enumeration for Country Code 230 (Fed. Rep. Of Germany)
+Code	Primary Administrative Subdivision
+BB	Brandenburg
+BE	Berlin
+BW	Baden-Württemberg
+BY	Freistaat Bayern
+HB	Freie Hansestadt Bremen
+HE	Hessen
+HH	Freie und Hansestadt Hamburg
+MV	Mecklenburg-Vorpommern
+NI	Niedersachsen
+NW	Nordrhein-Westfalen
+RP	Rheinland-Pfalz
+SL	Saarland
+SH	Schleswig-Holstein
+SN	Freistaat Sachsen
+ST	Sachsen-Anhalt
+TH	Freistaat Thüringen
+ 
+
+ 
+
+Enumeration for Country Code 239 (Hungary)
+Code	Primary Administrative Subdivision
+GY	Gyõr (Gyõr-Moson-Sopron)
+VA	Vas
+ZA	Zala
+KO	Komárom (Komárom-Esztergom)
+VE	Veszprém
+BA	Baranya
+SO	Somogy
+TO	Tolna
+FE	Fejér
+BP	Budapest
+HE	Heves
+NG	Nógrád
+PE	Pest
+SZ	Szolnok (Jász-Nagykun-Szolnok)
+BE	Békés
+BN	Bács-Kiskun
+CS	Csongrád
+BO	Borsod (Borsod-Abaúj-Zemplén)
+HB	Hajdú-Bihar
+SA	Szabolcs (Szabolcs-Szatmár-Bereg)
+ 
+
+ 
+
+Enumeration for Country Code 245 (Ireland)
+Code	Primary Administrative Subdivision
+CW	Carlow (Ceatharlach)
+CN	Cavan (An Cabhán)
+CE	Clare (An Clár)
+C	Cork (Corcaigh)
+DL	Donegal (Dún na nGall)
+D	Dublin (Baile Áth Cliath)
+G	Galway (Gaillimh)
+KY	Kerry (Ciarraí)
+KE	Kildare (Cill Dara)
+KK	Kilkenny (Cill Chainnigh)
+LS	Laois (Laois)
+LM	Leitrim (Liatroim)
+LK	Limerick (Luimneach)
+LD	Longford (An Longfort)
+LH	Louth (Lú)
+MO	Mayo (Maigh Eo)
+MH	Meath (An Mhí)
+MN	Monaghan (Muineachán)
+OY	Offaly (Uíbh Fhailí)
+RN	Roscommon (Ros Comáin)
+SO	Sligo (Sligeach)
+TA	Tipperary (Tiobraid Árann)
+WD	Waterford (Port Láirge)
+WH	Westmeath (An Iarmhí)
+WX	Wexford (Loch Garman)
+WW	Wicklow (Cill Mhantáin)
+ 
+
+ 
+
+Enumeration for Country Code 248 (Italy)
+Code	Primary Administrative Subdivision
+Liguria
+GE	Genova
+IM	Imperia
+SP	La Spezia
+SV	Savona
+Piedmont (Piemonte)
+AL	Alessandria
+AT	Asti
+BI	Biella
+CN	Cuneo
+NO	Novara
+TO	Torino
+VB	Verbano Cusio Ossola
+VC	Vercelli
+Aosta Valley (Valle D'Aosta)
+AO	Aosta
+Lombardy (Lombardia)
+BG	Bergamo
+BS	Brescia
+CO	Como
+CR	Cremona
+LC	Lecco
+LO	Lodi
+MB	Monza e Brianza
+MN	Mantova
+MI	Milano
+PV	Pavia
+SO	Sondrio
+VA	Varese
+Veneto
+BL	Belluno
+PD	Padova
+RO	Rovigo
+TV	Treviso
+VE	Venezia
+VR	Verona
+VI	Vicenza
+Trentino-South Tyrol (Trentino-Alto Adige)
+BZ	Bolzano
+TN	Trento
+Friuli-Venezia Giulia
+GO	Gorizia
+PN	Pordenone
+TS	Trieste
+UD	Udine
+Emilia Romagna
+BO	Bologna
+FE	Ferrara
+FO	Forlì (import-only)
+FC	Forlì-Cesena
+MO	Modena
+PR	Parma
+PC	Piacenza
+RA	Ravenna
+RE	Reggio Emilia
+RN	Rimini
+Tuscany (Toscana)
+AR	Arezzo
+FI	Firenze
+GR	Grosseto
+LI	Livorno
+LU	Lucca
+MS	Massa Carrara
+PT	Pistoia
+PI	Pisa
+PO	Prato
+SI	Siena
+Abruzzo
+CH	Chieti
+AQ	L'Aquila
+PE	Pescara
+TE	Teramo
+Marche
+AN	Ancona
+AP	Ascoli Piceno
+FM	Fermo
+MC	Macerata
+PS	Pesaro e Urbino (import-only)
+PU	Pesaro e Urbino
+Basilicata
+MT	Matera
+PZ	Potenza
+Puglia
+BA	Bari
+BT	Barletta-Andria-Trani
+BR	Brindisi
+FG	Foggia
+LE	Lecce
+TA	Taranto
+Calabria
+CZ	Catanzaro
+CS	Cosenza
+KR	Crotone
+RC	Reggio Calabria
+VV	Vibo Valentia
+Campania
+AV	Avellino
+BN	Benevento
+CE	Caserta
+NA	Napoli
+SA	Salerno
+Molise
+IS	Isernia
+CB	Campobasso
+Latium (Lazio)
+FR	Frosinone
+LT	Latina
+RI	Rieti
+RM	Roma
+VT	Viterbo
+Umbria
+PG	Perugia
+TR	Terni
+Sicliy (Sicilia)
+AG	Agrigento
+CL	Caltanissetta
+CT	Catania
+EN	Enna
+ME	Messina
+PA	Palermo
+RG	Ragusa
+SR	Siracusa
+TP	Trapani
+ 
+
+ 
+
+Enumeration for Country Code 256 (Madeira Is.)
+Code	Primary Administrative Subdivision
+MD	Madeira
+ 
+
+ 
+
+Enumeration for Country Code 263 (Netherlands)
+Code	Primary Administrative Subdivision
+DR	Drenthe
+FR	Friesland
+GR	Groningen
+NB	Noord-Brabant
+OV	Overijssel
+ZH	Zuid-Holland
+FL	Flevoland
+GD	Gelderland
+LB	Limburg
+NH	Noord-Holland
+UT	Utrecht
+ZL	Zeeland
+ 
+
+ 
+
+Enumeration for Country Code 269 (Poland)
+Code	Primary Administrative Subdivision
+Z	Zachodnio-Pomorskie
+F	Pomorskie
+P	Kujawsko-Pomorskie
+B	Lubuskie
+W	Wielkopolskie
+J	Warminsko-Mazurskie
+O	Podlaskie
+R	Mazowieckie
+D	Dolnoslaskie
+U	Opolskie
+C	Lodzkie
+S	Swietokrzyskie
+K	Podkarpackie
+L	Lubelskie
+G	Slaskie
+M	Malopolskie
+ 
+
+ 
+
+Enumeration for Country Code 272 (Portugal)
+Code	Primary Administrative Subdivision
+AV	Aveiro
+BJ	Beja
+BR	Braga
+BG	Bragança
+CB	Castelo Branco
+CO	Coimbra
+EV	Evora
+FR	Faro
+GD	Guarda
+LR	Leiria
+LX	Lisboa
+PG	Portalegre
+PT	Porto
+SR	Santarem
+ST	Setubal
+VC	Viana do Castelo
+VR	Vila Real
+VS	Viseu
+ 
+
+ 
+
+Enumeration for Country Code 275 (Romania)
+Code	Primary Administrative Subdivision
+AR	Arad
+CS	Cara'-Severin
+HD	Hunedoara
+TM	Timiş (Timis)
+BU	Bucureşti (Bucure'ti)
+IF	Ilfov
+BR	Brăila (Braila)
+CT	Conatarta
+GL	Galati
+TL	Tulcea
+VN	Vrancea
+AB	Alba
+BH	Bihor
+BN	Bistrita-Nasaud
+CJ	Cluj
+MM	Maramureş (Maramures)
+SJ	Sălaj (Salaj)
+SM	Satu Mare
+BV	Braşov (Bra'ov)
+CV	Covasna
+HR	Harghita
+MS	Mureş (Mures)
+SB	Sibiu
+AG	Arge'
+DJ	Dolj
+GJ	Gorj
+MH	Mehedinţi (Mehedinti)
+OT	Olt
+VL	Vâlcea
+BC	Bacau
+BT	Boto'ani
+IS	Iaşi (Iasi)
+NT	Neamţ (Neamt)
+SV	Suceava
+VS	Vaslui
+BZ	Buzău (Buzau)
+CL	Călăraşi (Calarasi)
+DB	Dâmboviţa (Dambovita)
+GR	Giurqiu
+IL	Ialomita
+PH	Prahova
+TR	Teleorman
+ 
+
+ 
+
+Enumeration for Country Code 281 (Spain)
+Code	Primary Administrative Subdivision
+AV	Avila
+BU	Burgos
+C	A Coruña
+LE	Leon
+LO	La Rioja
+LU	Lugo
+O	Asturias
+OU	Ourense
+P	Palencia
+PO	Pontevedra
+S	Cantabria
+SA	Salamanca
+SG	Segovia
+SO	Soria
+VA	Valladolid
+ZA	Zamora
+BI	Vizcaya
+HU	Huesca
+NA	Navarra
+SS	Guipuzcoa
+TE	Teruel
+VI	Alava
+Z	Zaragoza
+B	Barcelona
+GI	Girona
+L	Lleida
+T	Tarragona
+BA	Badajoz
+CC	Caceres
+CR	Ciudad Real
+CU	Cuenca
+GU	Guadalajara
+M	Madrid
+TO	Toledo
+A	Alicante
+AB	Albacete
+CS	Castellon
+MU	Murcia
+V	Valencia
+AL	Almeria
+CA	Cadiz
+CO	Cordoba
+GR	Granada
+H	Huelva
+J	Jaen
+MA	Malaga
+SE	Sevilla
+ 
+
+ 
+
+Enumeration for Country Code 284 (Sweden)
+Code	Primary Administrative Subdivision
+AB	Stockholm län
+I	Gotlands län
+BD	Norrbottens län
+AC	Västerbottens län
+X	Gävleborgs län
+Z	Jämtlands län
+Y	Västernorrlands län
+W	Dalarna län
+S	Värmlands län
+O	Västra Götalands län
+T	Örebro län
+E	Östergötlands län
+D	Södermanlands län
+C	Uppsala län
+U	Västmanlands län
+N	Hallands län
+K	Blekinge län
+F	Jönköpings län
+H	Kalmar län
+G	Kronobergs län
+M	Skåne län
+ 
+
+ 
+
+Enumeration for Country Code 287 (Switzerland)
+Code	Primary Administrative Subdivision
+AG	Aargau
+AR	Appenzell Ausserrhoden
+AI	Appenzell Innerrhoden
+BL	Basel Landschaft
+BS	Basel Stadt
+BE	Bern
+FR	Freiburg / Fribourg
+GE	Genf / Genève
+GL	Glarus
+GR	Graubuenden / Grisons
+JU	Jura
+LU	Luzern
+NE	Neuenburg / Neuchâtel
+NW	Nidwalden
+OW	Obwalden
+SH	Schaffhausen
+SZ	Schwyz
+SO	Solothurn
+SG	St. Gallen
+TI	Tessin / Ticino
+TG	Thurgau
+UR	Uri
+VD	Waadt / Vaud
+VS	Wallis / Valais
+ZH	Zuerich
+ZG	Zug
+ 
+
+ 
+
+Enumeration for Country Code 288 (Ukraine)
+Code	Primary Administrative Subdivision
+SU	Sums'ka Oblast'
+TE	Ternopil's'ka Oblast'
+CH	Cherkas'ka Oblast'
+ZA	Zakarpats'ka Oblast'
+DN	Dnipropetrovs'ka Oblast'
+OD	Odes'ka Oblast'
+HE	Khersons'ka Oblast'
+PO	Poltavs'ka Oblast'
+DO	Donets'ka Oblast'
+RI	Rivnens'ka Oblast'
+HA	Kharkivs'ka Oblast'
+LU	Luhans'ka Oblast'
+VI	Vinnyts'ka Oblast'
+VO	Volyos'ka Oblast'
+ZP	Zaporiz'ka Oblast'
+CR	Chernihivs'ka Oblast'
+IF	Ivano-Frankivs'ka Oblast'
+HM	Khmel'nyts'ka Oblast'
+KV	Kyïv
+KO	Kyivs'ka Oblast'
+KI	Kirovohrads'ka Oblast'
+LV	L'vivs'ka Oblast'
+ZH	Zhytomyrs'ka Oblast'
+CN	Chernivets'ka Oblast'
+NI	Mykolaivs'ka Oblast'
+KR	Respublika Krym
+SL	Sevastopol'
+ 
+
+ 
+
+Enumeration for Country Code 291 (United States)
+Code	Primary Administrative Subdivision	CQ Zone	ITU Zone
+CT	Connecticut	05	08
+ME	Maine	05	08
+MA	Massachusetts	05	08
+NH	New Hampshire	05	08
+RI	Rhode Island	05	08
+VT	Vermont	05	08
+NJ	New Jersey	05	08
+NY	New York	05	08
+DE	Delaware	05	08
+DC	District of Columbia	05	08
+MD	Maryland	05	08
+PA	Pennsylvania	05	08
+AL	Alabama	04	08
+FL	Florida	05	08
+GA	Georgia	05	08
+KY	Kentucky	04	08
+NC	North Carolina	04	08
+SC	South Carolina	05	08
+TN	Tennessee	04	07/08
+VA	Virginia	05	08
+AR	Arkansas	04	07/08
+LA	Louisiana	04	07/08
+MS	Mississippi	04	07/08
+NM	New Mexico	04	07
+OK	Oklahoma	04	07
+TX	Texas	04	07
+CA	California	03	06
+AZ	Arizona	03	06/07
+ID	Idaho	03	06
+MT	Montana	04	06/07
+NV	Nevada	03	06
+OR	Oregon	03	06
+UT	Utah	03	06/07
+WA	Washington	03	06
+WY	Wyoming	04	07
+MI	Michigan	04	07/08
+OH	Ohio	04	08
+WV	West Virginia	05	08
+IL	Illinois	04	07/08
+IN	Indiana	04	08
+WI	Wisconsin	04	07/08
+CO	Colorado	04	07
+IA	Iowa	04	07
+KS	Kansas	04	07
+MN	Minnesota	04	07/08
+MO	Missouri	04	07/08
+NE	Nebraska	04	07
+ND	North Dakota	04	07
+SD	South Dakota	04	07
+ 
+
+ 
+
+Enumeration for Country Code 318 (China)
+Code	Primary Administrative Subdivision
+AH	Anhui
+BJ	Beijing
+CQ	Chongqing
+FJ	Fujian
+GD	Guangdong
+GS	Gansu
+GX	Guangxi Zhuangzu
+GZ	Guizhou
+HA	Henan
+HB	Hubei
+HE	Hebei
+HI	Hainan
+HL	Heilongjiang
+HN	Hunan
+JL	Jilin
+JS	Jiangsu
+JX	Jiangxi
+LN	Liaoning
+NM	Nei Mongol
+NX	Ningxia Huizu
+QH	Qinghai
+SC	Sichuan
+SD	Shandong
+SH	Shanghai
+SN	Shaanxi
+SX	Shanxi
+TJ	Tianjin
+XJ	Xinjiang Uygur
+XZ	Xizang
+YN	Yunnan
+ZJ	Zhejiang
+ 
+
+ 
+
+Enumeration for Country Code 339 (Japan)
+Code	Primary Administrative Subdivision
+Kanto
+12	Chiba
+16	Gunma
+14	Ibaraki
+11	Kanagawa
+13	Saitama
+15	Tochigi
+10	Tokyo
+17	Yamanashi
+Tokai
+20	Aichi
+19	Gifu
+21	Mie
+18	Shizuoka
+Kansai
+27	Hyogo
+22	Kyoto
+24	Nara
+25	Osaka
+23	Shiga
+26	Wakayama
+Chugoku
+35	Hiroshima
+31	Okayama
+32	Shimane
+34	Tottori
+33	Yamaguchi
+Shikoku
+38	Ehime
+36	Kagawa
+39	Kochi
+37	Tokushima
+Kyushu
+40	Fukuoka
+46	Kagoshima
+43	Kumamoto
+45	Miyazaki
+42	Nagasaki
+44	Oita
+47	Okinawa
+41	Saga
+Tohoku
+04	Akita
+02	Aomori
+07	Fukushima
+03	Iwate
+06	Miyagi
+05	Yamagata
+Hokkaido
+01	Hokkaido
+Hokuriku
+29	Fukui
+30	Ishikawa
+28	Toyama
+Shin'estu
+09	Nagano
+08	Niigata
+ 
+
+ 
+
+Enumeration for Country Code 375 (Philippines)
+Code	Primary Administrative Subdivision
+Southern Tagalog
+AUR	Aurora
+BTG	Batangas
+CAV	Cavite
+LAG	Laguna
+MAD	Marinduque
+MDC	Mindoro Occidental
+MDR	Mindoro Oriental
+PLW	Palawan
+QUE	Quezon
+RIZ	Rizal
+ROM	Romblon
+Ilocos
+ILN	Ilocos Norte
+ILS	Ilocos Sur
+LUN	La Union
+PAN	Pangasinan
+Cagayan Valley
+BTN	Batanes
+CAG	Cagayan
+ISA	Isabela
+NUV	Nueva Vizcaya
+QUI	Quirino
+Cordillera Administrative Region
+ABR	Abra
+APA	Apayao
+BEN	Benguet
+IFU	Ifugao
+KAL	Kalinga-Apayso
+MOU	Mountain Province
+Central Luzon
+BAN	Batasn
+BUL	Bulacan
+NUE	Nueva Ecija
+PAM	Pampanga
+TAR	Tarlac
+ZMB	Zambales
+Bicol
+ALB	Albay
+CAN	Camarines Norte
+CAS	Camarines Sur
+CAT	Catanduanes
+MAS	Masbate
+SOR	Sorsogon
+Eastern Visayas
+BIL	Biliran
+EAS	Eastern Samar
+LEY	Leyte
+NSA	Northern Samar
+SLE	Southern Leyte
+WSA	Western Samar
+Western Visayas
+AKL	Aklan
+ANT	Antique
+CAP	Capiz
+GUI	Guimaras
+ILI	Iloilo
+NEC	Negroe Occidental
+Central Visayas
+BOH	Bohol
+CEB	Cebu
+NER	Negros Oriental
+SIG	Siquijor
+Zamboanga Peninsular (Western Mindanao)
+ZAN	Zamboanga del Norte
+ZAS	Zamboanga del Sur
+ZSI	Zamboanga Sibugay
+SOCCSKSARGEN (Central Mindanao)
+NCO	North Cotabato
+SUK	Sultan Kudarat
+SAR	Sarangani
+SCO	South Cotabato
+Autonomous Region in Muslim Mindanao
+BAS	Basilan
+LAS	Lanao del Sur
+MAG	Maguindanao
+SLU	Sulu
+TAW	Tawi-Tawi
+Northern Mindanao
+LAN	Lanao del Norte
+BUK	Bukidnon
+CAM	Camiguin
+MSC	Misamis Occidental
+MSR	Misamis Oriental
+Davao (Southern Mindanao)
+COM	Compostela Valley
+DAV	Davao del Norte
+DAS	Davao del Sur
+DAO	Davao Oriental
+CARAGA
+AGN	Agusan del Norte
+AGS	Agusan del Sur
+SUN	Surigao del Norte
+SUR	Surigao del Sur
+ 
+
+ 
+
+Enumeration for Country Code 386 (Taiwan)
+Code	Primary Administrative Subdivision
+CHA	Changhua (county)
+CYI	Chiayi (city)
+CYQ	Chiayi (county)
+HSZ	Hsinchu (city)
+HSQ	Hsinchu (county)
+HUA	Hualien (county)
+KHH	Kaohsiung (special municipality)
+KEE	Keelung (city)
+KIN	Kinmen (county)
+LIE	Lienchiang (county)
+MIA	Miaoli (county)
+NAN	Nantou (county)
+NWT	New Taipei (special municipality)
+PEN	Penghu (county)
+PIF	Pingtung (county)
+TXG	Taichung (special municipality)
+TNN	Tainan (special municipality)
+TPE	Taipei (special municipality)
+TTT	Taitung (county)
+TAO	Taoyuan (special municipality)
+ILA	Yilan (county)
+YUN	Yunlin (county)
+ 
+
+ 
+
+Enumeration for Country Code 497 (Croatia)
+Code	Primary Administrative Subdivision
+01	Zagrebačka županija
+02	Krapinsko-Zagorska županija
+03	Sisačko-Moslavačka županija
+04	Karlovačka županija
+05	Varaždinska županija
+06	Koprivničko-Križevačka županija
+07	Bjelovarsko-Bilogorska županija
+08	Primorsko-Goranska županija
+09	Ličko-Senjska županija
+10	Virovitičko-Podravska županija
+11	Požeško-Slavonska županija
+12	Brodsko-Posavska županija
+13	Zadarska županija
+14	Osječko-Baranjska županija
+15	Šibensko-Kninska županija
+16	Vukovarsko-Srijemska županija
+17	Splitsko-Dalmatinska županija
+18	Istarska županija
+19	Dubrovačko-Neretvanska županija
+20	Međimurska županija
+21	Grad Zagreb
+ 
+
+ 
+
+Enumeration for Country Code 503 (Czech Republic)
+Code	Primary Administrative Subdivision
+Prague (Praha)
+APA	Praha 1
+APB	Praha 2
+APC	Praha 3
+APD	Praha 4
+APE	Praha 5
+APF	Praha 6
+APG	Praha 7
+APH	Praha 8
+API	Praha 9
+APJ	Praha 10
+Central Bohemia (Středoceský kraj)
+BBN	Benesov
+BBE	Beroun
+BKD	Kladno
+BKO	Kolin
+BKH	Kutna Hora
+BME	Melnik
+BMB	Mlada Boleslav
+BNY	Nymburk
+BPZ	Praha zapad
+BPV	Praha vychod
+BPB	Pribram
+BRA	Rakovnik
+Southern Bohemia (Jihočeský kraj)
+CBU	Ceske Budejovice
+CCK	Cesky Krumlov
+CJH	Jindrichuv Hradec
+CPE	Pelhrimov
+CPI	Pisek
+CPR	Prachatice
+CST	Strakonice
+CTA	Tabor
+Western Bohemia (Západocesky kraj)
+DDO	Domazlice
+DCH	Cheb
+DKV	Karlovy Vary
+DKL	Klatovy
+DPM	Plzen mesto
+DPJ	Plzen jih
+DPS	Plzen sever
+DRO	Rokycany
+DSO	Sokolov
+DTA	Tachov
+Northern Bohemia (Severoceaky kraj)
+ECL	Ceska Lipa
+EDE	Decin
+ECH	Chomutov
+EJA	Jablonec n. Nisou
+ELI	Liberec
+ELT	Litomerice
+ELO	Louny
+EMO	Most
+ETE	Teplice
+EUL	Usti nad Labem
+Eastern Bohemia (Vychodocesky kraj)
+FHB	Havlickuv Brod
+FHK	Hradec Kralove
+FCR	Chrudim
+FJI	Jicin
+FNA	Nachod
+FPA	Pardubice
+FRK	Rychn n. Kneznou
+FSE	Semily
+FSV	Svitavy
+FTR	Trutnov
+FUO	Usti nad Orlici
+Southern Moravia (Jihomoravský kraj)
+GBL	Blansko
+GBM	Brno mesto
+GBV	Brno venkov
+GBR	Breclav
+GHO	Hodonin
+GJI	Jihlava
+GKR	Kromeriz
+GPR	Prostejov
+GTR	Trebic
+GUH	Uherske Hradiste
+GVY	Vyskov
+GZL	Zlin
+GZN	Znojmo
+GZS	Zdar nad Sazavou
+Northern Moravia (Soveromoravsky kraj)
+HBR	Bruntal
+HFM	Frydek-Mistek
+HJE	Jesenik
+HKA	Karvina
+HNJ	Novy Jicin
+HOL	Olomouc
+HOP	Opava
+HOS	Ostrava
+HPR	Prerov
+HSU	Sumperk
+HVS	Vsetin
+ 
+
+ 
+
+Enumeration for Country Code 504 (Slovak Republic)
+Code	Primary Administrative Subdivision
+Bratislava (Bratislavský kraj)
+BAA	Bratislava 1
+BAB	Bratislava 2
+BAC	Bratislava 3
+BAD	Bratislava 4
+BAE	Bratislava 5
+MAL	Malacky
+PEZ	Pezinok
+SEN	Senec
+Trnava (Trnavský kraj)
+DST	Dunajska Streda
+GAL	Galanta
+HLO	Hlohovec
+PIE	Piestany
+SEA	Senica
+SKA	Skalica
+TRN	Trnava
+Trencin (Trenčiansky kraj)
+BAN	Banovce n. Bebr.
+ILA	Ilava
+MYJ	Myjava
+NMV	Nove Mesto n. Vah
+PAR	Partizanske
+PBY	Povazska Bystrica
+PRI	Prievidza
+PUC	Puchov
+TNC	Trencin
+Nitra (Nitrianaky kraj)
+KOM	Komarno
+LVC	Levice
+NIT	Nitra
+NZA	Nove Zamky
+SAL	Sala
+TOP	Topolcany
+ZMO	Zlate Moravce
+Zilina (Žilinský kraj)
+BYT	Bytca
+CAD	Cadca
+DKU	Dolny Kubin
+KNM	Kysucke N. Mesto
+LMI	Liptovsky Mikulas
+MAR	Martin
+NAM	Namestovo
+RUZ	Ruzomberok
+TTE	Turcianske Teplice
+TVR	Tvrdosin
+ZIL	Zilina
+Banska Bystrica (Banskobystrický kraj)
+BBY	Banska Bystrica
+BST	Banska Stiavnica
+BRE	Brezno
+DET	Detva
+KRU	Krupina
+LUC	Lucenec
+POL	Poltar
+REV	Revuca
+RSO	Rimavska Sobota
+VKR	Velky Krtis
+ZAR	Zarnovica
+ZIH	Ziar nad Hronom
+ZVO	Zvolen
+Kosice (Košický kraj)
+GEL	Gelnica
+KEA	Kosice 1
+KEB	Kosice 2
+KEC	Kosice 3
+KED	Kosice 4
+KEO	Kosice-okolie
+MIC	Michalovce
+ROZ	Roznava
+SOB	Sobrance
+SNV	Spisska Nova Ves
+TRE	Trebisov
+Presov (Prešovský kraj)
+BAR	Bardejov
+HUM	Humenne
+KEZ	Kezmarok
+LEV	Levoca
+MED	Medzilaborce
+POP	Poprad
+PRE	Presov
+SAB	Sabinov
+SNI	Snina
+SLU	Stara Lubovna
+STR	Stropkov
+SVI	Svidnik
+VRT	Vranov nad Toplou
