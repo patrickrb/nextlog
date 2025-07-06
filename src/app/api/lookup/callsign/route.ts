@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const result = await lookupCallsign(callsign.trim(), user.qrz_username, decryptedPassword);
 
     return NextResponse.json(result);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to lookup callsign' }, { status: 500 });
   }
 }
