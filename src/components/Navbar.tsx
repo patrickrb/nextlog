@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import UserMenu from '@/components/UserMenu';
+import ThemeToggleButton from '@/components/ThemeToggleButton';
 
 interface NavbarProps {
   title?: string;
@@ -66,6 +67,7 @@ export default function Navbar({ title, breadcrumbs, actions }: NavbarProps) {
               </>
             )}
             
+            <ThemeToggleButton />
             {user && <UserMenu user={user} />}
           </div>
         </div>
