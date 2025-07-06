@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Loader2, User, Key, MapPin } from 'lucide-react';
+import { ArrowLeft, Loader2, User, Key, MapPin, Settings } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import ThemeToggle from '@/components/ThemeToggle';
 
 interface User {
   id: number;
@@ -275,6 +276,22 @@ export default function ProfilePage() {
                   </Button>
                 </div>
               </form>
+            </CardContent>
+          </Card>
+
+          {/* Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Settings className="h-5 w-5 mr-2" />
+                Preferences
+              </CardTitle>
+              <CardDescription>
+                Customize your NodeLog experience
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ThemeToggle />
             </CardContent>
           </Card>
         </div>

@@ -275,7 +275,7 @@ export default function StationsPage() {
                                 asChild
                                 title="Edit station"
                               >
-                                <Link href={`/dashboard/stations/${station.id}/edit`}>
+                                <Link href={`/stations/${station.id}/edit`}>
                                   <Edit className="h-4 w-4" />
                                 </Link>
                               </Button>

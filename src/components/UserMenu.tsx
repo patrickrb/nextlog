@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Settings, LogOut, User, Radio } from 'lucide-react';
+import { LogOut, User, Radio } from 'lucide-react';
 
 interface User {
   id: number;
@@ -80,10 +80,6 @@ export default function UserMenu({ user }: UserMenuProps) {
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem disabled>
-          <Settings className="mr-2 h-4 w-4" />
-          <span>Settings</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
