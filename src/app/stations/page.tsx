@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, Star, StarOff, Radio, BarChart3 } from 'lucide-react';
+import Navbar from '@/components/Navbar';
 
 interface Station {
   id: number;
@@ -133,27 +134,17 @@ export default function StationsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="text-xl font-semibold hover:text-primary">
-                NodeLog
-              </Link>
-              <span className="mx-2 text-muted-foreground">/</span>
-              <h1 className="text-xl font-semibold">Station Logbooks</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button asChild>
-                <Link href="/dashboard/stations/new">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Station
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar 
+        title="Station Logbooks"
+        actions={
+          <Button asChild>
+            <Link href="/stations/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Station
+            </Link>
+          </Button>
+        }
+      />
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0 space-y-6">

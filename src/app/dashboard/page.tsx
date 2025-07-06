@@ -3,13 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Loader2, Radio } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import DynamicContactMap from '@/components/DynamicContactMap';
-import UserMenu from '@/components/UserMenu';
+import Navbar from '@/components/Navbar';
+import { useUser } from '@/contexts/UserContext';
 
 interface Contact {
   id: number;
@@ -28,66 +28,37 @@ interface Contact {
   confirmed?: boolean;
 }
 
-interface User {
-  id: number;
-  email: string;
-  name: string;
-  callsign?: string;
-  grid_locator?: string;
-}
-
 export default function DashboardPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { user } = useUser();
   const router = useRouter();
 
-  const fetchData = useCallback(async () => {
-    const fetchContacts = async () => {
-      try {
-        const response = await fetch('/api/contacts');
-        if (response.status === 401) {
-          router.push('/login');
-          return;
-        }
-        
-        const data = await response.json();
-        if (response.ok) {
-          setContacts(data.contacts || []);
-        } else {
-          setError(data.error || 'Failed to fetch contacts');
-        }
-      } catch {
-        setError('Network error. Please try again.');
-      } finally {
-        setLoading(false);
+  const fetchContacts = useCallback(async () => {
+    try {
+      const response = await fetch('/api/contacts');
+      if (response.status === 401) {
+        router.push('/login');
+        return;
       }
-    };
-
-    const fetchUser = async () => {
-      try {
-        const response = await fetch('/api/user');
-        if (response.status === 401) {
-          router.push('/login');
-          return;
-        }
-        
-        const data = await response.json();
-        if (response.ok) {
-          setUser(data.user);
-        }
-      } catch {
-        // Silent error handling for user fetch
+      
+      const data = await response.json();
+      if (response.ok) {
+        setContacts(data.contacts || []);
+      } else {
+        setError(data.error || 'Failed to fetch contacts');
       }
-    };
-    
-    await Promise.all([fetchContacts(), fetchUser()]);
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   }, [router]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchContacts();
+  }, [fetchContacts]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -112,32 +83,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <h1 className="text-xl font-semibold">
-                NodeLog Dashboard
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" asChild>
-                <Link href="/dashboard/stations">
-                  <Radio className="h-4 w-4 mr-2" />
-                  Stations
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link href="/dashboard/new-contact">
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Contact
-                </Link>
-              </Button>
-              {user && <UserMenu user={user} />}
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar title="Dashboard" />
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0 space-y-6">

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ArrowLeft, Save, Radio } from 'lucide-react';
 import { Combobox } from '@/components/ui/combobox';
 import { CreateStationData } from '@/models/Station';
+import Navbar from '@/components/Navbar';
 
 interface DxccEntity {
   adif: number;
@@ -231,7 +232,7 @@ export default function NewStationPage() {
       const data = await response.json();
 
       if (response.ok) {
-        router.push('/dashboard/stations');
+        router.push('/stations');
       } else {
         setError(data.error || 'Failed to create station');
       }
@@ -244,31 +245,20 @@ export default function NewStationPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="text-xl font-semibold hover:text-primary">
-                NodeLog
-              </Link>
-              <span className="mx-2 text-muted-foreground">/</span>
-              <Link href="/dashboard/stations" className="hover:text-primary">
-                Stations
-              </Link>
-              <span className="mx-2 text-muted-foreground">/</span>
-              <h1 className="text-xl font-semibold">Add Station</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" asChild>
-                <Link href="/dashboard/stations">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Stations
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar 
+        breadcrumbs={[
+          { label: "Stations", href: "/stations" },
+          { label: "Add Station" }
+        ]}
+        actions={
+          <Button variant="ghost" asChild>
+            <Link href="/stations">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Stations
+            </Link>
+          </Button>
+        }
+      />
 
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
