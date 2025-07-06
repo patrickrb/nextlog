@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, LogOut, Loader2, Map, Settings } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import UserMenu from '@/components/UserMenu';
 
@@ -43,13 +43,13 @@ export default function DashboardPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     await Promise.all([fetchContacts(), fetchUser()]);
   };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const fetchContacts = async () => {
     try {
@@ -65,7 +65,7 @@ export default function DashboardPage() {
       } else {
         setError(data.error || 'Failed to fetch contacts');
       }
-    } catch (error) {
+    } catch {
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
@@ -84,7 +84,7 @@ export default function DashboardPage() {
       if (response.ok) {
         setUser(data.user);
       }
-    } catch (error) {
+    } catch {
       // Silent error handling for user fetch
     }
   };

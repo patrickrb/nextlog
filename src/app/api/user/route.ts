@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Return user info without password
-    const { password, ...userInfo } = user;
+    const { password: _, ...userInfo } = user;
     return NextResponse.json({ user: userInfo });
   } catch (error) {
     console.error('User fetch error:', error);

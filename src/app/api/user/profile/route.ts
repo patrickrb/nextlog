@@ -33,7 +33,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Return user info without password
-    const { password, ...userInfo } = updatedUser;
+    const { password: _, ...userInfo } = updatedUser;
     return NextResponse.json({ user: userInfo });
   } catch (error) {
     console.error('Profile update error:', error);

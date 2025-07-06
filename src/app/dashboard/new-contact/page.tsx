@@ -45,34 +45,6 @@ export default function NewContactPage() {
   const modes = ['SSB', 'CW', 'FM', 'AM', 'RTTY', 'PSK31', 'FT8', 'FT4', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'CONTESTIA'];
   const bands = ['160M', '80M', '60M', '40M', '30M', '20M', '17M', '15M', '12M', '10M', '6M', '2M', '1.25M', '70CM', '33CM', '23CM'];
 
-  // Function to convert grid locator to lat/lng
-  const gridToLatLng = (grid: string): [number, number] | null => {
-    if (!grid || grid.length < 4) return null;
-    
-    const grid_upper = grid.toUpperCase();
-    const lon_field = grid_upper.charCodeAt(0) - 65;
-    const lat_field = grid_upper.charCodeAt(1) - 65;
-    const lon_square = parseInt(grid_upper.charAt(2));
-    const lat_square = parseInt(grid_upper.charAt(3));
-    
-    let lon = -180 + (lon_field * 20) + (lon_square * 2);
-    let lat = -90 + (lat_field * 10) + (lat_square * 1);
-    
-    // Add subsquare precision if available
-    if (grid.length >= 6) {
-      const lon_subsquare = grid_upper.charCodeAt(4) - 65;
-      const lat_subsquare = grid_upper.charCodeAt(5) - 65;
-      lon += (lon_subsquare * 2/24) + (1/24);
-      lat += (lat_subsquare * 1/24) + (1/48);
-    } else {
-      // Default to center of square
-      lon += 1;
-      lat += 0.5;
-    }
-    
-    return [lat, lon];
-  };
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -124,7 +96,7 @@ export default function NewContactPage() {
           error: data.error || 'Lookup failed'
         });
       }
-    } catch (error) {
+    } catch {
       setLookupResult({
         found: false,
         error: 'Network error during lookup'
@@ -209,7 +181,7 @@ export default function NewContactPage() {
       } else {
         setError(data.error || 'Failed to create contact');
       }
-    } catch (error) {
+    } catch {
       setError('Network error. Please try again.');
     } finally {
       setIsLoading(false);
