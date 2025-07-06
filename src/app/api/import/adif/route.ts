@@ -2,11 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import pool from '@/lib/db';
 
-interface ADIFField {
-  name: string;
-  length: number;
-  value: string;
-}
 
 interface ADIFRecord {
   fields: { [key: string]: string };
@@ -170,7 +165,7 @@ async function importRecord(record: ADIFRecord, userId: number, stationId: numbe
       const second = parseInt(timeStr.substring(4, 6)) || 0;
       
       datetime = new Date(Date.UTC(year, month, day, hour, minute, second));
-    } catch (error) {
+    } catch {
       result.errors++;
       result.details?.push(`Invalid date/time format for ${callsign}: ${qsoDate} ${timeOn}`);
       return;

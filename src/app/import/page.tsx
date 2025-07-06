@@ -43,7 +43,7 @@ export default function ImportPage() {
 
   useEffect(() => {
     fetchStations();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-select default station when stations are loaded
   useEffect(() => {
