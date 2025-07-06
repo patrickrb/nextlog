@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Combobox } from '@/components/ui/combobox';
 import { ArrowLeft, Save, Radio, Loader2 } from 'lucide-react';
+import Navbar from '@/components/Navbar';
 
 interface Station {
   id: number;
@@ -374,31 +375,20 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="min-h-screen bg-background">
-      <nav className="border-b bg-card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="text-xl font-semibold hover:text-primary">
-                NodeLog
-              </Link>
-              <span className="mx-2 text-muted-foreground">/</span>
-              <Link href="/dashboard/stations" className="hover:text-primary">
-                Stations
-              </Link>
-              <span className="mx-2 text-muted-foreground">/</span>
-              <h1 className="text-xl font-semibold">Edit {station.station_name}</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" asChild>
-                <Link href="/dashboard/stations">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Stations
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar 
+        breadcrumbs={[
+          { label: "Stations", href: "/stations" },
+          { label: `Edit ${station.station_name}` }
+        ]}
+        actions={
+          <Button variant="ghost" asChild>
+            <Link href="/stations">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Stations
+            </Link>
+          </Button>
+        }
+      />
 
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
