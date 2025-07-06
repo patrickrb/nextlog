@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Plus, LogOut, Loader2, Map, Settings } from 'lucide-react';
 import DynamicContactMap from '@/components/DynamicContactMap';
+import UserMenu from '@/components/UserMenu';
 
 interface Contact {
   id: number;
@@ -89,14 +90,6 @@ export default function DashboardPage() {
   };
 
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      router.push('/');
-    } catch (error) {
-      // Silent error handling for logout
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -136,16 +129,7 @@ export default function DashboardPage() {
                   New Contact
                 </Link>
               </Button>
-              <Button variant="outline" asChild>
-                <Link href="/dashboard/profile">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Profile
-                </Link>
-              </Button>
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
+              {user && <UserMenu user={user} />}
             </div>
           </div>
         </div>
