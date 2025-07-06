@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -33,7 +32,7 @@ export default function UserMenu({ user }: UserMenuProps) {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       router.push('/');
-    } catch (error) {
+    } catch {
       // Silent error handling for logout
     }
   };
