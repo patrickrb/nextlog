@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -9,9 +9,18 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Loader2, Search, Check, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, Search, Check, AlertCircle, Radio } from 'lucide-react';
+
+interface Station {
+  id: number;
+  callsign: string;
+  station_name: string;
+  is_default: boolean;
+}
 
 export default function NewContactPage() {
+  const [stations, setStations] = useState<Station[]>([]);
+  const [selectedStationId, setSelectedStationId] = useState<string>('');
   const [formData, setFormData] = useState({
     callsign: '',
     frequency: '',
@@ -44,6 +53,28 @@ export default function NewContactPage() {
 
   const modes = ['SSB', 'CW', 'FM', 'AM', 'RTTY', 'PSK31', 'FT8', 'FT4', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'CONTESTIA'];
   const bands = ['160M', '80M', '60M', '40M', '30M', '20M', '17M', '15M', '12M', '10M', '6M', '2M', '1.25M', '70CM', '33CM', '23CM'];
+
+  useEffect(() => {
+    fetchStations();
+  }, []);
+
+  const fetchStations = async () => {
+    try {
+      const response = await fetch('/api/stations');
+      if (response.ok) {
+        const data = await response.json();
+        setStations(data.stations || []);
+        
+        // Auto-select default station
+        const defaultStation = data.stations?.find((station: Station) => station.is_default);
+        if (defaultStation) {
+          setSelectedStationId(defaultStation.id.toString());
+        }
+      }
+    } catch {
+      // Silent error handling for stations fetch
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -160,6 +191,7 @@ export default function NewContactPage() {
         },
         body: JSON.stringify({
           ...formData,
+          station_id: selectedStationId ? parseInt(selectedStationId) : undefined,
           grid_locator: formData.gridLocator, // Map camelCase to snake_case
           latitude: formData.latitude,
           longitude: formData.longitude,
@@ -219,6 +251,73 @@ export default function NewContactPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Station Selection */}
+                {stations.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="station">Station *</Label>
+                    <Select value={selectedStationId} onValueChange={setSelectedStationId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a station">
+                          <div className="flex items-center">
+                            <Radio className="h-4 w-4 mr-2" />
+                            {selectedStationId && stations.find(s => s.id.toString() === selectedStationId)?.station_name}
+                          </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stations.map(station => (
+                          <SelectItem key={station.id} value={station.id.toString()}>
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center">
+                                <Radio className="h-4 w-4 mr-2" />
+                                <span className="font-medium">{station.station_name}</span>
+                                <span className="ml-2 text-muted-foreground font-mono">
+                                  ({station.callsign})
+                                </span>
+                              </div>
+                              {station.is_default && (
+                                <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                                  Default
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {stations.length > 1 && (
+                      <p className="text-sm text-muted-foreground">
+                        Contact will be logged to the selected station logbook
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* No stations warning */}
+                {stations.length === 0 && (
+                  <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-3" />
+                      <div className="flex-1">
+                        <h3 className="font-medium text-yellow-800 dark:text-yellow-200">
+                          No Station Configured
+                        </h3>
+                        <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                          You need to set up at least one station before logging contacts.
+                        </p>
+                        <div className="mt-3">
+                          <Button asChild size="sm" variant="outline">
+                            <Link href="/dashboard/stations/new">
+                              <Radio className="h-4 w-4 mr-2" />
+                              Add Your First Station
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="callsign">Callsign *</Label>

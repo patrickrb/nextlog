@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, Radio } from 'lucide-react';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import UserMenu from '@/components/UserMenu';
 
@@ -121,6 +121,12 @@ export default function DashboardPage() {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              <Button variant="outline" asChild>
+                <Link href="/dashboard/stations">
+                  <Radio className="h-4 w-4 mr-2" />
+                  Stations
+                </Link>
+              </Button>
               <Button asChild>
                 <Link href="/dashboard/new-contact">
                   <Plus className="h-4 w-4 mr-2" />
