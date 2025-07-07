@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import pool from '@/lib/db';
 
-
 interface ADIFRecord {
   fields: { [key: string]: string };
 }
@@ -201,6 +200,26 @@ async function importRecord(record: ADIFRecord, userId: number, stationId: numbe
     }
   }
 
+  // Parse additional date/time fields
+  let qsoDateOff: Date | null = null;
+  if (fields.qso_date_off && fields.time_off) {
+    try {
+      const dateStr = fields.qso_date_off.padStart(8, '0');
+      const timeStr = fields.time_off.padStart(6, '0');
+      
+      const year = parseInt(dateStr.substring(0, 4));
+      const month = parseInt(dateStr.substring(4, 6)) - 1;
+      const day = parseInt(dateStr.substring(6, 8));
+      const hour = parseInt(timeStr.substring(0, 2));
+      const minute = parseInt(timeStr.substring(2, 4));
+      const second = parseInt(timeStr.substring(4, 6)) || 0;
+      
+      qsoDateOff = new Date(Date.UTC(year, month, day, hour, minute, second));
+    } catch {
+      // Ignore invalid date
+    }
+  }
+
   // Prepare contact data
   const contactData = {
     user_id: userId,
@@ -217,15 +236,39 @@ async function importRecord(record: ADIFRecord, userId: number, stationId: numbe
     grid_locator: fields.gridsquare || null,
     notes: fields.notes || fields.comment || null,
     latitude: fields.lat_n ? parseFloat(fields.lat_n) : null,
-    longitude: fields.lon_w ? parseFloat(fields.lon_w) : null
+    longitude: fields.lon_w ? parseFloat(fields.lon_w) : null,
+    // Additional ADIF fields
+    country: fields.country || null,
+    dxcc: fields.dxcc ? parseInt(fields.dxcc) : null,
+    cont: fields.cont || null,
+    cqz: fields.cqz ? parseInt(fields.cqz) : null,
+    ituz: fields.ituz ? parseInt(fields.ituz) : null,
+    state: fields.state || null,
+    cnty: fields.cnty || null,
+    qsl_rcvd: fields.qsl_rcvd || null,
+    qsl_sent: fields.qsl_sent || null,
+    qsl_via: fields.qsl_via || null,
+    eqsl_qsl_rcvd: fields.eqsl_qsl_rcvd || null,
+    eqsl_qsl_sent: fields.eqsl_qsl_sent || null,
+    lotw_qsl_rcvd: fields.lotw_qsl_rcvd || null,
+    lotw_qsl_sent: fields.lotw_qsl_sent || null,
+    qso_date_off: qsoDateOff,
+    time_off: qsoDateOff ? qsoDateOff.toISOString().split('T')[1].split('.')[0] : null,
+    operator: fields.operator || null,
+    distance: fields.distance ? parseFloat(fields.distance) : null
   };
 
   // Insert contact
   const insertQuery = `
     INSERT INTO contacts (
       user_id, station_id, callsign, name, frequency, mode, band, datetime,
-      rst_sent, rst_received, qth, grid_locator, notes, latitude, longitude
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      rst_sent, rst_received, qth, grid_locator, notes, latitude, longitude,
+      country, dxcc, cont, cqz, ituz, state, cnty, qsl_rcvd, qsl_sent, qsl_via,
+      eqsl_qsl_rcvd, eqsl_qsl_sent, lotw_qsl_rcvd, lotw_qsl_sent, qso_date_off,
+      time_off, operator, distance
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 
+             $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, 
+             $30, $31, $32, $33)
   `;
 
   const values = [
@@ -243,7 +286,25 @@ async function importRecord(record: ADIFRecord, userId: number, stationId: numbe
     contactData.grid_locator,
     contactData.notes,
     contactData.latitude,
-    contactData.longitude
+    contactData.longitude,
+    contactData.country,
+    contactData.dxcc,
+    contactData.cont,
+    contactData.cqz,
+    contactData.ituz,
+    contactData.state,
+    contactData.cnty,
+    contactData.qsl_rcvd,
+    contactData.qsl_sent,
+    contactData.qsl_via,
+    contactData.eqsl_qsl_rcvd,
+    contactData.eqsl_qsl_sent,
+    contactData.lotw_qsl_rcvd,
+    contactData.lotw_qsl_sent,
+    contactData.qso_date_off,
+    contactData.time_off,
+    contactData.operator,
+    contactData.distance
   ];
 
   await pool.query(insertQuery, values);
