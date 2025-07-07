@@ -82,9 +82,9 @@ export default function UserMenu({ user }: UserMenuProps) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/import" className="cursor-pointer">
+          <Link href="/adif" className="cursor-pointer">
             <Upload className="mr-2 h-4 w-4" />
-            <span>Import ADIF</span>
+            <span>ADIF Import/Export</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
