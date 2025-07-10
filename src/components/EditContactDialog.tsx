@@ -76,7 +76,7 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave }: 
     setFormData(prev => {
       const updated = { ...prev, [field]: value };
       
-      if (field === 'frequency' && typeof value === 'number') {
+      if (field === 'frequency' && typeof value === 'number' && !Number.isNaN(value)) {
         updated.band = calculateBand(value);
       }
       
