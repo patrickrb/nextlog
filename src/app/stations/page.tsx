@@ -170,7 +170,7 @@ export default function StationsPage() {
                     Get started by adding your first station location.
                   </p>
                   <Button asChild>
-                    <Link href="/dashboard/stations/new">
+                    <Link href="/stations/new">
                       <Plus className="h-4 w-4 mr-2" />
                       Add Your First Station
                     </Link>
