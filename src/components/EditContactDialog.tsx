@@ -162,7 +162,11 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave }: 
                 type="number"
                 step="0.001"
                 value={formData.frequency || ''}
-                onChange={(e) => handleInputChange('frequency', parseFloat(e.target.value))}
+                onChange={(e) => {
+                  const inputValue = e.target.value.trim();
+                  const frequency = inputValue === '' || isNaN(Number(inputValue)) ? 0 : Number(inputValue);
+                  handleInputChange('frequency', frequency);
+                }}
                 required
               />
             </div>
