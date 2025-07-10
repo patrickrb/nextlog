@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 import DynamicContactMap from '@/components/DynamicContactMap';
+import EditContactDialog from '@/components/EditContactDialog';
 import Navbar from '@/components/Navbar';
 import { useUser } from '@/contexts/UserContext';
 
@@ -23,6 +24,7 @@ interface Contact {
   name?: string;
   qth?: string;
   grid_locator?: string;
+  notes?: string;
   latitude?: number;
   longitude?: number;
   confirmed?: boolean;
@@ -32,6 +34,8 @@ export default function DashboardPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { user } = useUser();
   const router = useRouter();
 
@@ -68,6 +72,24 @@ export default function DashboardPage() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleContactClick = (contact: Contact) => {
+    setSelectedContact(contact);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleContactSave = (updatedContact: Contact) => {
+    setContacts(prevContacts => 
+      prevContacts.map(contact => 
+        contact.id === updatedContact.id ? updatedContact : contact
+      )
+    );
+  };
+
+  const handleDialogClose = () => {
+    setIsEditDialogOpen(false);
+    setSelectedContact(null);
   };
 
   if (loading) {
@@ -143,7 +165,11 @@ export default function DashboardPage() {
                   </TableHeader>
                   <TableBody>
                     {contacts.map((contact) => (
-                      <TableRow key={contact.id}>
+                      <TableRow 
+                        key={contact.id} 
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        onClick={() => handleContactClick(contact)}
+                      >
                         <TableCell className="font-medium">
                           {contact.callsign}
                         </TableCell>
@@ -174,6 +200,13 @@ export default function DashboardPage() {
           </Card>
         </div>
       </main>
+
+      <EditContactDialog
+        contact={selectedContact}
+        isOpen={isEditDialogOpen}
+        onClose={handleDialogClose}
+        onSave={handleContactSave}
+      />
     </div>
   );
 }
