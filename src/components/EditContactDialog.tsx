@@ -43,11 +43,18 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave }: 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const isValidDate = (dateString: string): boolean => {
+    const parsedDate = Date.parse(dateString);
+    return !isNaN(parsedDate);
+  };
+
   useEffect(() => {
     if (contact) {
       setFormData({
         ...contact,
-        datetime: contact.datetime ? new Date(contact.datetime).toISOString().slice(0, 16) : ''
+        datetime: contact.datetime && isValidDate(contact.datetime) 
+          ? new Date(contact.datetime).toISOString().slice(0, 16) 
+          : ''
       });
     }
   }, [contact]);
