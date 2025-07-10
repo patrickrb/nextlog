@@ -8,6 +8,8 @@ CREATE TABLE users (
     name VARCHAR(255) NOT NULL,
     callsign VARCHAR(50),
     grid_locator VARCHAR(10),
+    qrz_username VARCHAR(255),
+    qrz_password VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
