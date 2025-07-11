@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, Radio, Upload } from 'lucide-react';
+import { LogOut, User, Radio, Upload, Shield } from 'lucide-react';
 
 interface User {
   id: number;
@@ -19,6 +19,8 @@ interface User {
   name: string;
   callsign?: string;
   grid_locator?: string;
+  role?: string;
+  status?: string;
 }
 
 interface UserMenuProps {
@@ -47,6 +49,9 @@ export default function UserMenu({ user }: UserMenuProps) {
       .slice(0, 2);
   };
 
+  // Check if user is admin
+  const isAdmin = user.role === 'admin';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -69,6 +74,17 @@ export default function UserMenu({ user }: UserMenuProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        {isAdmin && (
+          <>
+            <DropdownMenuItem asChild>
+              <Link href="/admin" className="cursor-pointer">
+                <Shield className="mr-2 h-4 w-4" />
+                <span>Admin Panel</span>
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
         <DropdownMenuItem asChild>
           <Link href="/stations" className="cursor-pointer">
             <Radio className="mr-2 h-4 w-4" />

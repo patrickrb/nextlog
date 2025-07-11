@@ -9,6 +9,8 @@ interface User {
   name: string;
   callsign?: string;
   grid_locator?: string;
+  role?: string;
+  status?: string;
 }
 
 interface UserContextType {

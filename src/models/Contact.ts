@@ -1,4 +1,4 @@
-import pool from '../lib/db';
+import { query } from '../lib/db';
 
 export interface IContact {
   id: number;
@@ -57,7 +57,7 @@ export class Contact {
       notes
     } = contactData;
     
-    const query = `
+    const sql = `
       INSERT INTO contacts (
         user_id, station_id, callsign, name, frequency, mode, band, datetime,
         rst_sent, rst_received, qth, grid_locator, latitude, longitude, notes
@@ -66,7 +66,7 @@ export class Contact {
       RETURNING *
     `;
     
-    const result = await pool.query(query, [
+    const result = await query(sql, [
       user_id,
       station_id || null,
       callsign.toUpperCase().trim(),
@@ -88,26 +88,26 @@ export class Contact {
   }
 
   static async findByUserId(userId: number, limit?: number, offset?: number): Promise<IContact[]> {
-    let query = 'SELECT * FROM contacts WHERE user_id = $1 ORDER BY datetime DESC';
+    let sql = 'SELECT * FROM contacts WHERE user_id = $1 ORDER BY datetime DESC';
     const params = [userId];
     
     if (limit) {
-      query += ` LIMIT $${params.length + 1}`;
+      sql += ` LIMIT $${params.length + 1}`;
       params.push(limit);
     }
     
     if (offset) {
-      query += ` OFFSET $${params.length + 1}`;
+      sql += ` OFFSET $${params.length + 1}`;
       params.push(offset);
     }
     
-    const result = await pool.query(query, params);
+    const result = await query(sql, params);
     return result.rows;
   }
 
   static async findById(id: number): Promise<IContact | null> {
-    const query = 'SELECT * FROM contacts WHERE id = $1';
-    const result = await pool.query(query, [id]);
+    const sql = 'SELECT * FROM contacts WHERE id = $1';
+    const result = await query(sql, [id]);
     
     return result.rows[0] || null;
   }
@@ -130,76 +130,76 @@ export class Contact {
     }
 
     values.push(id);
-    const query = `
+    const sql = `
       UPDATE contacts 
       SET ${fields.join(', ')} 
       WHERE id = $${paramCount}
       RETURNING *
     `;
 
-    const result = await pool.query(query, values);
+    const result = await query(sql, values);
     return result.rows[0] || null;
   }
 
   static async delete(id: number): Promise<boolean> {
-    const query = 'DELETE FROM contacts WHERE id = $1';
-    const result = await pool.query(query, [id]);
+    const sql = 'DELETE FROM contacts WHERE id = $1';
+    const result = await query(sql, [id]);
     
     return (result.rowCount ?? 0) > 0;
   }
 
   static async countByUserId(userId: number): Promise<number> {
-    const query = 'SELECT COUNT(*) FROM contacts WHERE user_id = $1';
-    const result = await pool.query(query, [userId]);
+    const sql = 'SELECT COUNT(*) FROM contacts WHERE user_id = $1';
+    const result = await query(sql, [userId]);
     
     return parseInt(result.rows[0].count);
   }
 
   static async findByStationId(stationId: number, limit?: number, offset?: number): Promise<IContact[]> {
-    let query = 'SELECT * FROM contacts WHERE station_id = $1 ORDER BY datetime DESC';
+    let sql = 'SELECT * FROM contacts WHERE station_id = $1 ORDER BY datetime DESC';
     const params = [stationId];
     
     if (limit) {
-      query += ` LIMIT $${params.length + 1}`;
+      sql += ` LIMIT $${params.length + 1}`;
       params.push(limit);
     }
     
     if (offset) {
-      query += ` OFFSET $${params.length + 1}`;
+      sql += ` OFFSET $${params.length + 1}`;
       params.push(offset);
     }
     
-    const result = await pool.query(query, params);
+    const result = await query(sql, params);
     return result.rows;
   }
 
   static async findByUserIdAndStationId(userId: number, stationId: number, limit?: number, offset?: number): Promise<IContact[]> {
-    let query = 'SELECT * FROM contacts WHERE user_id = $1 AND station_id = $2 ORDER BY datetime DESC';
+    let sql = 'SELECT * FROM contacts WHERE user_id = $1 AND station_id = $2 ORDER BY datetime DESC';
     const params = [userId, stationId];
     
     if (limit) {
-      query += ` LIMIT $${params.length + 1}`;
+      sql += ` LIMIT $${params.length + 1}`;
       params.push(limit);
     }
     
     if (offset) {
-      query += ` OFFSET $${params.length + 1}`;
+      sql += ` OFFSET $${params.length + 1}`;
       params.push(offset);
     }
     
-    const result = await pool.query(query, params);
+    const result = await query(sql, params);
     return result.rows;
   }
 
   static async countByStationId(stationId: number): Promise<number> {
-    const query = 'SELECT COUNT(*) FROM contacts WHERE station_id = $1';
-    const result = await pool.query(query, [stationId]);
+    const sql = 'SELECT COUNT(*) FROM contacts WHERE station_id = $1';
+    const result = await query(sql, [stationId]);
     
     return parseInt(result.rows[0].count);
   }
 
   static async findWithStation(userId: number, limit?: number, offset?: number): Promise<(IContact & { station?: { id: number; callsign: string; station_name: string } })[]> {
-    let query = `
+    let sql = `
       SELECT 
         c.*,
         s.id as station_id,
@@ -213,16 +213,16 @@ export class Contact {
     const params = [userId];
     
     if (limit) {
-      query += ` LIMIT $${params.length + 1}`;
+      sql += ` LIMIT $${params.length + 1}`;
       params.push(limit);
     }
     
     if (offset) {
-      query += ` OFFSET $${params.length + 1}`;
+      sql += ` OFFSET $${params.length + 1}`;
       params.push(offset);
     }
     
-    const result = await pool.query(query, params);
+    const result = await query(sql, params);
     return result.rows.map(row => ({
       ...row,
       station: row.station_id ? {
