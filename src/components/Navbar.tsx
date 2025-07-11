@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -15,7 +15,25 @@ interface NavbarProps {
 }
 
 export default function Navbar({ title, breadcrumbs, actions }: NavbarProps) {
-  const { user } = useUser();
+  const { user, loading, refreshUser } = useUser();
+
+  // Check if we should retry fetching user data after login
+  useEffect(() => {
+    const checkAuth = async () => {
+      // If we're on a protected page but have no user and not loading, retry
+      if (!user && !loading && window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/') {
+        try {
+          await refreshUser();
+        } catch {
+          // Silent error handling
+        }
+      }
+    };
+
+    // Small delay to allow for potential redirect completion
+    const timeoutId = setTimeout(checkAuth, 100);
+    return () => clearTimeout(timeoutId);
+  }, [user, loading, refreshUser]);
 
   return (
     <nav className="border-b bg-card">
