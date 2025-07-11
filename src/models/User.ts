@@ -1,4 +1,4 @@
-import pool from '../lib/db';
+import { query } from '../lib/db';
 import { encrypt, decrypt } from '../lib/crypto';
 
 export interface IUser {
@@ -10,6 +10,9 @@ export interface IUser {
   grid_locator?: string;
   qrz_username?: string;
   qrz_password?: string;
+  role?: string;
+  status?: string;
+  last_login?: Date;
   created_at: Date;
   updated_at: Date;
 }
@@ -29,13 +32,13 @@ export class User {
   }): Promise<IUser> {
     const { email, password, name, callsign, grid_locator, qrz_username, qrz_password } = userData;
     
-    const query = `
+    const sql = `
       INSERT INTO users (email, password, name, callsign, grid_locator, qrz_username, qrz_password)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `;
     
-    const result = await pool.query(query, [
+    const result = await query(sql, [
       email.toLowerCase().trim(),
       password,
       name.trim(),
@@ -49,15 +52,15 @@ export class User {
   }
 
   static async findByEmail(email: string): Promise<IUser | null> {
-    const query = 'SELECT * FROM users WHERE email = $1';
-    const result = await pool.query(query, [email.toLowerCase().trim()]);
+    const sql = 'SELECT * FROM users WHERE email = $1';
+    const result = await query(sql, [email.toLowerCase().trim()]);
     
     return result.rows[0] || null;
   }
 
   static async findById(id: number): Promise<IUser | null> {
-    const query = 'SELECT * FROM users WHERE id = $1';
-    const result = await pool.query(query, [id]);
+    const sql = 'SELECT * FROM users WHERE id = $1';
+    const result = await query(sql, [id]);
     
     return result.rows[0] || null;
   }
@@ -84,20 +87,20 @@ export class User {
     }
 
     values.push(id);
-    const query = `
+    const sql = `
       UPDATE users 
       SET ${fields.join(', ')} 
       WHERE id = $${paramCount}
       RETURNING *
     `;
 
-    const result = await pool.query(query, values);
+    const result = await query(sql, values);
     return result.rows[0] || null;
   }
 
   static async delete(id: number): Promise<boolean> {
-    const query = 'DELETE FROM users WHERE id = $1';
-    const result = await pool.query(query, [id]);
+    const sql = 'DELETE FROM users WHERE id = $1';
+    const result = await query(sql, [id]);
     
     return (result.rowCount ?? 0) > 0;
   }

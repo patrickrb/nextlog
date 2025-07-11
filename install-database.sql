@@ -12,8 +12,14 @@ CREATE TABLE users (
     grid_locator VARCHAR(10),
     qrz_username VARCHAR(255),
     qrz_password VARCHAR(255),
+    role VARCHAR(50) DEFAULT 'user' NOT NULL,
+    status VARCHAR(50) DEFAULT 'active' NOT NULL,
+    last_login TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT valid_role CHECK (role IN ('user', 'admin', 'moderator')),
+    CONSTRAINT valid_status CHECK (status IN ('active', 'inactive', 'suspended'))
 );
 
 -- Create stations table
@@ -145,8 +151,41 @@ CREATE TABLE states_provinces (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create storage configuration table
+CREATE TABLE storage_config (
+    id SERIAL PRIMARY KEY,
+    config_type VARCHAR(50) NOT NULL UNIQUE,
+    account_name VARCHAR(255),
+    account_key TEXT, -- Encrypted
+    container_name VARCHAR(255),
+    endpoint_url VARCHAR(500),
+    is_enabled BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by INTEGER REFERENCES users(id),
+    
+    CONSTRAINT valid_config_type CHECK (config_type IN ('azure_blob', 'aws_s3', 'local_storage'))
+);
+
+-- Create admin audit log table
+CREATE TABLE admin_audit_log (
+    id SERIAL PRIMARY KEY,
+    admin_user_id INTEGER NOT NULL REFERENCES users(id),
+    action VARCHAR(100) NOT NULL,
+    target_type VARCHAR(50), -- 'user', 'storage_config', etc.
+    target_id INTEGER,
+    old_values JSONB,
+    new_values JSONB,
+    ip_address INET,
+    user_agent TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create indexes for better performance
 CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_users_status ON users(status);
+CREATE INDEX idx_users_callsign ON users(callsign);
 
 CREATE INDEX idx_stations_user_id ON stations(user_id);
 CREATE INDEX idx_stations_callsign ON stations(callsign);
@@ -163,6 +202,14 @@ CREATE INDEX idx_contacts_datetime ON contacts(datetime DESC);
 CREATE INDEX idx_contacts_frequency ON contacts(frequency);
 CREATE INDEX idx_contacts_mode ON contacts(mode);
 CREATE INDEX idx_contacts_band ON contacts(band);
+
+CREATE INDEX idx_storage_config_type ON storage_config(config_type);
+CREATE INDEX idx_storage_config_enabled ON storage_config(is_enabled);
+
+CREATE INDEX idx_audit_log_admin_user ON admin_audit_log(admin_user_id);
+CREATE INDEX idx_audit_log_action ON admin_audit_log(action);
+CREATE INDEX idx_audit_log_created_at ON admin_audit_log(created_at DESC);
+CREATE INDEX idx_audit_log_target ON admin_audit_log(target_type, target_id);
 
 -- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -231,6 +278,23 @@ CREATE TRIGGER ensure_single_default_station_trigger
 CREATE TRIGGER set_default_station_for_contact_trigger
     BEFORE INSERT ON contacts
     FOR EACH ROW EXECUTE FUNCTION set_default_station_for_contact();
+
+-- Create trigger for storage config updated_at
+CREATE TRIGGER update_storage_config_updated_at 
+    BEFORE UPDATE ON storage_config 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Create function to update last_login timestamp
+CREATE OR REPLACE FUNCTION update_last_login()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.last_login = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to update last_login on successful authentication
+-- Note: This would be called manually from the application login logic
 
 -- Print success message
 SELECT 'NodeLog database schema installed successfully!' as message;

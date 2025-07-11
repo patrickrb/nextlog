@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { query } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,14 +10,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'DXCC parameter is required' }, { status: 400 });
     }
 
-    const query = `
+    const sqlQuery = `
       SELECT id, code, name, type, cq_zone, itu_zone 
       FROM states_provinces 
       WHERE dxcc_entity = $1 
       ORDER BY name
     `;
 
-    const result = await pool.query(query, [dxcc]);
+    const result = await query(sqlQuery, [dxcc]);
     
     return NextResponse.json({ states: result.rows });
   } catch (error) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import pool from '@/lib/db';
+import { query } from '@/lib/db';
 
 interface Contact {
   id: number;
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Verify station belongs to user
     const stationQuery = 'SELECT id, callsign, station_name FROM stations WHERE id = $1 AND user_id = $2';
-    const stationResult = await pool.query(stationQuery, [parseInt(stationId), parseInt(user.userId)]);
+    const stationResult = await query(stationQuery, [parseInt(stationId), parseInt(user.userId)]);
     
     if (stationResult.rows.length === 0) {
       return NextResponse.json({ error: 'Station not found or access denied' }, { status: 404 });
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         FROM contacts 
         WHERE user_id = $1 AND station_id = $2
       `;
-      const dateRangeResult = await pool.query(dateRangeQuery, [parseInt(user.userId), parseInt(stationId)]);
+      const dateRangeResult = await query(dateRangeQuery, [parseInt(user.userId), parseInt(stationId)]);
       
       if (dateRangeResult.rows.length > 0 && dateRangeResult.rows[0].first_contact) {
         if (!startDate) {
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     contactQuery += ' ORDER BY datetime DESC';
 
-    const contactResult = await pool.query(contactQuery, queryParams);
+    const contactResult = await query(contactQuery, queryParams);
     const contacts: Contact[] = contactResult.rows;
 
     if (contacts.length === 0) {
