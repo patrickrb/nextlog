@@ -32,7 +32,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const fetchUser = async () => {
     try {
       setError(null);
-      const response = await fetch('/api/user');
+      const response = await fetch('/api/user', {
+        credentials: 'include',
+        cache: 'no-store' // Ensure we always get fresh data
+      });
       
       if (response.status === 401) {
         setUser(null);
@@ -70,6 +73,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchUser();
+    
+    // Listen for storage events to detect login/logout from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'auth-refresh') {
+        fetchUser();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom auth events
+    const handleAuthChange = () => {
+      fetchUser();
+    };
+    
+    window.addEventListener('auth-refresh', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth-refresh', handleAuthChange);
+    };
   }, []);
 
   const value: UserContextType = {
