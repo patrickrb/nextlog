@@ -7,10 +7,10 @@ import { query } from '@/lib/db';
 import { logAdminAction, AUDIT_ACTIONS, sanitizeForAudit } from '@/lib/audit';
 import bcrypt from 'bcryptjs';
 
-interface RouteParams {
-  params: {
+interface RouteContext {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 /**
@@ -18,18 +18,20 @@ interface RouteParams {
  */
 export async function GET(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: RouteContext
 ) {
-  return requirePermission(Permission.VIEW_USERS)(async (req, adminUser) => {
+  const resolvedParams = await params;
+  const userId = parseInt(resolvedParams.id);
+  
+  if (isNaN(userId)) {
+    return NextResponse.json(
+      { error: 'Invalid user ID' },
+      { status: 400 }
+    );
+  }
+
+  return requirePermission(Permission.VIEW_USERS)(async () => {
     try {
-      const userId = parseInt(params.id);
-      
-      if (isNaN(userId)) {
-        return NextResponse.json(
-          { error: 'Invalid user ID' },
-          { status: 400 }
-        );
-      }
 
       const result = await query(
         `SELECT id, email, name, callsign, grid_locator, role, status, last_login, created_at, updated_at
@@ -53,7 +55,7 @@ export async function GET(
         { status: 500 }
       );
     }
-  })(request, adminUser);
+  })(request);
 }
 
 /**
@@ -61,18 +63,20 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: RouteContext
 ) {
-  return requirePermission(Permission.EDIT_USERS)(async (req, adminUser) => {
+  const resolvedParams = await params;
+  const userId = parseInt(resolvedParams.id);
+  
+  if (isNaN(userId)) {
+    return NextResponse.json(
+      { error: 'Invalid user ID' },
+      { status: 400 }
+    );
+  }
+
+  return requirePermission(Permission.EDIT_USERS)(async (_req, adminUser) => {
     try {
-      const userId = parseInt(params.id);
-      
-      if (isNaN(userId)) {
-        return NextResponse.json(
-          { error: 'Invalid user ID' },
-          { status: 400 }
-        );
-      }
 
       const body = await request.json();
       const { email, name, callsign, grid_locator, role, status, password } = body;
@@ -104,7 +108,7 @@ export async function PUT(
 
       // Build update query dynamically
       const updates: string[] = [];
-      const params: any[] = [];
+      const queryParams: unknown[] = [];
       let paramCount = 0;
 
       if (email !== undefined) {
@@ -122,22 +126,22 @@ export async function PUT(
         }
         
         updates.push(`email = $${++paramCount}`);
-        params.push(email);
+        queryParams.push(email);
       }
 
       if (name !== undefined) {
         updates.push(`name = $${++paramCount}`);
-        params.push(name);
+        queryParams.push(name);
       }
 
       if (callsign !== undefined) {
         updates.push(`callsign = $${++paramCount}`);
-        params.push(callsign || null);
+        queryParams.push(callsign || null);
       }
 
       if (grid_locator !== undefined) {
         updates.push(`grid_locator = $${++paramCount}`);
-        params.push(grid_locator || null);
+        queryParams.push(grid_locator || null);
       }
 
       if (role !== undefined) {
@@ -148,7 +152,7 @@ export async function PUT(
           );
         }
         updates.push(`role = $${++paramCount}`);
-        params.push(role);
+        queryParams.push(role);
       }
 
       if (status !== undefined) {
@@ -159,13 +163,13 @@ export async function PUT(
           );
         }
         updates.push(`status = $${++paramCount}`);
-        params.push(status);
+        queryParams.push(status);
       }
 
       if (password !== undefined && password.trim() !== '') {
         const hashedPassword = await bcrypt.hash(password, 12);
         updates.push(`password = $${++paramCount}`);
-        params.push(hashedPassword);
+        queryParams.push(hashedPassword);
       }
 
       if (updates.length === 0) {
@@ -179,7 +183,7 @@ export async function PUT(
       updates.push(`updated_at = CURRENT_TIMESTAMP`);
       
       // Add user ID for WHERE clause
-      params.push(userId);
+      queryParams.push(userId);
       const whereParam = `$${++paramCount}`;
 
       const updateQuery = `
@@ -189,7 +193,7 @@ export async function PUT(
         RETURNING id, email, name, callsign, grid_locator, role, status, last_login, created_at, updated_at
       `;
 
-      const result = await query(updateQuery, params);
+      const result = await query(updateQuery, queryParams);
       const updatedUser = result.rows[0];
 
       // Log the action
@@ -215,7 +219,7 @@ export async function PUT(
         { status: 500 }
       );
     }
-  })(request, adminUser);
+  })(request);
 }
 
 /**
@@ -223,18 +227,20 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: RouteParams
+  { params }: RouteContext
 ) {
-  return requirePermission(Permission.DELETE_USERS)(async (req, adminUser) => {
+  const resolvedParams = await params;
+  const userId = parseInt(resolvedParams.id);
+  
+  if (isNaN(userId)) {
+    return NextResponse.json(
+      { error: 'Invalid user ID' },
+      { status: 400 }
+    );
+  }
+
+  return requirePermission(Permission.DELETE_USERS)(async (_req, adminUser) => {
     try {
-      const userId = parseInt(params.id);
-      
-      if (isNaN(userId)) {
-        return NextResponse.json(
-          { error: 'Invalid user ID' },
-          { status: 400 }
-        );
-      }
 
       // Prevent self-deletion
       if (userId === adminUser.id) {
@@ -286,5 +292,5 @@ export async function DELETE(
         { status: 500 }
       );
     }
-  })(request, adminUser);
+  })(request);
 }

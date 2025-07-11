@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { AlertCircle, CheckCircle, Database, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -76,7 +75,7 @@ export default function StorageConfigPage() {
       } else {
         setError(data.error || 'Failed to fetch storage configurations');
       }
-    } catch (err) {
+    } catch {
       setError('Network error occurred');
     } finally {
       setIsLoading(false);
@@ -114,7 +113,7 @@ export default function StorageConfigPage() {
       } else {
         setError(data.error || 'Failed to create storage configuration');
       }
-    } catch (err) {
+    } catch {
       setError('Network error occurred');
     }
   };
@@ -141,7 +140,7 @@ export default function StorageConfigPage() {
       } else {
         setError(data.error || 'Failed to update storage configuration');
       }
-    } catch (err) {
+    } catch {
       setError('Network error occurred');
     }
   };
@@ -165,7 +164,7 @@ export default function StorageConfigPage() {
       } else {
         setError(data.error || 'Failed to delete storage configuration');
       }
-    } catch (err) {
+    } catch {
       setError('Network error occurred');
     }
   };

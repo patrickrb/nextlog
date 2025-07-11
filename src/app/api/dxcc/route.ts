@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import pool from '@/lib/db';
+import { query } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
 
-    let query = `
+    let sqlQuery = `
       SELECT 
         adif,
         name,
@@ -20,13 +20,13 @@ export async function GET(request: NextRequest) {
     const params: string[] = [];
 
     if (search) {
-      query += ` AND (name ILIKE $1 OR prefix ILIKE $1)`;
+      sqlQuery += ` AND (name ILIKE $1 OR prefix ILIKE $1)`;
       params.push(`%${search}%`);
     }
 
-    query += ` ORDER BY name`;
+    sqlQuery += ` ORDER BY name`;
 
-    const result = await pool.query(query, params);
+    const result = await query(sqlQuery, params);
     
     return NextResponse.json({ 
       entities: result.rows 

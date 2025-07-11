@@ -11,7 +11,7 @@ import bcrypt from 'bcryptjs';
  * GET /api/admin/users - List all users
  */
 export const GET = requirePermission(Permission.VIEW_USERS)(
-  async (request: NextRequest, adminUser) => {
+  async (request: NextRequest) => {
     try {
       const { searchParams } = new URL(request.url);
       const page = parseInt(searchParams.get('page') || '1');
@@ -23,7 +23,7 @@ export const GET = requirePermission(Permission.VIEW_USERS)(
       const offset = (page - 1) * limit;
       
       let whereClause = '';
-      const params: any[] = [];
+      const params: unknown[] = [];
       let paramCount = 0;
       
       const conditions: string[] = [];

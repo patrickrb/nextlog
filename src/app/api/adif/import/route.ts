@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import pool from '@/lib/db';
+import { query } from '@/lib/db';
 
 interface ADIFRecord {
   fields: { [key: string]: string };
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Verify station belongs to user
     const stationQuery = 'SELECT id FROM stations WHERE id = $1 AND user_id = $2';
-    const stationResult = await pool.query(stationQuery, [parseInt(stationId), parseInt(user.userId)]);
+    const stationResult = await query(stationQuery, [parseInt(stationId), parseInt(user.userId)]);
     
     if (stationResult.rows.length === 0) {
       return NextResponse.json({ error: 'Station not found or access denied' }, { status: 404 });
@@ -182,7 +182,7 @@ async function importRecord(record: ADIFRecord, userId: number, stationId: numbe
     SELECT id FROM contacts 
     WHERE user_id = $1 AND station_id = $2 AND callsign = $3 AND datetime = $4
   `;
-  const duplicateResult = await pool.query(duplicateQuery, [userId, stationId, callsign.toUpperCase(), datetime]);
+  const duplicateResult = await query(duplicateQuery, [userId, stationId, callsign.toUpperCase(), datetime]);
   
   if (duplicateResult.rows.length > 0) {
     result.skipped++;
@@ -307,7 +307,7 @@ async function importRecord(record: ADIFRecord, userId: number, stationId: numbe
     contactData.distance
   ];
 
-  await pool.query(insertQuery, values);
+  await query(insertQuery, values);
   result.imported++;
 }
 

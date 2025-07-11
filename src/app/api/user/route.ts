@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Return user info without password
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userInfo } = user;
     return NextResponse.json({ user: userInfo });
   } catch (error) {

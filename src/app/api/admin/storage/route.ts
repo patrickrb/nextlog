@@ -39,7 +39,7 @@ async function validateAzureBlobCredentials(config: StorageConfig): Promise<bool
  * GET /api/admin/storage - Get storage configurations
  */
 export const GET = requirePermission(Permission.VIEW_STORAGE_CONFIG)(
-  async (request: NextRequest, adminUser) => {
+  async () => {
     try {
       const result = await query(
         `SELECT 
@@ -222,7 +222,7 @@ export const PUT = requirePermission(Permission.EDIT_STORAGE_CONFIG)(
 
       // Build update query
       const updates: string[] = [];
-      const params: any[] = [];
+      const params: unknown[] = [];
       let paramCount = 0;
 
       if (account_name !== undefined) {

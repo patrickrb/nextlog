@@ -1,4 +1,4 @@
-import pool from '@/lib/db';
+import { query, getClient } from '@/lib/db';
 
 export interface StationData {
   id: number;
@@ -81,7 +81,7 @@ export interface CreateStationData {
 
 export class Station {
   static async create(userId: number, data: CreateStationData): Promise<StationData> {
-    const query = `
+    const sqlQuery = `
       INSERT INTO stations (
         user_id, callsign, station_name, operator_name, qth_name,
         street_address, city, county, state_province, postal_code,
@@ -123,35 +123,35 @@ export class Station {
       data.club_callsign || null,
     ];
 
-    const result = await pool.query(query, values);
+    const result = await query(sqlQuery, values);
     return result.rows[0];
   }
 
   static async findByUserId(userId: number): Promise<StationData[]> {
-    const query = `
+    const sqlQuery = `
       SELECT * FROM stations 
       WHERE user_id = $1 
       ORDER BY is_default DESC, station_name ASC
     `;
-    const result = await pool.query(query, [userId]);
+    const result = await query(sqlQuery, [userId]);
     return result.rows;
   }
 
   static async findById(id: number): Promise<StationData | null> {
-    const query = 'SELECT * FROM stations WHERE id = $1';
-    const result = await pool.query(query, [id]);
+    const sqlQuery = 'SELECT * FROM stations WHERE id = $1';
+    const result = await query(sqlQuery, [id]);
     return result.rows[0] || null;
   }
 
   static async findByUserIdAndId(userId: number, id: number): Promise<StationData | null> {
-    const query = 'SELECT * FROM stations WHERE user_id = $1 AND id = $2';
-    const result = await pool.query(query, [userId, id]);
+    const sqlQuery = 'SELECT * FROM stations WHERE user_id = $1 AND id = $2';
+    const result = await query(sqlQuery, [userId, id]);
     return result.rows[0] || null;
   }
 
   static async findDefaultByUserId(userId: number): Promise<StationData | null> {
-    const query = 'SELECT * FROM stations WHERE user_id = $1 AND is_default = true';
-    const result = await pool.query(query, [userId]);
+    const sqlQuery = 'SELECT * FROM stations WHERE user_id = $1 AND is_default = true';
+    const result = await query(sqlQuery, [userId]);
     return result.rows[0] || null;
   }
 
@@ -173,7 +173,7 @@ export class Station {
       return null;
     }
 
-    const query = `
+    const sqlQuery = `
       UPDATE stations 
       SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
       WHERE id = $${paramCount}
@@ -181,18 +181,18 @@ export class Station {
     `;
     values.push(id);
 
-    const result = await pool.query(query, values);
+    const result = await query(sqlQuery, values);
     return result.rows[0] || null;
   }
 
   static async delete(id: number): Promise<boolean> {
-    const query = 'DELETE FROM stations WHERE id = $1';
-    const result = await pool.query(query, [id]);
+    const sqlQuery = 'DELETE FROM stations WHERE id = $1';
+    const result = await query(sqlQuery, [id]);
     return (result.rowCount ?? 0) > 0;
   }
 
   static async setDefault(userId: number, stationId: number): Promise<boolean> {
-    const client = await pool.connect();
+    const client = await getClient();
     try {
       await client.query('BEGIN');
 
@@ -219,12 +219,12 @@ export class Station {
   }
 
   static async getActiveStations(userId: number): Promise<StationData[]> {
-    const query = `
+    const sqlQuery = `
       SELECT * FROM stations 
       WHERE user_id = $1 AND is_active = true 
       ORDER BY is_default DESC, station_name ASC
     `;
-    const result = await pool.query(query, [userId]);
+    const result = await query(sqlQuery, [userId]);
     return result.rows;
   }
 
@@ -234,7 +234,7 @@ export class Station {
     modes: number;
     bands: number;
   }> {
-    const query = `
+    const sqlQuery = `
       SELECT 
         COUNT(*) as total_contacts,
         COUNT(DISTINCT qth) as countries,
@@ -243,7 +243,7 @@ export class Station {
       FROM contacts 
       WHERE user_id = $1 AND station_id = $2
     `;
-    const result = await pool.query(query, [userId, stationId]);
+    const result = await query(sqlQuery, [userId, stationId]);
     const row = result.rows[0];
     
     return {

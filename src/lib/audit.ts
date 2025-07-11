@@ -9,8 +9,8 @@ export interface AuditLogEntry {
   action: string;
   target_type?: string;
   target_id?: number;
-  old_values?: Record<string, any>;
-  new_values?: Record<string, any>;
+  old_values?: Record<string, unknown>;
+  new_values?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
 }
@@ -24,8 +24,8 @@ export async function logAdminAction(
   options: {
     targetType?: string;
     targetId?: number;
-    oldValues?: Record<string, any>;
-    newValues?: Record<string, any>;
+    oldValues?: Record<string, unknown>;
+    newValues?: Record<string, unknown>;
     request?: NextRequest;
   } = {}
 ): Promise<void> {
@@ -86,7 +86,7 @@ export async function getAuditLogs(options: {
 
   const offset = (page - 1) * limit;
   let whereClause = '';
-  const params: any[] = [];
+  const params: unknown[] = [];
   let paramCount = 0;
 
   const conditions: string[] = [];
@@ -185,7 +185,7 @@ export const AUDIT_ACTIONS = {
 /**
  * Create a sanitized version of an object for logging (removes sensitive fields)
  */
-export function sanitizeForAudit(obj: Record<string, any>): Record<string, any> {
+export function sanitizeForAudit(obj: Record<string, unknown>): Record<string, unknown> {
   const sanitized = { ...obj };
   
   // Remove sensitive fields

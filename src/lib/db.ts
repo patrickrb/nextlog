@@ -30,7 +30,7 @@ function getPool(): Pool {
 /**
  * Execute a query using the connection pool
  */
-export async function query(text: string, params?: any[]): Promise<QueryResult> {
+export async function query(text: string, params?: unknown[]): Promise<QueryResult> {
   const pool = getPool();
   const start = Date.now();
   

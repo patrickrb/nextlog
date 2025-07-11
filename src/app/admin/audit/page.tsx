@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
 import Navbar from '@/components/Navbar';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertCircle, FileText, Search, Calendar, User, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertCircle, FileText, Search, User, Activity, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AuditLog {
@@ -18,8 +18,8 @@ interface AuditLog {
   action: string;
   target_type?: string;
   target_id?: number;
-  old_values?: any;
-  new_values?: any;
+  old_values?: Record<string, unknown>;
+  new_values?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
   created_at: string;
@@ -57,30 +57,7 @@ export default function AuditLogsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-      
-      if (user.role !== 'admin') {
-        router.push('/dashboard');
-        return;
-      }
-      
-      setIsAuthorized(true);
-      fetchAuditLogs();
-    }
-  }, [user, loading, router]);
-
-  useEffect(() => {
-    if (isAuthorized) {
-      fetchAuditLogs();
-    }
-  }, [pagination.page, actionFilter, targetTypeFilter, adminUserFilter, startDate, endDate]);
-
-  const fetchAuditLogs = async () => {
+  const handleFetchAuditLogs = useCallback(async () => {
     try {
       setError('');
       const params = new URLSearchParams({
@@ -105,14 +82,38 @@ export default function AuditLogsPage() {
           totalPages: data.totalPages
         }));
       } else {
-        setError(data.error || 'Failed to fetch audit logs');
+        setError((data as { error?: string }).error || 'Failed to fetch audit logs');
       }
-    } catch (err) {
+    } catch {
       setError('Network error occurred');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, actionFilter, targetTypeFilter, adminUserFilter, startDate, endDate]);
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      
+      if (user.role !== 'admin') {
+        router.push('/dashboard');
+        return;
+      }
+      
+      setIsAuthorized(true);
+      handleFetchAuditLogs();
+    }
+  }, [user, loading, router, handleFetchAuditLogs]);
+
+  useEffect(() => {
+    if (isAuthorized) {
+      handleFetchAuditLogs();
+    }
+  }, [isAuthorized, handleFetchAuditLogs]);
+
 
   const getActionBadgeVariant = (action: string) => {
     if (action.includes('created')) return 'default';

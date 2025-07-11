@@ -9,7 +9,7 @@ import { getAuditLogs } from '@/lib/audit';
  * GET /api/admin/audit - Get audit logs
  */
 export const GET = requirePermission(Permission.VIEW_AUDIT_LOGS)(
-  async (request: NextRequest, adminUser) => {
+  async (request: NextRequest) => {
     try {
       const { searchParams } = new URL(request.url);
       

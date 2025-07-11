@@ -79,7 +79,7 @@ export default function UserManagementPage() {
       } else {
         setError(data.error || 'Failed to fetch users');
       }
-    } catch (err) {
+    } catch {
       setError('Network error occurred');
     } finally {
       setIsLoading(false);
@@ -97,7 +97,7 @@ export default function UserManagementPage() {
       const method = isEditing ? 'PUT' : 'POST';
       
       // Don't send password if editing and password is empty
-      const submitData = { ...formData };
+      const submitData: Partial<typeof formData> = { ...formData };
       if (isEditing && !submitData.password) {
         delete submitData.password;
       }
@@ -120,7 +120,7 @@ export default function UserManagementPage() {
       } else {
         setError(data.error || `Failed to ${isEditing ? 'update' : 'create'} user`);
       }
-    } catch (err) {
+    } catch {
       setError('Network error occurred');
     }
   };
@@ -158,7 +158,7 @@ export default function UserManagementPage() {
       } else {
         setError(data.error || 'Failed to delete user');
       }
-    } catch (err) {
+    } catch {
       setError('Network error occurred');
     }
   };
@@ -176,11 +176,6 @@ export default function UserManagementPage() {
     setEditingUser(null);
   };
 
-  const clearFilters = () => {
-    setSearchTerm('');
-    setRoleFilter('all');
-    setStatusFilter('all');
-  };
 
   const filteredUsers = users.filter(userData => {
     const matchesSearch = !searchTerm || 
