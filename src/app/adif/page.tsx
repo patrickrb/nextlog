@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Upload, Download, FileText, CheckCircle, AlertCircle, Loader2, Calendar } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import AutoImportADIF from '@/components/AutoImportADIF';
 
 interface Station {
   id: number;
@@ -272,11 +273,15 @@ export default function ADIFPage() {
 
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0 space-y-6">
-          <Tabs defaultValue="import" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs defaultValue="auto-import" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="import" className="flex items-center space-x-2">
                 <Upload className="h-4 w-4" />
-                <span>Import</span>
+                <span>Manual Import</span>
+              </TabsTrigger>
+              <TabsTrigger value="auto-import" className="flex items-center space-x-2">
+                <FileText className="h-4 w-4" />
+                <span>Auto Import</span>
               </TabsTrigger>
               <TabsTrigger value="export" className="flex items-center space-x-2">
                 <Download className="h-4 w-4" />
@@ -291,12 +296,11 @@ export default function ADIFPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Upload className="h-5 w-5 mr-2" />
-                    Import ADIF File
+                    Manual ADIF Import
                   </CardTitle>
                   <CardDescription>
-                    Upload an ADIF (.adi or .adif) file to import your amateur radio contacts. 
-                    Maximum file size: 10MB. For larger files or better performance, consider splitting your ADIF file into smaller chunks.
-                    Files with more than 5,000 contacts may timeout - please split large logbooks.
+                    Upload smaller ADIF files (recommended: &lt;1000 contacts). For large files with 1000+ contacts, 
+                    use the &quot;Auto Import&quot; tab which automatically splits and processes files in reliable chunks.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -464,6 +468,62 @@ export default function ADIFPage() {
                     </div>
                   </CardContent>
                 </Card>
+              )}
+            </TabsContent>
+
+            {/* Auto Import Tab */}
+            <TabsContent value="auto-import" className="space-y-6">
+              {stationsLoaded && stations.length > 0 && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="auto-station">Select Station for Auto Import *</Label>
+                    <Select
+                      value={selectedStationId}
+                      onValueChange={setSelectedStationId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a station to associate contacts with" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stations.map((station) => (
+                          <SelectItem key={station.id} value={station.id.toString()}>
+                            {station.callsign} - {station.station_name}
+                            {station.is_default && <span className="ml-1 text-xs text-blue-600">(Default)</span>}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedStationId && (
+                    <AutoImportADIF stationId={parseInt(selectedStationId)} />
+                  )}
+
+                  {!selectedStationId && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Please select a station above to enable auto-import functionality.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
+
+              {!stationsLoaded && (
+                <div className="text-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                  <p className="text-sm text-muted-foreground mt-2">Loading stations...</p>
+                </div>
+              )}
+
+              {stationsLoaded && stations.length === 0 && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    No stations found. Please <Link href="/stations/new" className="underline">create a station</Link> first before importing contacts.
+                  </AlertDescription>
+                </Alert>
               )}
             </TabsContent>
 
