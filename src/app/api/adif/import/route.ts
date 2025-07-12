@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { getAdifImportSettings } from '@/lib/settings';
 
 interface ADIFRecord {
   fields: { [key: string]: string };
@@ -22,6 +23,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get current import settings
+    const importSettings = await getAdifImportSettings();
+    const maxFileSizeMB = importSettings.adif_max_file_size_mb as number;
+    const maxFileSize = maxFileSizeMB * 1024 * 1024;
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const stationId = formData.get('stationId') as string;
@@ -34,6 +40,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Station ID is required' }, { status: 400 });
     }
 
+    // Check file size using dynamic setting
+    if (file.size > maxFileSize) {
+      return NextResponse.json({ 
+        error: `File too large. Please upload files smaller than ${maxFileSizeMB}MB. For larger files, consider splitting them into smaller chunks.` 
+      }, { status: 413 });
+    }
+
     // Verify station belongs to user
     const stationQuery = 'SELECT id FROM stations WHERE id = $1 AND user_id = $2';
     const stationResult = await query(stationQuery, [parseInt(stationId), parseInt(user.userId)]);
@@ -44,19 +57,43 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Read and parse ADIF file
     const fileContent = await file.text();
-    const result = await parseAndImportADIF(fileContent, parseInt(user.userId), parseInt(stationId));
+    
+    // Quick validation before processing using dynamic settings
+    const maxContentSize = maxFileSizeMB * 1.5 * 1024 * 1024; // Allow 1.5x file size for text expansion
+    if (fileContent.length > maxContentSize) {
+      return NextResponse.json({ 
+        error: 'File content too large to process. Please use smaller files.' 
+      }, { status: 413 });
+    }
+
+    const result = await parseAndImportADIF(fileContent, parseInt(user.userId), parseInt(stationId), importSettings);
 
     return NextResponse.json(result);
   } catch (error) {
     console.error('ADIF import error:', error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('timeout') || error.message.includes('deadline')) {
+        return NextResponse.json({
+          error: 'Import timeout. Please try with a smaller file or split your ADIF file into chunks.'
+        }, { status: 408 });
+      }
+      if (error.message.includes('memory') || error.message.includes('heap')) {
+        return NextResponse.json({
+          error: 'File too large to process. Please split into smaller files.'
+        }, { status: 413 });
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error during import. Please try with a smaller file.' },
       { status: 500 }
     );
   }
 }
 
-async function parseAndImportADIF(content: string, userId: number, stationId: number): Promise<ImportResult> {
+async function parseAndImportADIF(content: string, userId: number, stationId: number, settings: Record<string, unknown>): Promise<ImportResult> {
   const result: ImportResult = {
     success: true,
     imported: 0,
@@ -65,6 +102,11 @@ async function parseAndImportADIF(content: string, userId: number, stationId: nu
     details: []
   };
 
+  const startTime = Date.now();
+  const timeoutMs = (settings.adif_timeout_seconds as number) * 1000; // Dynamic timeout from settings
+  const maxRecords = settings.adif_max_record_count as number;
+  const batchSize = settings.adif_batch_size as number;
+  
   try {
     // Remove header if present (everything before <eoh>)
     const eohIndex = content.toLowerCase().indexOf('<eoh>');
@@ -72,26 +114,73 @@ async function parseAndImportADIF(content: string, userId: number, stationId: nu
 
     // Parse records
     const records = parseADIFRecords(dataContent);
+    console.log(`Parsed ${records.length} records from ADIF file`);
     
-    for (const record of records) {
-      try {
-        await importRecord(record, userId, stationId, result);
-      } catch (error) {
-        result.errors++;
-        result.details?.push(`Error importing record: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    // Limit number of records for large imports using dynamic setting
+    if (records.length > maxRecords) {
+      return {
+        success: false,
+        imported: 0,
+        skipped: 0,
+        errors: 1,
+        message: `File contains ${records.length} records. For performance reasons, please limit imports to ${maxRecords} records or fewer. Consider splitting your file.`
+      };
+    }
+    
+    // Process records in batches to avoid timeouts using dynamic setting
+    const totalBatches = Math.ceil(records.length / batchSize);
+    
+    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+      // Check timeout
+      if (Date.now() - startTime > timeoutMs) {
+        result.message = `Import timed out after ${batchIndex * batchSize} records. ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors. Please try with smaller files.`;
+        result.success = false;
+        return result;
+      }
+      
+      const startIdx = batchIndex * batchSize;
+      const endIdx = Math.min(startIdx + batchSize, records.length);
+      const batch = records.slice(startIdx, endIdx);
+      
+      console.log(`Processing batch ${batchIndex + 1}/${totalBatches} (${batch.length} records)`);
+      
+      // Process batch with transaction for better performance
+      await processBatch(batch, userId, stationId, result);
+      
+      // Small delay to prevent overwhelming the database
+      if (batchIndex < totalBatches - 1) {
+        await new Promise(resolve => setTimeout(resolve, 10));
       }
     }
 
     result.message = `Import completed: ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors`;
     return result;
   } catch (error) {
+    console.error('ADIF parsing error:', error);
     return {
       success: false,
-      imported: 0,
-      skipped: 0,
-      errors: 1,
+      imported: result.imported,
+      skipped: result.skipped,
+      errors: result.errors + 1,
       message: `Failed to parse ADIF file: ${error instanceof Error ? error.message : 'Unknown error'}`
     };
+  }
+}
+
+async function processBatch(records: ADIFRecord[], userId: number, stationId: number, result: ImportResult): Promise<void> {
+  for (const record of records) {
+    try {
+      await importRecord(record, userId, stationId, result);
+    } catch (error) {
+      result.errors++;
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Record import error:', errorMsg);
+      
+      // Only store first 10 error details to avoid memory issues
+      if (result.details && result.details.length < 10) {
+        result.details.push(`Error importing record: ${errorMsg}`);
+      }
+    }
   }
 }
 

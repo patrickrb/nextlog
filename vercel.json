@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "src/app/api/adif/import/route.ts": {
+      "maxDuration": 30
+    },
+    "src/app/api/adif/export/route.ts": {
+      "maxDuration": 30
+    }
+  },
+  "regions": ["iad1"]
+}

@@ -100,6 +100,27 @@ export default function ADIFPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
+    
+    if (selectedFile) {
+      // Check file size (10MB limit for Vercel)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (selectedFile.size > maxSize) {
+        setImportError(`File size (${(selectedFile.size / 1024 / 1024).toFixed(1)}MB) exceeds the 10MB limit. Please use a smaller file or split your ADIF file into chunks.`);
+        setFile(null);
+        e.target.value = '';
+        return;
+      }
+      
+      // Check file extension
+      const fileName = selectedFile.name.toLowerCase();
+      if (!fileName.endsWith('.adi') && !fileName.endsWith('.adif') && !fileName.endsWith('.txt')) {
+        setImportError('Please select a valid ADIF file (.adi, .adif, or .txt)');
+        setFile(null);
+        e.target.value = '';
+        return;
+      }
+    }
+    
     setFile(selectedFile || null);
     setImportResult(null);
     setImportError('');
@@ -128,10 +149,18 @@ export default function ADIFPage() {
       formData.append('file', file);
       formData.append('stationId', selectedStationId);
 
+      // Show progress while uploading
+      const progressInterval = setInterval(() => {
+        setImportProgress(prev => Math.min(prev + 5, 90));
+      }, 500);
+
       const response = await fetch('/api/adif/import', {
         method: 'POST',
         body: formData,
       });
+
+      clearInterval(progressInterval);
+      setImportProgress(95);
 
       const data = await response.json();
 
@@ -143,12 +172,28 @@ export default function ADIFPage() {
         const fileInput = document.getElementById('adif-file') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
       } else {
-        setImportError(data.error || 'Failed to import ADIF file');
+        // Provide specific error messages based on status
+        let errorMessage = data.error || 'Failed to import ADIF file';
+        
+        if (response.status === 413) {
+          errorMessage = data.error || 'File too large to process. Please use a smaller file.';
+        } else if (response.status === 408) {
+          errorMessage = data.error || 'Import timed out. Please try with a smaller file.';
+        } else if (response.status === 500) {
+          errorMessage = data.error || 'Server error during import. Please try with a smaller file or contact support.';
+        }
+        
+        setImportError(errorMessage);
       }
-    } catch {
-      setImportError('Network error. Please try again.');
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        setImportError('Upload was cancelled.');
+      } else {
+        setImportError('Network error. Please check your connection and try again. For large files, consider splitting them into smaller chunks.');
+      }
     } finally {
       setUploading(false);
+      setImportProgress(0);
     }
   };
 
@@ -208,7 +253,7 @@ export default function ADIFPage() {
 
   const isValidAdifFile = (filename: string) => {
     const extension = filename.toLowerCase().split('.').pop();
-    return extension === 'adi' || extension === 'adif';
+    return extension === 'adi' || extension === 'adif' || extension === 'txt';
   };
 
   return (
@@ -250,7 +295,8 @@ export default function ADIFPage() {
                   </CardTitle>
                   <CardDescription>
                     Upload an ADIF (.adi or .adif) file to import your amateur radio contacts. 
-                    Select the station to associate these contacts with.
+                    Maximum file size: 10MB. For larger files or better performance, consider splitting your ADIF file into smaller chunks.
+                    Files with more than 5,000 contacts may timeout - please split large logbooks.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -297,7 +343,7 @@ export default function ADIFPage() {
                         <Input
                           id="adif-file"
                           type="file"
-                          accept=".adi,.adif"
+                          accept=".adi,.adif,.txt"
                           onChange={handleFileChange}
                           disabled={uploading}
                         />
@@ -306,14 +352,14 @@ export default function ADIFPage() {
                         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                           <FileText className="h-4 w-4" />
                           <span>{file.name}</span>
-                          <span>({(file.size / 1024).toFixed(1)} KB)</span>
+                          <span>({file.size > 1024 * 1024 ? (file.size / 1024 / 1024).toFixed(1) + ' MB' : (file.size / 1024).toFixed(1) + ' KB'})</span>
                           {!isValidAdifFile(file.name) && (
                             <span className="text-destructive">(Invalid file type)</span>
                           )}
                         </div>
                       )}
                       <p className="text-sm text-muted-foreground">
-                        Supported formats: .adi, .adif (ADIF 3.1.5 compatible)
+                        Supported formats: .adi, .adif, .txt (ADIF 3.1.5 compatible). Max size: 10MB, Max records: 5,000
                       </p>
                     </div>
 
