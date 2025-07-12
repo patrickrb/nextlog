@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { getAdifImportSettings } from '@/lib/settings';
 
 interface ADIFRecord {
   fields: { [key: string]: string };
@@ -22,6 +23,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get current import settings
+    const importSettings = await getAdifImportSettings();
+    const maxFileSizeMB = importSettings.adif_max_file_size_mb as number;
+    const maxFileSize = maxFileSizeMB * 1024 * 1024;
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const stationId = formData.get('stationId') as string;
@@ -34,6 +40,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Station ID is required' }, { status: 400 });
     }
 
+    // Check file size using dynamic setting
+    if (file.size > maxFileSize) {
+      return NextResponse.json({ 
+        error: `File too large. Please upload files smaller than ${maxFileSizeMB}MB. For larger files, consider splitting them into smaller chunks.` 
+      }, { status: 413 });
+    }
+
     // Verify station belongs to user
     const stationQuery = 'SELECT id FROM stations WHERE id = $1 AND user_id = $2';
     const stationResult = await query(stationQuery, [parseInt(stationId), parseInt(user.userId)]);
@@ -44,19 +57,43 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Read and parse ADIF file
     const fileContent = await file.text();
-    const result = await parseAndImportADIF(fileContent, parseInt(user.userId), parseInt(stationId));
+    
+    // Quick validation before processing using dynamic settings
+    const maxContentSize = maxFileSizeMB * 1.5 * 1024 * 1024; // Allow 1.5x file size for text expansion
+    if (fileContent.length > maxContentSize) {
+      return NextResponse.json({ 
+        error: 'File content too large to process. Please use smaller files.' 
+      }, { status: 413 });
+    }
+
+    const result = await parseAndImportADIF(fileContent, parseInt(user.userId), parseInt(stationId), importSettings);
 
     return NextResponse.json(result);
   } catch (error) {
     console.error('ADIF import error:', error);
+    
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (error.message.includes('timeout') || error.message.includes('deadline')) {
+        return NextResponse.json({
+          error: 'Import timeout. Please try with a smaller file or split your ADIF file into chunks.'
+        }, { status: 408 });
+      }
+      if (error.message.includes('memory') || error.message.includes('heap')) {
+        return NextResponse.json({
+          error: 'File too large to process. Please split into smaller files.'
+        }, { status: 413 });
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error during import. Please try with a smaller file.' },
       { status: 500 }
     );
   }
 }
 
-async function parseAndImportADIF(content: string, userId: number, stationId: number): Promise<ImportResult> {
+async function parseAndImportADIF(content: string, userId: number, stationId: number, settings: Record<string, unknown>): Promise<ImportResult> {
   const result: ImportResult = {
     success: true,
     imported: 0,
@@ -65,6 +102,11 @@ async function parseAndImportADIF(content: string, userId: number, stationId: nu
     details: []
   };
 
+  const startTime = Date.now();
+  const timeoutMs = (settings.adif_timeout_seconds as number) * 1000; // Dynamic timeout from settings
+  const maxRecords = settings.adif_max_record_count as number;
+  const batchSize = settings.adif_batch_size as number;
+  
   try {
     // Remove header if present (everything before <eoh>)
     const eohIndex = content.toLowerCase().indexOf('<eoh>');
@@ -72,27 +114,125 @@ async function parseAndImportADIF(content: string, userId: number, stationId: nu
 
     // Parse records
     const records = parseADIFRecords(dataContent);
+    console.log(`Parsed ${records.length} records from ADIF file`);
+    console.log(`First record sample:`, records[0]?.fields ? Object.keys(records[0].fields).slice(0, 5) : 'No records');
     
-    for (const record of records) {
+    // Limit number of records for large imports using dynamic setting
+    if (records.length > maxRecords) {
+      return {
+        success: false,
+        imported: 0,
+        skipped: 0,
+        errors: 1,
+        message: `File contains ${records.length} records. For performance reasons, please limit imports to ${maxRecords} records or fewer. Consider using the ADIF splitter tool: node scripts/split-adif.js yourfile.adi 400`
+      };
+    }
+    
+    // For large files, provide realistic timeout warning
+    const estimatedTimeNeeded = Math.ceil(records.length / batchSize) * 0.2; // Estimate 200ms per batch
+    if (estimatedTimeNeeded > (timeoutMs / 1000)) {
+      console.warn(`Warning: File has ${records.length} records which may take ~${estimatedTimeNeeded}s but timeout is ${timeoutMs/1000}s. Consider splitting the file.`);
+    }
+    
+    // Process records in batches to avoid timeouts using dynamic setting
+    const totalBatches = Math.ceil(records.length / batchSize);
+    
+    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+      // Check timeout early with buffer
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = timeoutMs - elapsedTime;
+      
+      if (remainingTime < 3000) { // Leave 3 seconds buffer for final processing
+        const recordsProcessed = batchIndex * batchSize;
+        const recordsRemaining = records.length - recordsProcessed;
+        result.message = `Import timed out after processing ${recordsProcessed}/${records.length} records (${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors). ${recordsRemaining} records remaining. Please try importing in smaller chunks using: node scripts/split-adif.js yourfile.adi 400`;
+        result.success = false;
+        return result;
+      }
+      
+      const startIdx = batchIndex * batchSize;
+      const endIdx = Math.min(startIdx + batchSize, records.length);
+      const batch = records.slice(startIdx, endIdx);
+      
+      console.log(`Processing batch ${batchIndex + 1}/${totalBatches} (${batch.length} records) - ${elapsedTime/1000}s elapsed`);
+      console.log(`Current results so far: ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors`);
+      
       try {
-        await importRecord(record, userId, stationId, result);
-      } catch (error) {
-        result.errors++;
-        result.details?.push(`Error importing record: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        // Process batch with transaction for better performance
+        await processBatch(batch, userId, stationId, result);
+        
+        // Log progress every 10 batches
+        if ((batchIndex + 1) % 10 === 0) {
+          console.log(`Progress: ${batchIndex + 1}/${totalBatches} batches completed. ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors.`);
+        }
+      } catch (batchError) {
+        console.error(`Batch ${batchIndex + 1} failed:`, batchError);
+        result.errors += batch.length; // Mark all records in batch as errors
+        if (result.details && result.details.length < 10) {
+          result.details.push(`Batch ${batchIndex + 1} failed: ${batchError instanceof Error ? batchError.message : 'Unknown error'}`);
+        }
+      }
+      
+      // Small delay to prevent overwhelming the database
+      if (batchIndex < totalBatches - 1) {
+        await new Promise(resolve => setTimeout(resolve, 5)); // Reduced delay
       }
     }
 
-    result.message = `Import completed: ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors`;
+    const totalProcessed = result.imported + result.skipped + result.errors;
+    result.message = `Import completed successfully: ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors out of ${records.length} total records (${totalProcessed}/${records.length} processed)`;
+    
+    if (totalProcessed < records.length) {
+      result.success = false;
+      result.message += `. Warning: Only ${totalProcessed} of ${records.length} records were processed.`;
+    }
+    
     return result;
   } catch (error) {
+    console.error('ADIF parsing error:', error);
+    
+    // More detailed error information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
+    
+    console.error('Error stack:', errorStack);
+    
     return {
       success: false,
-      imported: 0,
-      skipped: 0,
-      errors: 1,
-      message: `Failed to parse ADIF file: ${error instanceof Error ? error.message : 'Unknown error'}`
+      imported: result.imported,
+      skipped: result.skipped,
+      errors: result.errors + 1,
+      message: `Failed to parse ADIF file: ${errorMessage}. Processed ${result.imported + result.skipped + result.errors} records before failure.`,
+      details: result.details || []
     };
   }
+}
+
+async function processBatch(records: ADIFRecord[], userId: number, stationId: number, result: ImportResult): Promise<void> {
+  console.log(`Starting batch of ${records.length} records...`);
+  
+  for (let i = 0; i < records.length; i++) {
+    const record = records[i];
+    try {
+      await importRecord(record, userId, stationId, result);
+      
+      // Log progress every 10 records within batch
+      if ((i + 1) % 10 === 0) {
+        console.log(`  Processed ${i + 1}/${records.length} records in current batch`);
+      }
+    } catch (error) {
+      result.errors++;
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Record ${i + 1} import error:`, errorMsg);
+      
+      // Only store first 10 error details to avoid memory issues
+      if (result.details && result.details.length < 10) {
+        result.details.push(`Error importing record ${i + 1}: ${errorMsg}`);
+      }
+    }
+  }
+  
+  console.log(`Batch completed: ${result.imported} total imported, ${result.skipped} total skipped, ${result.errors} total errors`);
 }
 
 function parseADIFRecords(content: string): ADIFRecord[] {

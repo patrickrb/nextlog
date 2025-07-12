@@ -13,6 +13,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Upload, Download, FileText, CheckCircle, AlertCircle, Loader2, Calendar } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import AutoImportADIF from '@/components/AutoImportADIF';
 
 interface Station {
   id: number;
@@ -100,6 +101,27 @@ export default function ADIFPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
+    
+    if (selectedFile) {
+      // Check file size (10MB limit for Vercel)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (selectedFile.size > maxSize) {
+        setImportError(`File size (${(selectedFile.size / 1024 / 1024).toFixed(1)}MB) exceeds the 10MB limit. Please use a smaller file or split your ADIF file into chunks.`);
+        setFile(null);
+        e.target.value = '';
+        return;
+      }
+      
+      // Check file extension
+      const fileName = selectedFile.name.toLowerCase();
+      if (!fileName.endsWith('.adi') && !fileName.endsWith('.adif') && !fileName.endsWith('.txt')) {
+        setImportError('Please select a valid ADIF file (.adi, .adif, or .txt)');
+        setFile(null);
+        e.target.value = '';
+        return;
+      }
+    }
+    
     setFile(selectedFile || null);
     setImportResult(null);
     setImportError('');
@@ -128,10 +150,18 @@ export default function ADIFPage() {
       formData.append('file', file);
       formData.append('stationId', selectedStationId);
 
+      // Show progress while uploading
+      const progressInterval = setInterval(() => {
+        setImportProgress(prev => Math.min(prev + 5, 90));
+      }, 500);
+
       const response = await fetch('/api/adif/import', {
         method: 'POST',
         body: formData,
       });
+
+      clearInterval(progressInterval);
+      setImportProgress(95);
 
       const data = await response.json();
 
@@ -143,12 +173,28 @@ export default function ADIFPage() {
         const fileInput = document.getElementById('adif-file') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
       } else {
-        setImportError(data.error || 'Failed to import ADIF file');
+        // Provide specific error messages based on status
+        let errorMessage = data.error || 'Failed to import ADIF file';
+        
+        if (response.status === 413) {
+          errorMessage = data.error || 'File too large to process. Please use a smaller file.';
+        } else if (response.status === 408) {
+          errorMessage = data.error || 'Import timed out. Please try with a smaller file.';
+        } else if (response.status === 500) {
+          errorMessage = data.error || 'Server error during import. Please try with a smaller file or contact support.';
+        }
+        
+        setImportError(errorMessage);
       }
-    } catch {
-      setImportError('Network error. Please try again.');
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        setImportError('Upload was cancelled.');
+      } else {
+        setImportError('Network error. Please check your connection and try again. For large files, consider splitting them into smaller chunks.');
+      }
     } finally {
       setUploading(false);
+      setImportProgress(0);
     }
   };
 
@@ -208,7 +254,7 @@ export default function ADIFPage() {
 
   const isValidAdifFile = (filename: string) => {
     const extension = filename.toLowerCase().split('.').pop();
-    return extension === 'adi' || extension === 'adif';
+    return extension === 'adi' || extension === 'adif' || extension === 'txt';
   };
 
   return (
@@ -227,11 +273,15 @@ export default function ADIFPage() {
 
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0 space-y-6">
-          <Tabs defaultValue="import" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs defaultValue="auto-import" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="import" className="flex items-center space-x-2">
                 <Upload className="h-4 w-4" />
-                <span>Import</span>
+                <span>Manual Import</span>
+              </TabsTrigger>
+              <TabsTrigger value="auto-import" className="flex items-center space-x-2">
+                <FileText className="h-4 w-4" />
+                <span>Auto Import</span>
               </TabsTrigger>
               <TabsTrigger value="export" className="flex items-center space-x-2">
                 <Download className="h-4 w-4" />
@@ -246,11 +296,11 @@ export default function ADIFPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center">
                     <Upload className="h-5 w-5 mr-2" />
-                    Import ADIF File
+                    Manual ADIF Import
                   </CardTitle>
                   <CardDescription>
-                    Upload an ADIF (.adi or .adif) file to import your amateur radio contacts. 
-                    Select the station to associate these contacts with.
+                    Upload smaller ADIF files (recommended: &lt;1000 contacts). For large files with 1000+ contacts, 
+                    use the &quot;Auto Import&quot; tab which automatically splits and processes files in reliable chunks.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -297,7 +347,7 @@ export default function ADIFPage() {
                         <Input
                           id="adif-file"
                           type="file"
-                          accept=".adi,.adif"
+                          accept=".adi,.adif,.txt"
                           onChange={handleFileChange}
                           disabled={uploading}
                         />
@@ -306,14 +356,14 @@ export default function ADIFPage() {
                         <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                           <FileText className="h-4 w-4" />
                           <span>{file.name}</span>
-                          <span>({(file.size / 1024).toFixed(1)} KB)</span>
+                          <span>({file.size > 1024 * 1024 ? (file.size / 1024 / 1024).toFixed(1) + ' MB' : (file.size / 1024).toFixed(1) + ' KB'})</span>
                           {!isValidAdifFile(file.name) && (
                             <span className="text-destructive">(Invalid file type)</span>
                           )}
                         </div>
                       )}
                       <p className="text-sm text-muted-foreground">
-                        Supported formats: .adi, .adif (ADIF 3.1.5 compatible)
+                        Supported formats: .adi, .adif, .txt (ADIF 3.1.5 compatible). Max size: 10MB, Max records: 5,000
                       </p>
                     </div>
 
@@ -418,6 +468,62 @@ export default function ADIFPage() {
                     </div>
                   </CardContent>
                 </Card>
+              )}
+            </TabsContent>
+
+            {/* Auto Import Tab */}
+            <TabsContent value="auto-import" className="space-y-6">
+              {stationsLoaded && stations.length > 0 && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="auto-station">Select Station for Auto Import *</Label>
+                    <Select
+                      value={selectedStationId}
+                      onValueChange={setSelectedStationId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a station to associate contacts with" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stations.map((station) => (
+                          <SelectItem key={station.id} value={station.id.toString()}>
+                            {station.callsign} - {station.station_name}
+                            {station.is_default && <span className="ml-1 text-xs text-blue-600">(Default)</span>}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {selectedStationId && (
+                    <AutoImportADIF stationId={parseInt(selectedStationId)} />
+                  )}
+
+                  {!selectedStationId && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Please select a station above to enable auto-import functionality.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
+
+              {!stationsLoaded && (
+                <div className="text-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                  <p className="text-sm text-muted-foreground mt-2">Loading stations...</p>
+                </div>
+              )}
+
+              {stationsLoaded && stations.length === 0 && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    No stations found. Please <Link href="/stations/new" className="underline">create a station</Link> first before importing contacts.
+                  </AlertDescription>
+                </Alert>
               )}
             </TabsContent>
 

@@ -26,6 +26,7 @@ export enum Permission {
   
   // System administration
   VIEW_AUDIT_LOGS = 'view_audit_logs',
+  MANAGE_SYSTEM = 'manage_system',
   SYSTEM_ADMIN = 'system_admin'
 }
 
@@ -48,6 +49,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     Permission.VIEW_STORAGE_CONFIG,
     Permission.EDIT_STORAGE_CONFIG,
     Permission.VIEW_AUDIT_LOGS,
+    Permission.MANAGE_SYSTEM,
     Permission.SYSTEM_ADMIN
   ]
 };

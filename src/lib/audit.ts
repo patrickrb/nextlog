@@ -178,6 +178,7 @@ export const AUDIT_ACTIONS = {
   
   // System
   ADMIN_LOGIN: 'admin_login',
+  SYSTEM_CONFIG_UPDATED: 'system_config_updated',
   SYSTEM_BACKUP: 'system_backup',
   SYSTEM_RESTORE: 'system_restore'
 } as const;

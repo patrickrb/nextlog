@@ -57,7 +57,7 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* User Management */}
           <Card>
             <CardHeader>
@@ -105,6 +105,32 @@ export default function AdminDashboard() {
                 </Button>
                 <p className="text-sm text-muted-foreground">
                   Set up and manage cloud storage configurations.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* System Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Settings className="mr-2 h-5 w-5" />
+                System Settings
+              </CardTitle>
+              <CardDescription>
+                Configure application limits and behavior
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <Button asChild className="w-full justify-start" variant="outline">
+                  <Link href="/admin/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Configure Settings
+                  </Link>
+                </Button>
+                <p className="text-sm text-muted-foreground">
+                  Manage ADIF import limits, timeouts, and system preferences.
                 </p>
               </div>
             </CardContent>
