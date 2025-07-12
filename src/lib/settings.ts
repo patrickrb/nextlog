@@ -1,6 +1,19 @@
 // System settings management for NodeLog
 import { query } from './db';
 
+// In-memory cache for settings
+interface SettingsCache {
+  data: Record<string, unknown>;
+  lastUpdated: number;
+  ttl: number; // Time to live in milliseconds
+}
+
+const settingsCache: SettingsCache = {
+  data: {},
+  lastUpdated: 0,
+  ttl: 5 * 60 * 1000 // 5 minutes cache TTL
+};
+
 export interface SystemSetting {
   id: number;
   setting_key: string;
@@ -61,10 +74,40 @@ export async function getSetting<T extends keyof typeof DEFAULT_SETTINGS>(
 }
 
 /**
- * Get multiple settings at once
+ * Check if cache is valid
+ */
+function isCacheValid(): boolean {
+  const now = Date.now();
+  return (now - settingsCache.lastUpdated) < settingsCache.ttl;
+}
+
+/**
+ * Invalidate settings cache (call when settings are updated)
+ */
+export function invalidateSettingsCache(): void {
+  settingsCache.lastUpdated = 0;
+  settingsCache.data = {};
+}
+
+/**
+ * Get multiple settings at once with caching
  */
 export async function getSettings(keys: string[]): Promise<Record<string, unknown>> {
   try {
+    // Check if we have cached data for all requested keys
+    const now = Date.now();
+    const hasAllCachedKeys = keys.every(key => key in settingsCache.data);
+    
+    if (isCacheValid() && hasAllCachedKeys) {
+      // Return cached values
+      const cachedSettings: Record<string, unknown> = {};
+      keys.forEach(key => {
+        cachedSettings[key] = settingsCache.data[key];
+      });
+      return cachedSettings;
+    }
+
+    // Fetch from database
     const placeholders = keys.map((_, index) => `$${index + 1}`).join(',');
     const result = await query(
       `SELECT setting_key, setting_value, data_type FROM system_settings WHERE setting_key IN (${placeholders})`,
@@ -85,9 +128,27 @@ export async function getSettings(keys: string[]): Promise<Record<string, unknow
       }
     });
 
+    // Update cache with new values
+    Object.assign(settingsCache.data, settings);
+    settingsCache.lastUpdated = now;
+
     return settings;
   } catch (error) {
     console.error('Error fetching settings:', error);
+    
+    // Try to return cached values even if they're stale
+    if (Object.keys(settingsCache.data).length > 0) {
+      const cachedSettings: Record<string, unknown> = {};
+      keys.forEach(key => {
+        if (key in settingsCache.data) {
+          cachedSettings[key] = settingsCache.data[key];
+        } else if (key in DEFAULT_SETTINGS) {
+          cachedSettings[key] = DEFAULT_SETTINGS[key as keyof typeof DEFAULT_SETTINGS];
+        }
+      });
+      return cachedSettings;
+    }
+    
     // Return defaults for all requested keys
     const defaults: Record<string, unknown> = {};
     keys.forEach(key => {
@@ -149,7 +210,14 @@ export async function updateSetting(
       : 'UPDATE system_settings SET setting_value = $1 WHERE setting_key = $2';
 
     const result = await query(updateQuery, updateParams);
-    return (result.rowCount ?? 0) > 0;
+    const success = (result.rowCount ?? 0) > 0;
+    
+    // Invalidate cache when settings are updated
+    if (success) {
+      invalidateSettingsCache();
+    }
+    
+    return success;
   } catch (error) {
     console.error(`Error updating setting ${key}:`, error);
     return false;
@@ -175,7 +243,14 @@ export async function createSetting(
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [key, String(value), dataType, category, description || null, isPublic, createdBy || null]
     );
-    return (result.rowCount ?? 0) > 0;
+    const success = (result.rowCount ?? 0) > 0;
+    
+    // Invalidate cache when settings are created
+    if (success) {
+      invalidateSettingsCache();
+    }
+    
+    return success;
   } catch (error) {
     console.error(`Error creating setting ${key}:`, error);
     return false;
@@ -191,7 +266,14 @@ export async function deleteSetting(key: string): Promise<boolean> {
       'DELETE FROM system_settings WHERE setting_key = $1',
       [key]
     );
-    return (result.rowCount ?? 0) > 0;
+    const success = (result.rowCount ?? 0) > 0;
+    
+    // Invalidate cache when settings are deleted
+    if (success) {
+      invalidateSettingsCache();
+    }
+    
+    return success;
   } catch (error) {
     console.error(`Error deleting setting ${key}:`, error);
     return false;
