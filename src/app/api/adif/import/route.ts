@@ -131,9 +131,12 @@ async function parseAndImportADIF(content: string, userId: number, stationId: nu
     const totalBatches = Math.ceil(records.length / batchSize);
     
     for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-      // Check timeout
-      if (Date.now() - startTime > timeoutMs) {
-        result.message = `Import timed out after ${batchIndex * batchSize} records. ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors. Please try with smaller files.`;
+      // Check timeout early with buffer
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = timeoutMs - elapsedTime;
+      
+      if (remainingTime < 2000) { // Leave 2 seconds buffer
+        result.message = `Import timed out after processing ${batchIndex} batches (${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors). ${totalBatches - batchIndex} batches remaining. Please try importing in smaller chunks.`;
         result.success = false;
         return result;
       }
@@ -142,27 +145,55 @@ async function parseAndImportADIF(content: string, userId: number, stationId: nu
       const endIdx = Math.min(startIdx + batchSize, records.length);
       const batch = records.slice(startIdx, endIdx);
       
-      console.log(`Processing batch ${batchIndex + 1}/${totalBatches} (${batch.length} records)`);
+      console.log(`Processing batch ${batchIndex + 1}/${totalBatches} (${batch.length} records) - ${elapsedTime/1000}s elapsed`);
       
-      // Process batch with transaction for better performance
-      await processBatch(batch, userId, stationId, result);
+      try {
+        // Process batch with transaction for better performance
+        await processBatch(batch, userId, stationId, result);
+        
+        // Log progress every 10 batches
+        if ((batchIndex + 1) % 10 === 0) {
+          console.log(`Progress: ${batchIndex + 1}/${totalBatches} batches completed. ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors.`);
+        }
+      } catch (batchError) {
+        console.error(`Batch ${batchIndex + 1} failed:`, batchError);
+        result.errors += batch.length; // Mark all records in batch as errors
+        if (result.details && result.details.length < 10) {
+          result.details.push(`Batch ${batchIndex + 1} failed: ${batchError instanceof Error ? batchError.message : 'Unknown error'}`);
+        }
+      }
       
       // Small delay to prevent overwhelming the database
       if (batchIndex < totalBatches - 1) {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise(resolve => setTimeout(resolve, 5)); // Reduced delay
       }
     }
 
-    result.message = `Import completed: ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors`;
+    const totalProcessed = result.imported + result.skipped + result.errors;
+    result.message = `Import completed successfully: ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors out of ${records.length} total records (${totalProcessed}/${records.length} processed)`;
+    
+    if (totalProcessed < records.length) {
+      result.success = false;
+      result.message += `. Warning: Only ${totalProcessed} of ${records.length} records were processed.`;
+    }
+    
     return result;
   } catch (error) {
     console.error('ADIF parsing error:', error);
+    
+    // More detailed error information
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : '';
+    
+    console.error('Error stack:', errorStack);
+    
     return {
       success: false,
       imported: result.imported,
       skipped: result.skipped,
       errors: result.errors + 1,
-      message: `Failed to parse ADIF file: ${error instanceof Error ? error.message : 'Unknown error'}`
+      message: `Failed to parse ADIF file: ${errorMessage}. Processed ${result.imported + result.skipped + result.errors} records before failure.`,
+      details: result.details || []
     };
   }
 }
