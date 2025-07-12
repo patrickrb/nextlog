@@ -281,8 +281,8 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
           <div className="space-y-2">
             <h4 className="font-semibold">Chunk Results:</h4>
             <div className="max-h-40 overflow-y-auto space-y-1">
-              {results.map((result, index) => (
-                <div key={index} className="flex items-center justify-between text-sm p-2 bg-gray-50 dark:bg-gray-800 rounded">
+              {[...results].reverse().map((result) => (
+                <div key={result.chunkIndex} className="flex items-center justify-between text-sm p-2 bg-gray-50 dark:bg-gray-800 rounded">
                   <div className="flex items-center">
                     {result.success ? (
                       <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
@@ -291,8 +291,10 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
                     )}
                     <span>Chunk {result.chunkIndex + 1}</span>
                   </div>
-                  <div className="text-xs">
-                    {result.imported}i, {result.skipped}s, {result.errors}e
+                  <div className="text-xs space-x-2">
+                    <span className="text-green-600">{result.imported} imported</span>
+                    <span className="text-yellow-600">{result.skipped} skipped</span>
+                    <span className="text-red-600">{result.errors} errors</span>
                   </div>
                 </div>
               ))}
