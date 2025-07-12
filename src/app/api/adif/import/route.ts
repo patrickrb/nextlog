@@ -123,8 +123,14 @@ async function parseAndImportADIF(content: string, userId: number, stationId: nu
         imported: 0,
         skipped: 0,
         errors: 1,
-        message: `File contains ${records.length} records. For performance reasons, please limit imports to ${maxRecords} records or fewer. Consider splitting your file.`
+        message: `File contains ${records.length} records. For performance reasons, please limit imports to ${maxRecords} records or fewer. Consider using the ADIF splitter tool: node scripts/split-adif.js yourfile.adi 400`
       };
+    }
+    
+    // For large files, provide realistic timeout warning
+    const estimatedTimeNeeded = Math.ceil(records.length / batchSize) * 0.2; // Estimate 200ms per batch
+    if (estimatedTimeNeeded > (timeoutMs / 1000)) {
+      console.warn(`Warning: File has ${records.length} records which may take ~${estimatedTimeNeeded}s but timeout is ${timeoutMs/1000}s. Consider splitting the file.`);
     }
     
     // Process records in batches to avoid timeouts using dynamic setting
@@ -135,8 +141,10 @@ async function parseAndImportADIF(content: string, userId: number, stationId: nu
       const elapsedTime = Date.now() - startTime;
       const remainingTime = timeoutMs - elapsedTime;
       
-      if (remainingTime < 2000) { // Leave 2 seconds buffer
-        result.message = `Import timed out after processing ${batchIndex} batches (${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors). ${totalBatches - batchIndex} batches remaining. Please try importing in smaller chunks.`;
+      if (remainingTime < 3000) { // Leave 3 seconds buffer for final processing
+        const recordsProcessed = batchIndex * batchSize;
+        const recordsRemaining = records.length - recordsProcessed;
+        result.message = `Import timed out after processing ${recordsProcessed}/${records.length} records (${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors). ${recordsRemaining} records remaining. Please try importing in smaller chunks using: node scripts/split-adif.js yourfile.adi 400`;
         result.success = false;
         return result;
       }
