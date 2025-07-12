@@ -130,8 +130,8 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
       const allRecords = parseADIFRecords(content);
       console.log(`Parsed ${allRecords.length} total records`);
 
-      // Determine chunk size (400 records per chunk for reliable Vercel processing)
-      const chunkSize = 400;
+      // Determine chunk size (200 records per chunk for reliable Vercel processing)
+      const chunkSize = 200;
       const chunks = Math.ceil(allRecords.length / chunkSize);
       setTotalChunks(chunks);
 
@@ -175,25 +175,36 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
 
           console.log(`Chunk ${i + 1} completed: ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors`);
 
-          // Small delay between chunks to avoid overwhelming the server
+          // Delay between chunks to avoid overwhelming the server and allow connections to reset
           if (i < chunks - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
           }
 
         } catch (chunkError) {
           console.error(`Chunk ${i + 1} failed:`, chunkError);
+          
+          // Check if this was a timeout or partial success
+          const errorMessage = chunkError instanceof Error ? chunkError.message : 'Unknown error';
+          const isTimeout = errorMessage.includes('timeout') || errorMessage.includes('timed out');
+          
           const errorResult: ChunkResult = {
             success: false,
             imported: 0,
             skipped: 0,
             errors: chunkRecords.length,
-            message: `Chunk ${i + 1} failed: ${chunkError instanceof Error ? chunkError.message : 'Unknown error'}`,
+            message: `Chunk ${i + 1} ${isTimeout ? 'timed out' : 'failed'}: ${errorMessage}`,
             chunkIndex: i,
             totalChunks: chunks
           };
           allResults.push(errorResult);
           setResults([...allResults]);
           totalErrors += chunkRecords.length;
+          
+          // For timeouts, add extra delay before continuing
+          if (isTimeout && i < chunks - 1) {
+            console.log('Adding extra delay after timeout...');
+            await new Promise(resolve => setTimeout(resolve, 3000));
+          }
         }
       }
 
@@ -221,7 +232,7 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
           Automatic ADIF Import
         </CardTitle>
         <CardDescription>
-          Upload large ADIF files and they will be automatically split and imported in chunks for reliable processing.
+          Upload large ADIF files and they will be automatically split into 200-record chunks and imported sequentially for reliable processing on Vercel.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
