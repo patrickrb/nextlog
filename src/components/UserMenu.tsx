@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, Radio, Upload, Shield } from 'lucide-react';
+import { LogOut, User, Radio, Upload, Shield, BarChart3 } from 'lucide-react';
 
 interface User {
   id: number;
@@ -89,6 +89,12 @@ export default function UserMenu({ user }: UserMenuProps) {
           <Link href="/stations" className="cursor-pointer">
             <Radio className="mr-2 h-4 w-4" />
             <span>Stations</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/stats" className="cursor-pointer">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            <span>Statistics</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

@@ -155,6 +155,13 @@ export class Contact {
     return parseInt(result.rows[0].count);
   }
 
+  static async countByUserIdSince(userId: number, since: string): Promise<number> {
+    const sql = 'SELECT COUNT(*) FROM contacts WHERE user_id = $1 AND datetime >= $2';
+    const result = await query(sql, [userId, since]);
+    
+    return parseInt(result.rows[0].count);
+  }
+
   static async findByStationId(stationId: number, limit?: number, offset?: number): Promise<IContact[]> {
     let sql = 'SELECT * FROM contacts WHERE station_id = $1 ORDER BY datetime DESC';
     const params = [stationId];
