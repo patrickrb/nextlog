@@ -13,8 +13,17 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = (page - 1) * limit;
+    const since = searchParams.get('since');
+    const countOnly = searchParams.get('count_only') === 'true';
 
     const userId = typeof user.userId === 'string' ? parseInt(user.userId, 10) : user.userId;
+    
+    // Handle count-only request for recent contacts
+    if (countOnly && since) {
+      const count = await Contact.countByUserIdSince(userId, since);
+      return NextResponse.json({ count });
+    }
+
     const contacts = await Contact.findByUserId(userId, limit, offset);
     const total = await Contact.countByUserId(userId);
 

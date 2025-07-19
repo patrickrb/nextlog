@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, BarChart3, TrendingUp } from 'lucide-react';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import EditContactDialog from '@/components/EditContactDialog';
 import Pagination from '@/components/Pagination';
@@ -51,6 +52,7 @@ export default function DashboardPage() {
     total: 0,
     pages: 0
   });
+  const [recentContactsCount, setRecentContactsCount] = useState<number>(0);
   const { user } = useUser();
   const router = useRouter();
 
@@ -83,8 +85,24 @@ export default function DashboardPage() {
     }
   }, [pagination.page, pagination.limit, router]);
 
+  const fetchRecentContactsCount = useCallback(async () => {
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      const response = await fetch(`/api/contacts?since=${thirtyDaysAgo.toISOString()}&count_only=true`);
+      if (response.ok) {
+        const data = await response.json();
+        setRecentContactsCount(data.count || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching recent contacts count:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchContacts(1, 20); // Initial load with default pagination
+    fetchRecentContactsCount(); // Load recent contacts count
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run on mount
 
@@ -141,6 +159,49 @@ export default function DashboardPage() {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0 space-y-6">
+          {/* Quick Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Total QSOs</p>
+                    <p className="text-2xl font-bold">{pagination.total.toLocaleString()}</p>
+                  </div>
+                  <TrendingUp className="h-8 w-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Recent Activity</p>
+                    <p className="text-2xl font-bold">{recentContactsCount.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">contacts in last 30 days</p>
+                  </div>
+                  <BarChart3 className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-6 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">View Detailed</p>
+                  <p className="text-sm text-muted-foreground">Statistics & Analysis</p>
+                </div>
+                <Button asChild>
+                  <Link href="/stats">
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Statistics
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Contact Map */}
           <Card>
             <CardHeader>
