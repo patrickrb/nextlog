@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle, Database, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { AlertCircle, CheckCircle, Database, Eye, EyeOff, Trash2, Edit } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface StorageConfig {
@@ -36,6 +36,7 @@ export default function StorageConfigPage() {
   const [success, setSuccess] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [editingConfig, setEditingConfig] = useState<StorageConfig | null>(null);
   
   // Form state for new/edit config
   const [formData, setFormData] = useState({
@@ -88,34 +89,56 @@ export default function StorageConfigPage() {
     setSuccess('');
 
     try {
+      const isEditing = editingConfig !== null;
+      const method = isEditing ? 'PUT' : 'POST';
+      const bodyData = isEditing ? { ...formData, id: editingConfig.id } : formData;
+      
       const response = await fetch('/api/admin/storage', {
-        method: 'POST',
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(bodyData),
       });
 
       const data = await response.json();
       
       if (response.ok) {
-        setSuccess('Storage configuration created successfully!');
-        setShowForm(false);
-        setFormData({
-          config_type: 'azure_blob',
-          account_name: '',
-          account_key: '',
-          container_name: '',
-          endpoint_url: '',
-          is_enabled: false
-        });
+        setSuccess(`Storage configuration ${isEditing ? 'updated' : 'created'} successfully!`);
+        handleCancelForm();
         fetchConfigs();
       } else {
-        setError(data.error || 'Failed to create storage configuration');
+        setError(data.error || `Failed to ${isEditing ? 'update' : 'create'} storage configuration`);
       }
     } catch {
       setError('Network error occurred');
     }
+  };
+
+  const handleEditConfig = (config: StorageConfig) => {
+    setEditingConfig(config);
+    setFormData({
+      config_type: config.config_type,
+      account_name: config.account_name,
+      account_key: '', // Don't pre-fill encrypted key
+      container_name: config.container_name,
+      endpoint_url: config.endpoint_url || '',
+      is_enabled: config.is_enabled
+    });
+    setShowForm(true);
+  };
+
+  const handleCancelForm = () => {
+    setShowForm(false);
+    setEditingConfig(null);
+    setFormData({
+      config_type: 'azure_blob',
+      account_name: '',
+      account_key: '',
+      container_name: '',
+      endpoint_url: '',
+      is_enabled: false
+    });
   };
 
   const handleToggleEnabled = async (configId: number, currentEnabled: boolean) => {
@@ -186,7 +209,7 @@ export default function StorageConfigPage() {
         title="Storage Configuration" 
         breadcrumbs={[{ label: 'Admin', href: '/admin' }, { label: 'Storage' }]}
         actions={
-          <Button onClick={() => setShowForm(!showForm)}>
+          <Button onClick={() => showForm ? handleCancelForm() : setShowForm(true)}>
             {showForm ? 'Cancel' : 'Add Configuration'}
           </Button>
         }
@@ -210,7 +233,7 @@ export default function StorageConfigPage() {
         {showForm && (
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Add Storage Configuration</CardTitle>
+              <CardTitle>{editingConfig ? 'Edit Storage Configuration' : 'Add Storage Configuration'}</CardTitle>
               <CardDescription>
                 Configure Azure Blob Storage for file uploads and backups
               </CardDescription>
@@ -242,15 +265,15 @@ export default function StorageConfigPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="account_key">Account Key *</Label>
+                  <Label htmlFor="account_key">Account Key {editingConfig ? '(leave empty to keep current)' : '*'}</Label>
                   <div className="relative">
                     <Input
                       id="account_key"
                       type={showPassword ? "text" : "password"}
                       value={formData.account_key}
                       onChange={(e) => setFormData(prev => ({ ...prev, account_key: e.target.value }))}
-                      placeholder="Enter your Azure storage account key"
-                      required
+                      placeholder={editingConfig ? "Leave empty to keep current key" : "Enter your Azure storage account key"}
+                      required={!editingConfig}
                     />
                     <Button
                       type="button"
@@ -288,11 +311,11 @@ export default function StorageConfigPage() {
                 </div>
 
                 <div className="flex justify-end space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+                  <Button type="button" variant="outline" onClick={handleCancelForm}>
                     Cancel
                   </Button>
                   <Button type="submit">
-                    Create Configuration
+                    {editingConfig ? 'Update Configuration' : 'Create Configuration'}
                   </Button>
                 </div>
               </form>
@@ -366,6 +389,14 @@ export default function StorageConfigPage() {
                   </div>
                   
                   <div className="flex justify-end space-x-2 mt-4 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditConfig(config)}
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit
+                    </Button>
                     <Button
                       variant="outline"
                       onClick={() => handleToggleEnabled(config.id, config.is_enabled)}

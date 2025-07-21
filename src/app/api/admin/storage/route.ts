@@ -43,12 +43,12 @@ export const GET = requirePermission(Permission.VIEW_STORAGE_CONFIG)(
     try {
       const result = await query(
         `SELECT 
-          id, config_type, account_name, container_name, endpoint_url, is_enabled, 
-          created_at, updated_at, created_by,
+          sc.id, sc.config_type, sc.account_name, sc.container_name, sc.endpoint_url, sc.is_enabled, 
+          sc.created_at, sc.updated_at, sc.created_by,
           u.name as created_by_name
          FROM storage_config sc
          LEFT JOIN users u ON sc.created_by = u.id
-         ORDER BY config_type, created_at DESC`
+         ORDER BY sc.config_type, sc.created_at DESC`
       );
 
       // Don't return encrypted account keys
