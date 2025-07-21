@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Upload, Image as ImageIcon, Trash2, AlertCircle, CheckCircle } from 'lucide-react';
+import Image from 'next/image';
 
 interface Contact {
   id: number;
@@ -69,19 +70,7 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave }: 
     return !isNaN(parsedDate);
   };
 
-  useEffect(() => {
-    if (contact) {
-      setFormData({
-        ...contact,
-        datetime: contact.datetime && isValidDate(contact.datetime) 
-          ? new Date(contact.datetime).toISOString().slice(0, 16) 
-          : ''
-      });
-      fetchQSLImages();
-    }
-  }, [contact]);
-
-  const fetchQSLImages = async () => {
+  const fetchQSLImages = useCallback(async () => {
     if (!contact) return;
     
     try {
@@ -92,10 +81,22 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave }: 
         setQslImages(data.images || []);
         setStorageAvailable(data.storage_available || false);
       }
-    } catch (error) {
-      console.error('Error fetching QSL images:', error);
+    } catch (fetchError) {
+      console.error('Error fetching QSL images:', fetchError);
     }
-  };
+  }, [contact]);
+
+  useEffect(() => {
+    if (contact) {
+      setFormData({
+        ...contact,
+        datetime: contact.datetime && isValidDate(contact.datetime) 
+          ? new Date(contact.datetime).toISOString().slice(0, 16) 
+          : ''
+      });
+      fetchQSLImages();
+    }
+  }, [contact, fetchQSLImages]);
 
   const calculateBand = (frequency: number): string => {
     if (frequency >= 1.8 && frequency <= 2.0) return '160m';
@@ -148,8 +149,9 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave }: 
       } else {
         setImageError(data.error || 'Failed to upload image');
       }
-    } catch (error) {
+    } catch (uploadError) {
       setImageError('Network error occurred');
+      console.error('Upload error:', uploadError);
     } finally {
       setImageLoading(false);
       setUploadingType(null);
@@ -176,8 +178,9 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave }: 
       } else {
         setImageError(data.error || 'Failed to delete image');
       }
-    } catch (error) {
+    } catch (deleteError) {
       setImageError('Network error occurred');
+      console.error('Delete error:', deleteError);
     } finally {
       setImageLoading(false);
     }
@@ -415,183 +418,196 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave }: 
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Front Image */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm flex items-center">
-                    <ImageIcon className="mr-2 h-4 w-4" />
-                    QSL Card Front
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {qslImages.find(img => img.image_type === 'front') ? (
-                    <div className="space-y-2">
-                      <div className="aspect-[3/2] bg-muted rounded-lg flex items-center justify-center overflow-hidden">
-                        {qslImages.find(img => img.image_type === 'front')?.storage_url ? (
-                          <img
-                            src={qslImages.find(img => img.image_type === 'front')?.storage_url}
-                            alt="QSL Card Front"
-                            className="w-full h-full object-cover"
-                          />
+              {(() => {
+                const frontImage = qslImages.find(img => img.image_type === 'front');
+                const backImage = qslImages.find(img => img.image_type === 'back');
+                
+                return (
+                  <>
+                    {/* Front Image */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm flex items-center">
+                          <ImageIcon className="mr-2 h-4 w-4" />
+                          QSL Card Front
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {frontImage ? (
+                          <div className="space-y-2">
+                            <div className="aspect-[3/2] bg-muted rounded-lg flex items-center justify-center overflow-hidden relative">
+                              {frontImage?.storage_url ? (
+                                <Image
+                                  src={frontImage.storage_url}
+                                  alt="QSL Card Front"
+                                  width={400}
+                                  height={267}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              <p>{frontImage?.original_filename}</p>
+                              <p>{formatFileSize(frontImage?.file_size || 0)}</p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleImageDelete('front')}
+                              disabled={imageLoading || !storageAvailable}
+                              className="w-full"
+                            >
+                              {imageLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                              Delete Front Image
+                            </Button>
+                          </div>
                         ) : (
-                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                          <div className="space-y-2">
+                            <div className="aspect-[3/2] bg-muted rounded-lg flex items-center justify-center border-2 border-dashed">
+                              <div className="text-center">
+                                <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                                <p className="text-sm text-muted-foreground">No front image</p>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <Input
+                                type="file"
+                                accept="image/jpeg,image/jpg,image/png,image/webp"
+                                disabled={!storageAvailable || imageLoading}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    handleImageUpload(file, 'front');
+                                    e.target.value = '';
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={!storageAvailable || imageLoading}
+                                className="w-full"
+                                onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file';
+                                  input.accept = 'image/jpeg,image/jpg,image/png,image/webp';
+                                  input.onchange = (e) => {
+                                    const file = (e.target as HTMLInputElement).files?.[0];
+                                    if (file) handleImageUpload(file, 'front');
+                                  };
+                                  input.click();
+                                }}
+                              >
+                                {uploadingType === 'front' ? (
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Upload className="mr-2 h-4 w-4" />
+                                )}
+                                Upload Front Image
+                              </Button>
+                            </div>
+                          </div>
                         )}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        <p>{qslImages.find(img => img.image_type === 'front')?.original_filename}</p>
-                        <p>{formatFileSize(qslImages.find(img => img.image_type === 'front')?.file_size || 0)}</p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleImageDelete('front')}
-                        disabled={imageLoading || !storageAvailable}
-                        className="w-full"
-                      >
-                        {imageLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                        Delete Front Image
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="aspect-[3/2] bg-muted rounded-lg flex items-center justify-center border-2 border-dashed">
-                        <div className="text-center">
-                          <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">No front image</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Input
-                          type="file"
-                          accept="image/jpeg,image/jpg,image/png,image/webp"
-                          disabled={!storageAvailable || imageLoading}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              handleImageUpload(file, 'front');
-                              e.target.value = '';
-                            }
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={!storageAvailable || imageLoading}
-                          className="w-full"
-                          onClick={() => {
-                            const input = document.createElement('input');
-                            input.type = 'file';
-                            input.accept = 'image/jpeg,image/jpg,image/png,image/webp';
-                            input.onchange = (e) => {
-                              const file = (e.target as HTMLInputElement).files?.[0];
-                              if (file) handleImageUpload(file, 'front');
-                            };
-                            input.click();
-                          }}
-                        >
-                          {uploadingType === 'front' ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <Upload className="mr-2 h-4 w-4" />
-                          )}
-                          Upload Front Image
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                      </CardContent>
+                    </Card>
 
-              {/* Back Image */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm flex items-center">
-                    <ImageIcon className="mr-2 h-4 w-4" />
-                    QSL Card Back
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {qslImages.find(img => img.image_type === 'back') ? (
-                    <div className="space-y-2">
-                      <div className="aspect-[3/2] bg-muted rounded-lg flex items-center justify-center overflow-hidden">
-                        {qslImages.find(img => img.image_type === 'back')?.storage_url ? (
-                          <img
-                            src={qslImages.find(img => img.image_type === 'back')?.storage_url}
-                            alt="QSL Card Back"
-                            className="w-full h-full object-cover"
-                          />
+                    {/* Back Image */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-sm flex items-center">
+                          <ImageIcon className="mr-2 h-4 w-4" />
+                          QSL Card Back
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {backImage ? (
+                          <div className="space-y-2">
+                            <div className="aspect-[3/2] bg-muted rounded-lg flex items-center justify-center overflow-hidden relative">
+                              {backImage?.storage_url ? (
+                                <Image
+                                  src={backImage.storage_url}
+                                  alt="QSL Card Back"
+                                  width={400}
+                                  height={267}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              <p>{backImage?.original_filename}</p>
+                              <p>{formatFileSize(backImage?.file_size || 0)}</p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleImageDelete('back')}
+                              disabled={imageLoading || !storageAvailable}
+                              className="w-full"
+                            >
+                              {imageLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+                              Delete Back Image
+                            </Button>
+                          </div>
                         ) : (
-                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                          <div className="space-y-2">
+                            <div className="aspect-[3/2] bg-muted rounded-lg flex items-center justify-center border-2 border-dashed">
+                              <div className="text-center">
+                                <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                                <p className="text-sm text-muted-foreground">No back image</p>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <Input
+                                type="file"
+                                accept="image/jpeg,image/jpg,image/png,image/webp"
+                                disabled={!storageAvailable || imageLoading}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    handleImageUpload(file, 'back');
+                                    e.target.value = '';
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={!storageAvailable || imageLoading}
+                                className="w-full"
+                                onClick={() => {
+                                  const input = document.createElement('input');
+                                  input.type = 'file';
+                                  input.accept = 'image/jpeg,image/jpg,image/png,image/webp';
+                                  input.onchange = (e) => {
+                                    const file = (e.target as HTMLInputElement).files?.[0];
+                                    if (file) handleImageUpload(file, 'back');
+                                  };
+                                  input.click();
+                                }}
+                              >
+                                {uploadingType === 'back' ? (
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Upload className="mr-2 h-4 w-4" />
+                                )}
+                                Upload Back Image
+                              </Button>
+                            </div>
+                          </div>
                         )}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        <p>{qslImages.find(img => img.image_type === 'back')?.original_filename}</p>
-                        <p>{formatFileSize(qslImages.find(img => img.image_type === 'back')?.file_size || 0)}</p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleImageDelete('back')}
-                        disabled={imageLoading || !storageAvailable}
-                        className="w-full"
-                      >
-                        {imageLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                        Delete Back Image
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="aspect-[3/2] bg-muted rounded-lg flex items-center justify-center border-2 border-dashed">
-                        <div className="text-center">
-                          <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">No back image</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Input
-                          type="file"
-                          accept="image/jpeg,image/jpg,image/png,image/webp"
-                          disabled={!storageAvailable || imageLoading}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              handleImageUpload(file, 'back');
-                              e.target.value = '';
-                            }
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={!storageAvailable || imageLoading}
-                          className="w-full"
-                          onClick={() => {
-                            const input = document.createElement('input');
-                            input.type = 'file';
-                            input.accept = 'image/jpeg,image/jpg,image/png,image/webp';
-                            input.onchange = (e) => {
-                              const file = (e.target as HTMLInputElement).files?.[0];
-                              if (file) handleImageUpload(file, 'back');
-                            };
-                            input.click();
-                          }}
-                        >
-                          {uploadingType === 'back' ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                            <Upload className="mr-2 h-4 w-4" />
-                          )}
-                          Upload Back Image
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                      </CardContent>
+                    </Card>
+                  </>
+                );
+              })()}
             </div>
 
             <div className="flex justify-end">

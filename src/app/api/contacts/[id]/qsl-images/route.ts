@@ -68,7 +68,12 @@ export async function GET(
               width, height, description, created_at, updated_at
        FROM qsl_images 
        WHERE contact_id = $1 AND user_id = $2 
-       ORDER BY image_type`,
+       ORDER BY 
+         CASE image_type 
+           WHEN 'front' THEN 1 
+           WHEN 'back' THEN 2 
+           ELSE 3 
+         END, created_at`,
       [contactId, user.userId]
     );
 

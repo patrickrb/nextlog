@@ -74,7 +74,7 @@ export default function QSLCardsPage() {
       
       if (response.ok) {
         setImages(data.images || []);
-        setPagination(data.pagination || pagination);
+        setPagination(prev => data.pagination || prev);
         setStorageAvailable(data.storage_available || false);
       } else {
         setError(data.error || 'Failed to fetch QSL images');

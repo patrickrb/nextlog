@@ -122,7 +122,7 @@ async function uploadToAzureBlob(
       success: false,
       storage_path: '',
       storage_type: 'azure_blob',
-      error: `Failed to upload to Azure Blob Storage: ${error.message}`
+      error: `Failed to upload to Azure Blob Storage: ${error instanceof Error ? error.message : String(error)}`
     };
   }
 }
@@ -133,12 +133,13 @@ async function uploadToAzureBlob(
 async function uploadToS3(
   config: StorageConfig,
   filename: string,
-  _buffer: Buffer,
-  _mimeType: string
+  buffer: Buffer,
+  mimeType: string
 ): Promise<UploadResult> {
   try {
     // For now, return a mock response
     // In a real implementation, you would use @aws-sdk/client-s3
+    console.log('Mock S3 upload:', { buffer: buffer.length, mimeType });
     const storage_path = filename;
     const storage_url = `https://${config.container_name}.s3.amazonaws.com/${filename}`;
     
