@@ -155,7 +155,23 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar title="Dashboard" />
+      <Navbar 
+        title="Dashboard" 
+        actions={
+          <div className="flex items-center space-x-2">
+            <Link href="/qsl-cards">
+              <Button variant="outline" size="sm">
+                QSL Cards
+              </Button>
+            </Link>
+            <Link href="/new-contact">
+              <Button size="sm">
+                New Contact
+              </Button>
+            </Link>
+          </div>
+        }
+      />
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0 space-y-6">

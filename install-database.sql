@@ -297,4 +297,46 @@ $$ LANGUAGE plpgsql;
 -- Note: This would be called manually from the application login logic
 
 -- Print success message
+-- Create qsl_images table for QSL card image uploads
+CREATE TABLE qsl_images (
+    id SERIAL PRIMARY KEY,
+    contact_id INTEGER NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    
+    -- Image metadata
+    image_type VARCHAR(10) NOT NULL CHECK (image_type IN ('front', 'back')),
+    filename VARCHAR(255) NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    file_size INTEGER NOT NULL,
+    mime_type VARCHAR(100) NOT NULL CHECK (mime_type IN ('image/jpeg', 'image/jpg', 'image/png', 'image/webp')),
+    
+    -- Storage information
+    storage_path VARCHAR(500) NOT NULL,
+    storage_url VARCHAR(500),
+    storage_type VARCHAR(20) DEFAULT 'azure_blob' CHECK (storage_type IN ('azure_blob', 'aws_s3')),
+    
+    -- Image dimensions (optional, for display optimization)
+    width INTEGER,
+    height INTEGER,
+    
+    -- Metadata
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Ensure only one front and one back image per contact
+    UNIQUE (contact_id, image_type)
+);
+
+-- Create indexes for qsl_images table
+CREATE INDEX idx_qsl_images_contact_id ON qsl_images(contact_id);
+CREATE INDEX idx_qsl_images_user_id ON qsl_images(user_id);
+CREATE INDEX idx_qsl_images_type ON qsl_images(image_type);
+CREATE INDEX idx_qsl_images_created_at ON qsl_images(created_at DESC);
+
+-- Create trigger for qsl_images updated_at
+CREATE TRIGGER update_qsl_images_updated_at
+    BEFORE UPDATE ON qsl_images
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 SELECT 'NodeLog database schema installed successfully!' as message;
