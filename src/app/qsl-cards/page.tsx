@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useUser } from '@/contexts/UserContext';
 import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -56,17 +57,7 @@ export default function QSLCardsPage() {
   const [storageAvailable, setStorageAvailable] = useState(false);
   const [imageTypeFilter, setImageTypeFilter] = useState<'all' | 'front' | 'back'>('all');
 
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-      fetchQSLImages();
-    }
-  }, [user, loading, router, pagination.page, imageTypeFilter]);
-
-  const fetchQSLImages = async () => {
+  const fetchQSLImages = useCallback(async () => {
     try {
       setError('');
       const params = new URLSearchParams({
@@ -88,13 +79,23 @@ export default function QSLCardsPage() {
       } else {
         setError(data.error || 'Failed to fetch QSL images');
       }
-    } catch (error) {
-      console.error('Error fetching QSL images:', error);
+    } catch (fetchError) {
+      console.error('Error fetching QSL images:', fetchError);
       setError('Network error occurred');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, imageTypeFilter]);
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      fetchQSLImages();
+    }
+  }, [user, loading, router, pagination.page, imageTypeFilter, fetchQSLImages]);
 
   const handlePageChange = (newPage: number) => {
     setPagination(prev => ({ ...prev, page: newPage }));
@@ -213,10 +214,11 @@ export default function QSLCardsPage() {
                 <Card key={image.id} className="overflow-hidden">
                   <div className="aspect-[3/2] bg-muted relative group">
                     {image.storage_url ? (
-                      <img
+                      <Image
                         src={image.storage_url}
                         alt={`QSL Card ${image.image_type} - ${image.callsign}`}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

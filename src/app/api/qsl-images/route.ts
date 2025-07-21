@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     // Build query with optional image type filter
     let whereClause = 'WHERE qi.user_id = $1';
-    let params: any[] = [user.userId];
+    const params: (string | number)[] = [user.userId];
     
     if (imageType && ['front', 'back'].includes(imageType)) {
       whereClause += ' AND qi.image_type = $2';

@@ -74,6 +74,7 @@ async function uploadToAzureBlob(
   mimeType: string
 ): Promise<UploadResult> {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { BlobServiceClient } = require('@azure/storage-blob');
     
     // Create connection string for Azure Blob Storage
@@ -132,8 +133,8 @@ async function uploadToAzureBlob(
 async function uploadToS3(
   config: StorageConfig,
   filename: string,
-  buffer: Buffer,
-  mimeType: string
+  _buffer: Buffer,
+  _mimeType: string
 ): Promise<UploadResult> {
   try {
     // For now, return a mock response
@@ -201,6 +202,7 @@ export async function uploadFile(
  */
 async function deleteFromAzureBlob(config: StorageConfig, storagePath: string): Promise<boolean> {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { BlobServiceClient } = require('@azure/storage-blob');
     
     // Create connection string for Azure Blob Storage
