@@ -23,6 +23,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ user: userInfo });
   } catch (error) {
     console.error('User fetch error:', error);
+    if (error instanceof jwt.TokenExpiredError) {
+      return NextResponse.json({ error: 'Token expired' }, { status: 401 });
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 });
   }
 }
