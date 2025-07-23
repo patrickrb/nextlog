@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, BarChart3, TrendingUp, Search } from 'lucide-react';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import EditContactDialog from '@/components/EditContactDialog';
+import DXpeditionWidget from '@/components/DXpeditionWidget';
 import Pagination from '@/components/Pagination';
 import Navbar from '@/components/Navbar';
 import { useUser } from '@/contexts/UserContext';
@@ -165,6 +166,11 @@ export default function DashboardPage() {
                 Search
               </Button>
             </Link>
+            <Link href="/dxpeditions">
+              <Button variant="outline" size="sm">
+                DXpeditions
+              </Button>
+            </Link>
             <Link href="/qsl-cards">
               <Button variant="outline" size="sm">
                 QSL Cards
@@ -224,34 +230,38 @@ export default function DashboardPage() {
             </Card>
           </div>
 
-          {/* Contact Map */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact Map</CardTitle>
-              <CardDescription>
-                Geographic view of your contacts
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {error && (
-                <div className="bg-destructive/15 border border-destructive/20 text-destructive px-4 py-3 rounded-md text-sm mb-4">
-                  {error}
-                </div>
-              )}
+          {/* Main Content Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            {/* Left side - Map and Contacts Table */}
+            <div className="lg:col-span-3 space-y-6">
+              {/* Contact Map */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contact Map</CardTitle>
+                  <CardDescription>
+                    Geographic view of your contacts
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {error && (
+                    <div className="bg-destructive/15 border border-destructive/20 text-destructive px-4 py-3 rounded-md text-sm mb-4">
+                      {error}
+                    </div>
+                  )}
 
-              <DynamicContactMap contacts={contacts} user={user} height="400px" />
-            </CardContent>
-          </Card>
+                  <DynamicContactMap contacts={contacts} user={user} height="400px" />
+                </CardContent>
+              </Card>
 
-          {/* Recent Contacts Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Contacts</CardTitle>
-              <CardDescription>
-                Your amateur radio contact log ({pagination.total} total contacts)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              {/* Recent Contacts Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contacts</CardTitle>
+                  <CardDescription>
+                    Your amateur radio contact log ({pagination.total} total contacts)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
               {pagination.total === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground">
@@ -338,8 +348,17 @@ export default function DashboardPage() {
                   )}
                 </>
               )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Right side - DXpeditions Widget */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-6">
+                <DXpeditionWidget limit={8} />
+              </div>
+            </div>
+          </div>
         </div>
       </main>
 
