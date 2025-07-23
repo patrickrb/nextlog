@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, BarChart3, TrendingUp } from 'lucide-react';
+import { Loader2, BarChart3, TrendingUp, Search } from 'lucide-react';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import EditContactDialog from '@/components/EditContactDialog';
 import Pagination from '@/components/Pagination';
@@ -159,6 +159,12 @@ export default function DashboardPage() {
         title="Dashboard" 
         actions={
           <div className="flex items-center space-x-2">
+            <Link href="/search">
+              <Button variant="outline" size="sm">
+                <Search className="h-4 w-4 mr-2" />
+                Search
+              </Button>
+            </Link>
             <Link href="/qsl-cards">
               <Button variant="outline" size="sm">
                 QSL Cards
