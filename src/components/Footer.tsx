@@ -20,7 +20,7 @@ export default function Footer() {
 
           <div className="flex items-center space-x-6">
             <Link
-              href="https://github.com/ks3ckc/nodelog"
+              href="https://github.com/patrickrb/nextlog"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-muted-foreground hover:text-primary flex items-center"
