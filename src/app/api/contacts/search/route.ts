@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     // Build the WHERE clause and parameters
     const whereConditions: string[] = ['user_id = $1'];
-    const queryParams: any[] = [userId];
+    const queryParams: (string | number)[] = [userId];
     let paramCount = 1;
 
     // Add search conditions
@@ -121,7 +121,19 @@ export async function GET(request: NextRequest) {
       adifContent += `Generated on ${new Date().toISOString()}\n`;
       adifContent += '<EOH>\n\n';
 
-      contacts.forEach((contact: any) => {
+      contacts.forEach((contact: {
+        callsign: string;
+        datetime: string;
+        frequency: number;
+        mode: string;
+        band: string;
+        rst_sent?: string;
+        rst_received?: string;
+        name?: string;
+        qth?: string;
+        grid_locator?: string;
+        notes?: string;
+      }) => {
         adifContent += `<CALL:${contact.callsign.length}>${contact.callsign}`;
         adifContent += `<QSO_DATE:8>${new Date(contact.datetime).toISOString().slice(0, 10).replace(/-/g, '')}`;
         adifContent += `<TIME_ON:6>${new Date(contact.datetime).toISOString().slice(11, 16).replace(':', '')}00`;

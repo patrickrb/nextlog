@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/combobox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Search, Filter, X, Calendar, Download, RotateCcw, ArrowLeft } from 'lucide-react';
+import { Loader2, Search, Filter, Download, RotateCcw, ArrowLeft } from 'lucide-react';
 import EditContactDialog from '@/components/EditContactDialog';
 import Pagination from '@/components/Pagination';
 import Navbar from '@/components/Navbar';
@@ -65,7 +65,6 @@ interface PaginationInfo {
 
 const MODES = ['AM', 'FM', 'FT8', 'MFSK', 'RTTY', 'SSB', 'CW', 'FT4', 'PSK31', 'DMR', 'DSTAR', 'YSF'];
 const BANDS = ['2m', '6m', '10m', '12m', '15m', '17m', '20m', '30m', '40m', '60m', '80m', '160m', '70cm', '23cm'];
-const QSL_STATUS = ['all', 'confirmed', 'pending', 'not_confirmed'];
 
 export default function SearchPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -100,7 +99,7 @@ export default function SearchPage() {
     pages: 0
   });
 
-  const { user } = useUser();
+  const { } = useUser();
   const router = useRouter();
 
   // Fetch DXCC entities
@@ -147,19 +146,6 @@ export default function SearchPage() {
     ];
   }, [dxccEntities]);
 
-  // Debounced search function
-  const debouncedSearch = useCallback((searchFilters: SearchFilters, page = 1) => {
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
-
-    const timeout = setTimeout(() => {
-      performSearch(searchFilters, page);
-    }, 300);
-
-    setSearchTimeout(timeout);
-  }, [searchTimeout]);
-
   const performSearch = useCallback(async (searchFilters: SearchFilters, page = 1) => {
     try {
       setLoading(true);
@@ -169,7 +155,7 @@ export default function SearchPage() {
         page: page.toString(),
         limit: pagination.limit.toString(),
         ...Object.fromEntries(
-          Object.entries(searchFilters).filter(([_, value]) => value.trim() !== '')
+          Object.entries(searchFilters).filter(([, value]) => value.trim() !== '')
         )
       });
 
@@ -193,12 +179,26 @@ export default function SearchPage() {
       } else {
         setError(data.error || 'Failed to search contacts');
       }
-    } catch {
+    } catch (error) {
+      console.error('Search error:', error);
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
     }
   }, [pagination.limit, router]);
+
+  // Debounced search function
+  const debouncedSearch = useCallback((searchFilters: SearchFilters, page = 1) => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    const timeout = setTimeout(() => {
+      performSearch(searchFilters, page);
+    }, 300);
+
+    setSearchTimeout(timeout);
+  }, [searchTimeout, performSearch]);
 
   // Handle filter changes with debouncing
   const handleFilterChange = (key: keyof SearchFilters, value: string) => {
@@ -271,7 +271,7 @@ export default function SearchPage() {
       
       const params = new URLSearchParams({
         ...Object.fromEntries(
-          Object.entries(filters).filter(([_, value]) => value.trim() !== '')
+          Object.entries(filters).filter(([, value]) => value.trim() !== '')
         ),
         export: 'true'
       });
@@ -299,7 +299,8 @@ export default function SearchPage() {
         const data = await response.json();
         setError(data.error || 'Failed to export search results');
       }
-    } catch {
+    } catch (error) {
+      console.error('Export error:', error);
       setError('Export failed. Please try again.');
     } finally {
       setExportLoading(false);
