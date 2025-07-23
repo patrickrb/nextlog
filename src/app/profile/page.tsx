@@ -287,7 +287,7 @@ export default function ProfilePage() {
                 Preferences
               </CardTitle>
               <CardDescription>
-                Customize your NodeLog experience
+                Customize your Nextlog experience
               </CardDescription>
             </CardHeader>
             <CardContent>

@@ -1,4 +1,4 @@
--- PostgreSQL initialization script for NodeLog
+-- PostgreSQL initialization script for Nextlog
 
 -- Create users table
 CREATE TABLE users (

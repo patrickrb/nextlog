@@ -3,7 +3,7 @@ version: '3.8'
 
 services:
   # Production Next.js Application
-  nodelog-app:
+  nextlog-app:
     build:
       context: .
       dockerfile: Dockerfile
@@ -25,7 +25,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: nodelog
+      MONGO_INITDB_DATABASE: nextlog
     volumes:
       - mongodb_data:/data/db
     ports: []

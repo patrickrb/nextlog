@@ -1,4 +1,4 @@
-// Role-based access control utilities for NodeLog admin system
+// Role-based access control utilities for Nextlog admin system
 
 export enum UserRole {
   USER = 'user',

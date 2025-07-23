@@ -53,7 +53,7 @@ export async function lookupCallsign(callsign: string, username: string, passwor
 
   try {
     // First, get a session key from QRZ
-    const sessionUrl = `https://xmldata.qrz.com/xml/current/?username=${encodeURIComponent(username)};password=${encodeURIComponent(password)};agent=NodeLog_1.0`;
+    const sessionUrl = `https://xmldata.qrz.com/xml/current/?username=${encodeURIComponent(username)};password=${encodeURIComponent(password)};agent=Nextlog_1.0`;
     
     const sessionResponse = await fetch(sessionUrl);
     const sessionXml = await sessionResponse.text();

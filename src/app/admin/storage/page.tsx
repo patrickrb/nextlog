@@ -258,7 +258,7 @@ export default function StorageConfigPage() {
                       id="container_name"
                       value={formData.container_name}
                       onChange={(e) => setFormData(prev => ({ ...prev, container_name: e.target.value }))}
-                      placeholder="nodelog-files"
+                      placeholder="nextlog-files"
                       required
                     />
                   </div>

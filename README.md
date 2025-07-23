@@ -1,4 +1,4 @@
-# NodeLog - Amateur Radio Logging Software
+# Nextlog - Amateur Radio Logging Software
 
 A modern, web-based amateur radio logging application built with Next.js and PostgreSQL. This is a clone of [Wavelog](https://github.com/wavelog/wavelog) with a modern tech stack.
 
@@ -36,7 +36,7 @@ A modern, web-based amateur radio logging application built with Next.js and Pos
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd nodelog
+cd nextlog
 ```
 
 2. Start the application with Docker:
@@ -46,7 +46,7 @@ docker-compose up -d
 
 This will start:
 - PostgreSQL database on port 5432
-- NodeLog application on port 3000
+- Nextlog application on port 3000
 - PgAdmin (optional) on port 8081
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser
@@ -56,7 +56,7 @@ This will start:
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd nodelog
+cd nextlog
 ```
 
 2. Install dependencies:
@@ -68,8 +68,8 @@ npm install
 ```bash
 # Install and start PostgreSQL (method varies by OS)
 # Create database and user
-createuser -U postgres nodelog
-createdb -U postgres -O nodelog nodelog
+createuser -U postgres nextlog
+createdb -U postgres -O nextlog nextlog
 ```
 
 4. Run the database installation script:
@@ -84,7 +84,7 @@ cp .env.example .env.local
 
 Edit `.env.local` with your settings:
 ```
-DATABASE_URL=postgresql://nodelog:password@localhost:5432/nodelog
+DATABASE_URL=postgresql://nextlog:password@localhost:5432/nextlog
 JWT_SECRET=your-jwt-secret-key-change-this-in-production
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ENCRYPTION_SECRET=supersecretkeyforencryption
@@ -99,7 +99,7 @@ npm run dev
 
 ## Database Installation Script
 
-NodeLog includes a comprehensive database installation script that sets up the complete schema and reference data.
+Nextlog includes a comprehensive database installation script that sets up the complete schema and reference data.
 
 ### Features
 
@@ -129,8 +129,8 @@ The script will:
 ### Configuration
 
 The script uses these default settings:
-- Database: `nodelog`
-- User: `nodelog`
+- Database: `nextlog`
+- User: `nextlog`
 - Password: `password`
 - Host: `localhost`
 - Port: `5432`

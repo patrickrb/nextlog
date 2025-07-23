@@ -1,4 +1,4 @@
-// Admin audit logging utilities for NodeLog
+// Admin audit logging utilities for Nextlog
 
 import { query } from './db';
 import { NextRequest } from 'next/server';

@@ -1,4 +1,4 @@
-// System settings management for NodeLog
+// System settings management for Nextlog
 import { query } from './db';
 
 // In-memory cache for settings
@@ -40,7 +40,7 @@ const DEFAULT_SETTINGS = {
   adif_max_record_count: 5000,
   adif_batch_size: 50,
   adif_timeout_seconds: 25,
-  app_name: 'NodeLog',
+  app_name: 'Nextlog',
   app_description: 'Amateur Radio Contact Logging System',
   default_timezone: 'UTC',
   enable_registration: true,

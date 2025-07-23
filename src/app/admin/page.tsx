@@ -197,7 +197,7 @@ export default function AdminDashboard() {
             🔐 Admin Access Granted
           </h3>
           <p className="text-blue-800 dark:text-blue-200 text-sm">
-            You have full administrative access to NodeLog. Use these tools responsibly to manage 
+            You have full administrative access to Nextlog. Use these tools responsibly to manage 
             users, configure system settings, and monitor activity. All admin actions are logged 
             for security and auditing purposes.
           </p>

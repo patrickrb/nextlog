@@ -41,7 +41,7 @@ export default function Navbar({ title, breadcrumbs, actions }: NavbarProps) {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/dashboard" className="text-xl font-semibold hover:text-primary">
-              NodeLog
+              Nextlog
             </Link>
             
             {breadcrumbs && breadcrumbs.length > 0 && (

@@ -1,4 +1,4 @@
--- NodeLog Database Installation Script
+-- Nextlog Database Installation Script
 -- Complete schema based on current production database
 -- This script creates all tables, indexes, functions, and triggers
 
@@ -339,4 +339,4 @@ CREATE TRIGGER update_qsl_images_updated_at
     BEFORE UPDATE ON qsl_images
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-SELECT 'NodeLog database schema installed successfully!' as message;
+SELECT 'Nextlog database schema installed successfully!' as message;

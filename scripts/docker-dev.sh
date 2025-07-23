@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Docker development script for NodeLog
+# Docker development script for Nextlog
 
-echo "🚀 Starting NodeLog in development mode with Docker..."
+echo "🚀 Starting Nextlog in development mode with Docker..."
 
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
@@ -34,7 +34,7 @@ if docker-compose ps | grep -q "Up"; then
     echo "   Password: admin123"
     echo ""
     echo "📝 To view logs:"
-    echo "   docker-compose logs -f nodelog-app"
+    echo "   docker-compose logs -f nextlog-app"
     echo ""
     echo "🛑 To stop services:"
     echo "   docker-compose down"

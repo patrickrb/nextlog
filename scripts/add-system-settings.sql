@@ -29,7 +29,7 @@ ON CONFLICT (setting_key) DO NOTHING;
 
 -- Insert general application settings
 INSERT INTO system_settings (setting_key, setting_value, data_type, category, description, is_public) VALUES
-('app_name', 'NodeLog', 'string', 'general', 'Application name displayed in UI', true),
+('app_name', 'Nextlog', 'string', 'general', 'Application name displayed in UI', true),
 ('app_description', 'Amateur Radio Contact Logging System', 'string', 'general', 'Application description', true),
 ('default_timezone', 'UTC', 'string', 'general', 'Default timezone for the application', false),
 ('enable_registration', 'true', 'boolean', 'auth', 'Allow new user registration', false),
