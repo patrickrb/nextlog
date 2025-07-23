@@ -1,4 +1,4 @@
--- Migration script to add admin features to existing NodeLog database
+-- Migration script to add admin features to existing Nextlog database
 -- Run this script on existing databases to add role-based access control and storage configuration
 
 -- Add role, status, and last_login columns to users table

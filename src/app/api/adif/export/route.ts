@@ -156,10 +156,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 }
 
 function generateADIF(contacts: Contact[]): string {
-  const header = `ADIF Export from NodeLog
+  const header = `ADIF Export from Nextlog
 
 <adif_ver:5>3.1.5
-<programid:7>NodeLog
+<programid:7>Nextlog
 <created_timestamp:15>${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
 <eoh>
 

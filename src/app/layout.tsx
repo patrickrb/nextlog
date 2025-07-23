@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NodeLog - Amateur Radio Logging",
+  title: "Nextlog - Amateur Radio Logging",
   description: "Modern amateur radio contact logging and station management",
 };
 

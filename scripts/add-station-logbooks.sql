@@ -1,4 +1,4 @@
--- Add Station Logbooks support to NodeLog
+-- Add Station Logbooks support to Nextlog
 -- Based on Wavelog functionality and ADIF standard
 
 -- Create stations table

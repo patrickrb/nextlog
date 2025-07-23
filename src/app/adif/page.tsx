@@ -651,7 +651,7 @@ export default function ADIFPage() {
               <div>
                 <h4 className="font-medium mb-2">Supported Fields</h4>
                 <p className="text-sm text-muted-foreground">
-                  NodeLog supports the most common ADIF fields including: callsign, frequency, mode, 
+                  Nextlog supports the most common ADIF fields including: callsign, frequency, mode, 
                   band, date/time, RST sent/received, QTH, grid locator, name, and more.
                 </p>
               </div>

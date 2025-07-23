@@ -1,4 +1,4 @@
-// Database connection utility for NodeLog PostgreSQL
+// Database connection utility for Nextlog PostgreSQL
 
 import { Pool, PoolClient, QueryResult } from 'pg';
 

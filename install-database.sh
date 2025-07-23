@@ -1,16 +1,16 @@
 #!/bin/bash
 
-# NodeLog Database Installation Script
-# This script sets up the complete NodeLog database schema
+# Nextlog Database Installation Script
+# This script sets up the complete Nextlog database schema
 
 set -e  # Exit on any error
 
-echo "🚀 NodeLog Database Installation Script"
+echo "🚀 Nextlog Database Installation Script"
 echo "======================================"
 
 # Configuration
-DB_NAME="nodelog"
-DB_USER="nodelog"
+DB_NAME="nextlog"
+DB_USER="nextlog"
 DB_PASSWORD="password"
 DB_HOST="localhost"
 DB_PORT="5432"
@@ -124,7 +124,7 @@ verify_installation() {
 
 # Main installation process
 main() {
-    echo "🔧 Starting NodeLog database installation..."
+    echo "🔧 Starting Nextlog database installation..."
     echo "   Database: $DB_NAME"
     echo "   User: $DB_USER"
     echo "   Host: $DB_HOST:$DB_PORT"
@@ -161,15 +161,15 @@ main() {
     verify_installation
     
     echo ""
-    echo "🎉 NodeLog database installation completed successfully!"
+    echo "🎉 Nextlog database installation completed successfully!"
     echo ""
     echo "Next steps:"
-    echo "1. Start your NodeLog application"
+    echo "1. Start your Nextlog application"
     echo "2. Create your first user account"
     echo "3. Set up your station information"
     echo "4. Start logging contacts!"
     echo ""
-    echo "Happy logging! 73 de NodeLog"
+    echo "Happy logging! 73 de Nextlog"
 }
 
 # Run the main function
