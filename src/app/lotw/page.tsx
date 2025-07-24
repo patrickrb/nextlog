@@ -67,14 +67,6 @@ export default function LotwPage() {
   const { user } = useUser();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!user && !loading) {
-      router.push('/login');
-      return;
-    }
-    loadData();
-  }, [user, router, loading, loadData]);
-
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
@@ -113,6 +105,14 @@ export default function LotwPage() {
       setLoading(false);
     }
   }, [selectedStation]);
+
+  useEffect(() => {
+    if (!user && !loading) {
+      router.push('/login');
+      return;
+    }
+    loadData();
+  }, [user, router, loading, loadData]);
 
   const handleUpload = async () => {
     if (!selectedStation) {
