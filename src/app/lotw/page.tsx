@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -75,7 +75,7 @@ export default function LotwPage() {
     loadData();
   }, [user, router, loading, loadData]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -112,7 +112,7 @@ export default function LotwPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedStation]);
 
   const handleUpload = async () => {
     if (!selectedStation) {

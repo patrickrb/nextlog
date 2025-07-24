@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,7 +43,7 @@ export default function LotwSettings({ stations }: LotwSettingsProps) {
     loadCredentials();
   }, [loadCredentials]);
 
-  const loadCredentials = async () => {
+  const loadCredentials = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -77,7 +77,7 @@ export default function LotwSettings({ stations }: LotwSettingsProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [stations]);
 
   const saveUserCredentials = async () => {
     if (!userForm.username || !userForm.password) {

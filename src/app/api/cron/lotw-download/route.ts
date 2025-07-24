@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
           station_id: station.id,
           callsign: station.callsign,
           status: 'error',
-          error: stationError.message
+          error: stationError instanceof Error ? stationError.message : 'Unknown error'
         });
       }
     }
