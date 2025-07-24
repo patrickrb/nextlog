@@ -83,18 +83,16 @@ export default function LotwSyncIndicator({
   if (showLabels) {
     return (
       <div className={`${containerClasses} text-xs`}>
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1" title={uploadStatus.tooltip}>
           <uploadStatus.icon 
-            className={`${iconSize} ${uploadStatus.color}`} 
-            title={uploadStatus.tooltip}
+            className={`${iconSize} ${uploadStatus.color}`}
           />
           {showLabels && <span className="text-muted-foreground">Up</span>}
         </div>
         
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1" title={downloadStatus.tooltip}>
           <downloadStatus.icon 
             className={`${iconSize} ${downloadStatus.color}`}
-            title={downloadStatus.tooltip}
           />
           {showLabels && <span className="text-muted-foreground">Down</span>}
         </div>
@@ -105,14 +103,16 @@ export default function LotwSyncIndicator({
   // Compact view - just icons
   return (
     <div className={containerClasses}>
-      <uploadStatus.icon 
-        className={`${iconSize} ${uploadStatus.color}`} 
-        title={uploadStatus.tooltip}
-      />
-      <downloadStatus.icon 
-        className={`${iconSize} ${downloadStatus.color}`}
-        title={downloadStatus.tooltip}
-      />
+      <div title={uploadStatus.tooltip}>
+        <uploadStatus.icon 
+          className={`${iconSize} ${uploadStatus.color}`}
+        />
+      </div>
+      <div title={downloadStatus.tooltip}>
+        <downloadStatus.icon 
+          className={`${iconSize} ${downloadStatus.color}`}
+        />
+      </div>
     </div>
   );
 }
