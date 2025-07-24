@@ -45,6 +45,9 @@ export async function POST(request: NextRequest) {
       );
     } else {
       // For regular requests, verify station belongs to user
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
       stationResult = await query(
         `SELECT s.id, s.callsign, s.lotw_username, s.lotw_password, s.user_id,
                 u.third_party_services

@@ -41,6 +41,9 @@ export async function POST(request: NextRequest) {
       );
     } else {
       // For regular requests, verify station belongs to user
+      if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
       stationResult = await query(
         'SELECT id, callsign, user_id FROM stations WHERE id = $1 AND user_id = $2',
         [station_id, parseInt(user.userId)]
