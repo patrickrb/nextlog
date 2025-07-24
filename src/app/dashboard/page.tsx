@@ -13,6 +13,7 @@ import EditContactDialog from '@/components/EditContactDialog';
 import DXpeditionWidget from '@/components/DXpeditionWidget';
 import Pagination from '@/components/Pagination';
 import Navbar from '@/components/Navbar';
+import LotwSyncIndicator from '@/components/LotwSyncIndicator';
 import { useUser } from '@/contexts/UserContext';
 
 interface Contact {
@@ -31,6 +32,12 @@ interface Contact {
   latitude?: number;
   longitude?: number;
   confirmed?: boolean;
+  // LoTW fields
+  lotw_qsl_rcvd?: string;
+  lotw_qsl_sent?: string;
+  qsl_lotw?: boolean;
+  qsl_lotw_date?: string;
+  lotw_match_status?: 'confirmed' | 'partial' | 'mismatch' | null;
 }
 
 interface PaginationInfo {
@@ -288,12 +295,13 @@ export default function DashboardPage() {
                           <TableHead>Band</TableHead>
                           <TableHead>RST</TableHead>
                           <TableHead>Name</TableHead>
+                          <TableHead>LoTW</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {loading ? (
                           <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8">
+                            <TableCell colSpan={8} className="text-center py-8">
                               <div className="flex items-center justify-center space-x-2">
                                 <Loader2 className="h-4 w-4 animate-spin" />
                                 <span>Loading contacts...</span>
@@ -327,6 +335,16 @@ export default function DashboardPage() {
                               </TableCell>
                               <TableCell>
                                 {contact.name || '-'}
+                              </TableCell>
+                              <TableCell>
+                                <LotwSyncIndicator
+                                  lotwQslSent={contact.lotw_qsl_sent}
+                                  lotwQslRcvd={contact.lotw_qsl_rcvd}
+                                  qslLotw={contact.qsl_lotw}
+                                  qslLotwDate={contact.qsl_lotw_date}
+                                  lotwMatchStatus={contact.lotw_match_status}
+                                  size="sm"
+                                />
                               </TableCell>
                             </TableRow>
                           ))

@@ -5,7 +5,23 @@
     },
     "src/app/api/adif/export/route.ts": {
       "maxDuration": 30
+    },
+    "src/app/api/cron/lotw-upload/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/cron/lotw-download/route.ts": {
+      "maxDuration": 60
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/lotw-upload",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/lotw-download", 
+      "schedule": "30 * * * *"
+    }
+  ],
   "regions": ["iad1"]
 }
