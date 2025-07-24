@@ -139,13 +139,13 @@ export async function POST(request: NextRequest) {
            SET status = 'failed', completed_at = NOW(), 
                error_message = $1 
            WHERE id = $2`,
-          [`Download from LoTW failed: ${downloadError.message}`, downloadLogId]
+          [`Download from LoTW failed: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}`, downloadLogId]
         );
 
         return NextResponse.json({ 
           success: false,
           download_log_id: downloadLogId,
-          error_message: `Download from LoTW failed: ${downloadError.message}`
+          error_message: `Download from LoTW failed: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}`
         }, { status: 500 });
       }
 
@@ -251,13 +251,13 @@ export async function POST(request: NextRequest) {
          SET status = 'failed', completed_at = NOW(), 
              error_message = $1 
          WHERE id = $2`,
-        [error.message, downloadLogId]
+        [error instanceof Error ? error.message : 'Unknown error', downloadLogId]
       );
 
       return NextResponse.json({ 
         success: false,
         download_log_id: downloadLogId,
-        error_message: error.message
+        error_message: error instanceof Error ? error.message : 'Unknown error'
       }, { status: 500 });
     }
 

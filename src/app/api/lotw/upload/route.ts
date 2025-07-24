@@ -170,13 +170,13 @@ export async function POST(request: NextRequest) {
            SET status = 'failed', completed_at = NOW(), 
                error_message = $1 
            WHERE id = $2`,
-          [`Failed to sign ADIF file: ${signError.message}`, uploadLogId]
+          [`Failed to sign ADIF file: ${signError instanceof Error ? signError.message : 'Unknown error'}`, uploadLogId]
         );
 
         return NextResponse.json({ 
           success: false,
           upload_log_id: uploadLogId,
-          error_message: `Failed to sign ADIF file: ${signError.message}`
+          error_message: `Failed to sign ADIF file: ${signError instanceof Error ? signError.message : 'Unknown error'}`
         }, { status: 500 });
       }
 
@@ -206,13 +206,13 @@ export async function POST(request: NextRequest) {
            SET status = 'failed', completed_at = NOW(), 
                error_message = $1, lotw_response = $2 
            WHERE id = $3`,
-          [`Upload to LoTW failed: ${uploadError.message}`, lotwResponse || '', uploadLogId]
+          [`Upload to LoTW failed: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`, lotwResponse || '', uploadLogId]
         );
 
         return NextResponse.json({ 
           success: false,
           upload_log_id: uploadLogId,
-          error_message: `Upload to LoTW failed: ${uploadError.message}`
+          error_message: `Upload to LoTW failed: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`
         }, { status: 500 });
       }
 
@@ -252,13 +252,13 @@ export async function POST(request: NextRequest) {
          SET status = 'failed', completed_at = NOW(), 
              error_message = $1 
          WHERE id = $2`,
-        [error.message, uploadLogId]
+        [error instanceof Error ? error.message : 'Unknown error', uploadLogId]
       );
 
       return NextResponse.json({ 
         success: false,
         upload_log_id: uploadLogId,
-        error_message: error.message
+        error_message: error instanceof Error ? error.message : 'Unknown error'
       }, { status: 500 });
     }
 
