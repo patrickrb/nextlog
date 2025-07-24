@@ -15,7 +15,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ title, breadcrumbs, actions }: NavbarProps) {
-  const { user, loading } = useUser();
+  const { user } = useUser();
   const retryAttemptedRef = useRef(false);
 
   // Only retry once when initially loading and no user is found

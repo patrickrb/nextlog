@@ -35,7 +35,7 @@ export default function WASPage() {
     if (user) {
       loadStations();
     }
-  }, [user, router]);
+  }, [user, router, loading]);
 
   const loadStations = async () => {
     try {

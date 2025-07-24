@@ -61,14 +61,22 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
         // Convert date strings to Date objects
         const processedData = {
           ...data.data,
-          recent_confirmations: data.data.recent_confirmations?.map((confirmation: any) => ({
+          recent_confirmations: data.data.recent_confirmations?.map((confirmation: {
+            confirmed_date?: string;
+            created_at?: string;
+            [key: string]: unknown;
+          }) => ({
             ...confirmation,
             confirmed_date: confirmation.confirmed_date ? new Date(confirmation.confirmed_date) : null,
             created_at: confirmation.created_at ? new Date(confirmation.created_at) : null
           })) || [],
           overall_progress: {
             ...data.data.overall_progress,
-            states: data.data.overall_progress?.states?.map((state: any) => ({
+            states: data.data.overall_progress?.states?.map((state: {
+              last_worked_date?: string;
+              last_confirmed_date?: string;
+              [key: string]: unknown;
+            }) => ({
               ...state,
               last_worked_date: state.last_worked_date ? new Date(state.last_worked_date) : null,
               last_confirmed_date: state.last_confirmed_date ? new Date(state.last_confirmed_date) : null

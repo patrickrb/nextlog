@@ -70,7 +70,7 @@ export default function AwardsPage() {
     if (user) {
       loadAwardsPreviews();
     }
-  }, [user, router, loadAwardsPreviews]);
+  }, [user, router, loading, loadAwardsPreviews]);
 
   const getWASStatus = (): 'available' | 'in_progress' | 'completed' => {
     if (!wasProgress) return 'available';
