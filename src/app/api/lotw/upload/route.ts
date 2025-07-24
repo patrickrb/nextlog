@@ -181,7 +181,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Upload to LoTW
-      let lotwResponse: string;
+      let lotwResponse = '';
       try {
         const uploadResponse = await fetch('https://lotw.arrl.org/lotwuser/upload', {
           method: 'POST',
@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
            SET status = 'failed', completed_at = NOW(), 
                error_message = $1, lotw_response = $2 
            WHERE id = $3`,
-          [`Upload to LoTW failed: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`, lotwResponse || '', uploadLogId]
+          [`Upload to LoTW failed: ${uploadError instanceof Error ? uploadError.message : 'Unknown error'}`, lotwResponse, uploadLogId]
         );
 
         return NextResponse.json({ 
