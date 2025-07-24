@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     const station = stationResult.rows[0];
-    const userId = isCronJob ? station.user_id : parseInt(user.userId);
+    const userId = isCronJob ? station.user_id : parseInt(user!.userId);
 
     // Get active LoTW certificate for this station
     const certResult = await query(

@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     }
 
     const station = stationResult.rows[0];
-    const userId = isCronJob ? station.user_id : parseInt(user.userId);
+    const userId = isCronJob ? station.user_id : parseInt(user!.userId);
     
     // Get LoTW credentials from station or user third_party_services
     let lotwUsername = station.lotw_username;
