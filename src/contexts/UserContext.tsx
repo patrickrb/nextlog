@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface User {
@@ -29,7 +29,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       setError(null);
       const response = await fetch('/api/user', {
@@ -54,14 +54,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     setLoading(true);
     await fetchUser();
-  };
+  }, [fetchUser]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
       setUser(null);
@@ -69,7 +69,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error('Logout error:', err);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     fetchUser();
@@ -94,7 +94,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('auth-refresh', handleAuthChange);
     };
-  }, []);
+  }, [fetchUser]);
 
   const value: UserContextType = {
     user,
