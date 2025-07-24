@@ -39,10 +39,6 @@ export default function LotwSettings({ stations }: LotwSettingsProps) {
   const [stationForms, setStationForms] = useState<Record<number, { username: string; password: string }>>({});
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    loadCredentials();
-  }, [loadCredentials]);
-
   const loadCredentials = useCallback(async () => {
     try {
       setLoading(true);
@@ -78,6 +74,10 @@ export default function LotwSettings({ stations }: LotwSettingsProps) {
       setLoading(false);
     }
   }, [stations]);
+
+  useEffect(() => {
+    loadCredentials();
+  }, [loadCredentials]);
 
   const saveUserCredentials = async () => {
     if (!userForm.username || !userForm.password) {
