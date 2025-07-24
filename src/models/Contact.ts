@@ -17,6 +17,31 @@ export interface IContact {
   latitude?: number;
   longitude?: number;
   notes?: string;
+  // DXCC and zone fields
+  country?: string;
+  dxcc?: number;
+  cont?: string;
+  cqz?: number;
+  ituz?: number;
+  state?: string;
+  cnty?: string;
+  // QSL fields
+  qsl_rcvd?: string;
+  qsl_sent?: string;
+  qsl_via?: string;
+  eqsl_qsl_rcvd?: string;
+  eqsl_qsl_sent?: string;
+  // LoTW fields
+  lotw_qsl_rcvd?: string;
+  lotw_qsl_sent?: string;
+  qsl_lotw?: boolean;
+  qsl_lotw_date?: Date;
+  lotw_match_status?: 'confirmed' | 'partial' | 'mismatch' | null;
+  // Additional fields
+  qso_date_off?: Date;
+  time_off?: string;
+  operator?: string;
+  distance?: number;
   created_at: Date;
   updated_at: Date;
 }
