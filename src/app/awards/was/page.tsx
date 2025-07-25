@@ -18,28 +18,29 @@ interface Station {
 
 export default function WASPage() {
   const [stations, setStations] = useState<Station[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
+    // Wait for user context to finish loading
+    if (userLoading) return;
+    
+    // Redirect to login if no user
     if (!user) {
-      // Don't redirect if still loading from UserContext
-      if (!loading) {
-        router.push('/login');
-      }
+      router.push('/login');
       return;
     }
-    if (user) {
-      loadStations();
-    }
-  }, [user, router, loading]);
+    
+    // Load stations data
+    loadStations();
+  }, [user, userLoading, router]);
 
   const loadStations = async () => {
     try {
-      setLoading(true);
+      setPageLoading(true);
       setError(null);
 
       const response = await fetch('/api/stations');
@@ -53,11 +54,11 @@ export default function WASPage() {
       console.error('Failed to load stations:', err);
       setError('Failed to load stations');
     } finally {
-      setLoading(false);
+      setPageLoading(false);
     }
   };
 
-  if (loading) {
+  if (pageLoading || userLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar title="WAS Progress" actions={

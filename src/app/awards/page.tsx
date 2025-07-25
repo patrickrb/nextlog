@@ -24,7 +24,7 @@ interface AwardPreview {
 }
 
 export default function AwardsPage() {
-  const [loading, setLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(true);
   const [wasProgress, setWasProgress] = useState<{
     overall_progress: {
       confirmed_states: number;
@@ -37,12 +37,12 @@ export default function AwardsPage() {
     };
   } | null>(null);
 
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const router = useRouter();
 
   const loadAwardsPreviews = useCallback(async () => {
     try {
-      setLoading(true);
+      setPageLoading(true);
 
       // Load WAS progress for preview
       const wasResponse = await fetch('/api/awards/was/summary');
@@ -55,22 +55,23 @@ export default function AwardsPage() {
     } catch (error) {
       console.error('Failed to load awards previews:', error);
     } finally {
-      setLoading(false);
+      setPageLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    // Wait for user context to finish loading
+    if (userLoading) return;
+    
+    // Redirect to login if no user
     if (!user) {
-      // Don't redirect if still loading from UserContext
-      if (!loading) {
-        router.push('/login');
-      }
+      router.push('/login');
       return;
     }
-    if (user) {
-      loadAwardsPreviews();
-    }
-  }, [user, router, loading, loadAwardsPreviews]);
+    
+    // Load awards data
+    loadAwardsPreviews();
+  }, [user, userLoading, router, loadAwardsPreviews]);
 
   const getWASStatus = (): 'available' | 'in_progress' | 'completed' => {
     if (!wasProgress) return 'available';
@@ -148,7 +149,7 @@ export default function AwardsPage() {
     }
   };
 
-  if (loading) {
+  if (pageLoading || userLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar title="Awards" actions={
