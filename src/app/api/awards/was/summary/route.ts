@@ -96,9 +96,9 @@ async function calculateBasicWASProgress(userId: number, stationId?: number): Pr
   let contactQuery = `
     SELECT DISTINCT c.state,
            MAX(c.datetime) as last_worked,
-           MAX(CASE WHEN c.qsl_rcvd = 'Y' THEN c.datetime END) as last_confirmed,
+           MAX(CASE WHEN c.lotw_qsl_rcvd = 'Y' AND c.lotw_qsl_sent = 'Y' THEN c.datetime END) as last_confirmed,
            COUNT(*) as contact_count,
-           BOOL_OR(c.qsl_rcvd = 'Y') as has_qsl
+           BOOL_OR(c.lotw_qsl_rcvd = 'Y' AND c.lotw_qsl_sent = 'Y') as has_qsl
     FROM contacts c
     WHERE c.user_id = $1
       AND c.state IS NOT NULL
@@ -161,9 +161,9 @@ async function calculateBandWASProgress(userId: number, stationId: number | unde
   let contactQuery = `
     SELECT DISTINCT c.state,
            MAX(c.datetime) as last_worked,
-           MAX(CASE WHEN c.qsl_rcvd = 'Y' THEN c.datetime END) as last_confirmed,
+           MAX(CASE WHEN c.lotw_qsl_rcvd = 'Y' AND c.lotw_qsl_sent = 'Y' THEN c.datetime END) as last_confirmed,
            COUNT(*) as contact_count,
-           BOOL_OR(c.qsl_rcvd = 'Y') as has_qsl
+           BOOL_OR(c.lotw_qsl_rcvd = 'Y' AND c.lotw_qsl_sent = 'Y') as has_qsl
     FROM contacts c
     WHERE c.user_id = $1
       AND c.state IS NOT NULL
@@ -243,9 +243,9 @@ async function calculateModeWASProgress(userId: number, stationId: number | unde
   let contactQuery = `
     SELECT DISTINCT c.state,
            MAX(c.datetime) as last_worked,
-           MAX(CASE WHEN c.qsl_rcvd = 'Y' THEN c.datetime END) as last_confirmed,
+           MAX(CASE WHEN c.lotw_qsl_rcvd = 'Y' AND c.lotw_qsl_sent = 'Y' THEN c.datetime END) as last_confirmed,
            COUNT(*) as contact_count,
-           BOOL_OR(c.qsl_rcvd = 'Y') as has_qsl
+           BOOL_OR(c.lotw_qsl_rcvd = 'Y' AND c.lotw_qsl_sent = 'Y') as has_qsl
     FROM contacts c
     WHERE c.user_id = $1
       AND c.state IS NOT NULL
@@ -306,7 +306,7 @@ async function getRecentWASConfirmations(userId: number, stationId?: number) {
       AND c.state IS NOT NULL
       AND c.state != ''
       AND c.dxcc IN (6, 110, 291)
-      AND (c.qsl_rcvd = 'Y' OR c.lotw_qsl_rcvd = 'Y')
+      AND c.lotw_qsl_rcvd = 'Y' AND c.lotw_qsl_sent = 'Y'
   `;
 
   const queryParams: (string | number)[] = [userId];
@@ -412,7 +412,7 @@ async function getWASStatistics(userId: number, stationId?: number) {
   let statsQuery = `
     SELECT 
       COUNT(DISTINCT state) as states_worked,
-      COUNT(DISTINCT CASE WHEN qsl_rcvd = 'Y' THEN state END) as states_confirmed,
+      COUNT(DISTINCT CASE WHEN lotw_qsl_rcvd = 'Y' AND lotw_qsl_sent = 'Y' THEN state END) as states_confirmed,
       state,
       COUNT(*) as contact_count
     FROM contacts c
