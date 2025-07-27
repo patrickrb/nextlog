@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
-# Install dependencies for development
-RUN apk add --no-cache libc6-compat
+# Install dependencies for development including PostgreSQL client
+RUN apk add --no-cache libc6-compat postgresql-client bash
 
 WORKDIR /app
 
@@ -11,8 +11,17 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
+# Copy database setup scripts
+COPY install-database.sql ./
+COPY postgres-lotw-migration.sql ./
+COPY docker-install.sh ./
+COPY scripts/ ./scripts/
+
+# Make install script executable
+RUN chmod +x docker-install.sh
+
 # Expose port
 EXPOSE 3000
 
-# Start the development server
-CMD ["npm", "run", "dev"]
+# Start script that initializes database and then starts dev server
+CMD ["sh", "-c", "./docker-install.sh && npm run dev"]

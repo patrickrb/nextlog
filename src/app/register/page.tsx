@@ -77,12 +77,12 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md bg-background text-foreground">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">
+          <CardTitle className="text-2xl text-center text-foreground">
             Create your account
           </CardTitle>
-          <CardDescription className="text-center">
+          <CardDescription className="text-center text-muted-foreground">
             Enter your details to create your Nextlog account
           </CardDescription>
         </CardHeader>
