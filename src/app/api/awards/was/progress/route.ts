@@ -77,6 +77,7 @@ async function calculateWASProgress(params: WASCalculationParams): Promise<WASPr
       c.datetime,
       c.qsl_rcvd,
       c.lotw_qsl_rcvd,
+      c.lotw_qsl_sent,
       c.qsl_lotw_date
     FROM contacts c
     WHERE c.user_id = $1
@@ -143,7 +144,7 @@ async function calculateWASProgress(params: WASCalculationParams): Promise<WASPr
       };
     }
 
-    const isConfirmed = contact.qsl_rcvd === 'Y' || contact.lotw_qsl_rcvd === 'Y';
+    const isConfirmed = contact.lotw_qsl_rcvd === 'Y' && contact.lotw_qsl_sent === 'Y';
     
     return {
       state_code: state.code,
