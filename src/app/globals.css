@@ -62,9 +62,34 @@
   * {
     border-color: hsl(var(--border));
   }
+  
+  html {
+    /* Ensure theme colors are inherited properly */
+    color-scheme: light;
+  }
+  
+  html.dark {
+    color-scheme: dark;
+  }
+  
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Prevent any default browser styles from interfering */
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  
+  /* Ensure all components respect theme variables */
+  .bg-background {
+    background-color: hsl(var(--background)) !important;
+  }
+  
+  .text-foreground {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .text-muted-foreground {
+    color: hsl(var(--muted-foreground)) !important;
   }
 }
