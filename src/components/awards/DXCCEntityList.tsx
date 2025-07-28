@@ -33,7 +33,7 @@ export default function DXCCEntityList({
   const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
 
   const filteredAndSortedEntities = useMemo(() => {
-    let filtered = entities.filter(entity => {
+    const filtered = entities.filter(entity => {
       const matchesSearch = entity.entity_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            entity.prefix.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === 'all' || entity.status === statusFilter;
@@ -44,7 +44,7 @@ export default function DXCCEntityList({
 
     // Sort the filtered results
     filtered.sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number, bValue: string | number;
       
       switch (sortField) {
         case 'name':

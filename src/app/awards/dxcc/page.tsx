@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Award, Map, BarChart3, Download, ExternalLink } from 'lucide-react';
+import { Globe, Award, BarChart3, Download, ExternalLink } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import Navbar from '@/components/Navbar';
 import DXCCProgressDashboard from '@/components/awards/DXCCProgressDashboard';
@@ -202,7 +202,6 @@ export default function DXCCPage() {
 
             <TabsContent value="overview" className="space-y-6">
               <DXCCProgressDashboard 
-                userId={user?.id || 0}
                 stationId={undefined}
               />
             </TabsContent>

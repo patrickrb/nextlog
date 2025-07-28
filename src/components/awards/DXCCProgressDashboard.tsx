@@ -1,32 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Globe, Map, BarChart3, Trophy, Target, Zap } from 'lucide-react';
-import { DXCCProgress, DXCCAwardType, DXCC_BANDS, DXCCSummary, DXCC_AWARD_DEFINITIONS } from '@/types/awards';
+import { DXCCProgress, DXCC_BANDS, DXCCSummary, DXCC_AWARD_DEFINITIONS } from '@/types/awards';
 
 interface DXCCProgressDashboardProps {
-  userId: number;
   stationId?: number;
 }
 
-export default function DXCCProgressDashboard({ userId, stationId }: DXCCProgressDashboardProps) {
+export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboardProps) {
   const [summary, setSummary] = useState<DXCCSummary | null>(null);
   const [selectedBand, setSelectedBand] = useState<string>('all');
   const [selectedMode, setSelectedMode] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchDXCCSummary();
-  }, [userId, stationId]);
-
-  const fetchDXCCSummary = async () => {
+  const fetchDXCCSummary = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -46,7 +40,11 @@ export default function DXCCProgressDashboard({ userId, stationId }: DXCCProgres
     } finally {
       setLoading(false);
     }
-  };
+  }, [stationId]);
+
+  useEffect(() => {
+    fetchDXCCSummary();
+  }, [fetchDXCCSummary]);
 
   const getCurrentProgress = (): DXCCProgress => {
     if (!summary) return {} as DXCCProgress;

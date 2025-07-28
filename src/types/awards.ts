@@ -34,8 +34,8 @@ export interface WASStateProgress {
   state_name: string;
   status: WASStatus;
   contact_count: number;
-  last_worked_date?: Date;
-  last_confirmed_date?: Date;
+  last_worked_date?: string;
+  last_confirmed_date?: string;
   qsl_received: boolean;
   contact_id?: number;
   callsign?: string;

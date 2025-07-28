@@ -151,8 +151,8 @@ async function calculateWASProgress(params: WASCalculationParams): Promise<WASPr
       state_name: state.name,
       status: isConfirmed ? 'confirmed' : 'worked' as WASStatus,
       contact_count: 1, // We're using DISTINCT ON, so always 1 per state
-      last_worked_date: new Date(contact.datetime),
-      last_confirmed_date: isConfirmed && contact.qsl_lotw_date ? new Date(contact.qsl_lotw_date) : undefined,
+      last_worked_date: contact.datetime,
+      last_confirmed_date: isConfirmed && contact.qsl_lotw_date ? contact.qsl_lotw_date : undefined,
       qsl_received: isConfirmed,
       contact_id: contact.id,
       callsign: contact.callsign,
@@ -177,7 +177,7 @@ async function calculateWASProgress(params: WASCalculationParams): Promise<WASPr
     progress_percentage: Math.round((workedStates / totalStates) * 100),
     confirmed_percentage: Math.round((confirmedStates / totalStates) * 100),
     states: stateProgress,
-    last_updated: new Date()
+    last_updated: new Date().toISOString()
   };
 
   return progress;

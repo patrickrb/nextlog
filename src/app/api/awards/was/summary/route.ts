@@ -126,8 +126,8 @@ async function calculateBasicWASProgress(userId: number, stationId?: number): Pr
       state_name: state.name,
       status: !worked ? 'needed' : (worked.has_qsl ? 'confirmed' : 'worked'),
       contact_count: worked?.contact_count || 0,
-      last_worked_date: worked?.last_worked ? new Date(worked.last_worked) : undefined,
-      last_confirmed_date: worked?.last_confirmed ? new Date(worked.last_confirmed) : undefined,
+      last_worked_date: worked?.last_worked || undefined,
+      last_confirmed_date: worked?.last_confirmed || undefined,
       qsl_received: worked?.has_qsl || false
     } as WASStateProgress;
   });
@@ -145,7 +145,7 @@ async function calculateBasicWASProgress(userId: number, stationId?: number): Pr
     progress_percentage: Math.round((workedStates / totalStates) * 100),
     confirmed_percentage: Math.round((confirmedStates / totalStates) * 100),
     states,
-    last_updated: new Date()
+    last_updated: new Date().toISOString()
   };
 }
 
@@ -192,8 +192,8 @@ async function calculateBandWASProgress(userId: number, stationId: number | unde
       state_name: state.name,
       status: !worked ? 'needed' : (worked.has_qsl ? 'confirmed' : 'worked'),
       contact_count: worked?.contact_count || 0,
-      last_worked_date: worked?.last_worked ? new Date(worked.last_worked) : undefined,
-      last_confirmed_date: worked?.last_confirmed ? new Date(worked.last_confirmed) : undefined,
+      last_worked_date: worked?.last_worked || undefined,
+      last_confirmed_date: worked?.last_confirmed || undefined,
       qsl_received: worked?.has_qsl || false
     } as WASStateProgress;
   });
@@ -212,7 +212,7 @@ async function calculateBandWASProgress(userId: number, stationId: number | unde
     progress_percentage: Math.round((workedStates / totalStates) * 100),
     confirmed_percentage: Math.round((confirmedStates / totalStates) * 100),
     states,
-    last_updated: new Date()
+    last_updated: new Date().toISOString()
   };
 }
 
@@ -274,8 +274,8 @@ async function calculateModeWASProgress(userId: number, stationId: number | unde
       state_name: state.name,
       status: !worked ? 'needed' : (worked.has_qsl ? 'confirmed' : 'worked'),
       contact_count: worked?.contact_count || 0,
-      last_worked_date: worked?.last_worked ? new Date(worked.last_worked) : undefined,
-      last_confirmed_date: worked?.last_confirmed ? new Date(worked.last_confirmed) : undefined,
+      last_worked_date: worked?.last_worked || undefined,
+      last_confirmed_date: worked?.last_confirmed || undefined,
       qsl_received: worked?.has_qsl || false
     } as WASStateProgress;
   });
@@ -293,7 +293,7 @@ async function calculateModeWASProgress(userId: number, stationId: number | unde
     progress_percentage: Math.round((workedStates / totalStates) * 100),
     confirmed_percentage: Math.round((confirmedStates / totalStates) * 100),
     states,
-    last_updated: new Date()
+    last_updated: new Date().toISOString()
   };
 }
 
