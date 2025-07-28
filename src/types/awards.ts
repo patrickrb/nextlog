@@ -53,7 +53,7 @@ export interface WASProgress {
   progress_percentage: number;
   confirmed_percentage: number;
   states: WASStateProgress[];
-  last_updated: Date;
+  last_updated: string;
 }
 
 export interface WASAward {
@@ -334,4 +334,297 @@ export const WAS_MODES = {
   cw: ['CW'],
   digital: ['PSK31', 'FT8', 'FT4', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'CONTESTIA'],
   rtty: ['RTTY']
+};
+
+// DXCC Award Types and Interfaces
+export interface DXCCEntity {
+  id: number;
+  adif: number;
+  name: string;
+  prefix: string;
+  cq_zone?: number;
+  itu_zone?: number;
+  continent: string;
+  longitude?: number;
+  latitude?: number;
+  deleted: boolean;
+  created_at: Date;
+}
+
+export type DXCCAwardType = 
+  | 'basic'     // Any band/mode (current)
+  | 'phone'     // Phone modes only
+  | 'cw'        // CW only
+  | 'digital'   // Digital modes only
+  | 'rtty'      // RTTY only
+  | '160m'      // 160M band only
+  | '80m'       // 80M band only
+  | '40m'       // 40M band only
+  | '20m'       // 20M band only
+  | '15m'       // 15M band only
+  | '10m'       // 10M band only
+  | '6m'        // 6M band only
+  | '2m'        // 2M band only
+  | 'mixed';    // Mixed mode (any mode)
+
+export type DXCCStatus = 'needed' | 'worked' | 'confirmed';
+
+export interface DXCCEntityProgress {
+  entity_id: number;
+  adif: number;
+  entity_name: string;
+  prefix: string;
+  continent: string;
+  cq_zone?: number;
+  itu_zone?: number;
+  status: DXCCStatus;
+  contact_count: number;
+  last_worked_date?: string;
+  last_confirmed_date?: string;
+  qsl_received: boolean;
+  contact_id?: number;
+  callsign?: string;
+  band?: string;
+  mode?: string;
+  longitude?: number;
+  latitude?: number;
+}
+
+export interface DXCCProgress {
+  award_type: DXCCAwardType;
+  band?: string;
+  total_entities: number;
+  worked_entities: number;
+  confirmed_entities: number;
+  needed_entities: number;
+  progress_percentage: number;
+  confirmed_percentage: number;
+  entities: DXCCEntityProgress[];
+  last_updated: string;
+  by_continent?: Record<string, {
+    worked: number;
+    confirmed: number;
+    total: number;
+  }>;
+}
+
+export interface DXCCAward {
+  id: number;
+  user_id: number;
+  station_id?: number;
+  award_type: DXCCAwardType;
+  band?: string;
+  completed_date?: Date;
+  confirmed_entities: number;
+  total_entities: number;
+  is_completed: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface DXCCConfirmation {
+  id: number;
+  user_id: number;
+  station_id?: number;
+  entity_id: number;
+  contact_id: number;
+  award_type: DXCCAwardType;
+  band?: string;
+  mode: string;
+  qsl_received: boolean;
+  confirmed_date?: string;
+  created_at: string;
+}
+
+export interface DXCCSummary {
+  overall_progress: DXCCProgress;
+  band_progress: Record<string, DXCCProgress>;
+  mode_progress: Record<string, DXCCProgress>;
+  recent_confirmations: DXCCConfirmation[];
+  needed_entities: {
+    all: number[];
+    by_band: Record<string, number[]>;
+    by_mode: Record<string, number[]>;
+    by_continent: Record<string, number[]>;
+  };
+  statistics: {
+    total_dxcc_awards: number;
+    completed_awards: number;
+    entities_worked_total: number;
+    entities_confirmed_total: number;
+    most_worked_continent: {
+      continent: string;
+      count: number;
+    };
+    rarest_entity: {
+      entity: string;
+      count: number;
+    };
+  };
+}
+
+export interface DXCCMapData {
+  entity_id: number;
+  adif: number;
+  entity_name: string;
+  status: DXCCStatus;
+  contact_count: number;
+  last_worked?: Date;
+  callsign?: string;
+  band?: string;
+  mode?: string;
+  longitude?: number;
+  latitude?: number;
+  continent: string;
+}
+
+// DXCC API Request/Response types
+export interface DXCCProgressRequest {
+  station_id?: number;
+  award_type?: DXCCAwardType;
+  band?: string;
+  mode?: string;
+}
+
+export interface DXCCProgressResponse {
+  success: boolean;
+  data?: DXCCProgress;
+  error?: string;
+}
+
+export interface DXCCSummaryResponse {
+  success: boolean;
+  data?: DXCCSummary;
+  error?: string;
+}
+
+export interface DXCCExportRequest {
+  station_id?: number;
+  award_type: DXCCAwardType;
+  band?: string;
+  format: 'csv' | 'pdf' | 'adif';
+}
+
+export interface DXCCExportResponse {
+  success: boolean;
+  download_url?: string;
+  filename?: string;
+  error?: string;
+}
+
+// DXCC Constants
+export const DXCC_BANDS = ['160M', '80M', '40M', '20M', '15M', '10M', '6M', '2M'];
+export const DXCC_MODES = {
+  phone: ['SSB', 'FM', 'AM'],
+  cw: ['CW'],
+  digital: ['PSK31', 'FT8', 'FT4', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'CONTESTIA'],
+  rtty: ['RTTY']
+};
+
+export const DXCC_CONTINENTS = ['NA', 'SA', 'EU', 'AS', 'AF', 'OC', 'AN'];
+
+export const DXCC_AWARD_DEFINITIONS: Record<DXCCAwardType, {
+  name: string;
+  description: string;
+  requirements: string;
+  entities_required: number;
+  valid_bands?: string[];
+  valid_modes?: string[];
+}> = {
+  basic: {
+    name: 'DXCC',
+    description: 'Work and confirm 100 DXCC entities',
+    requirements: 'QSL confirmation from 100 different DXCC entities',
+    entities_required: 100
+  },
+  phone: {
+    name: 'DXCC Phone',
+    description: 'Work and confirm 100 DXCC entities using phone modes',
+    requirements: 'QSL confirmation from 100 DXCC entities using phone modes only',
+    entities_required: 100,
+    valid_modes: ['SSB', 'FM', 'AM']
+  },
+  cw: {
+    name: 'DXCC CW',
+    description: 'Work and confirm 100 DXCC entities using CW',
+    requirements: 'QSL confirmation from 100 DXCC entities using CW only',
+    entities_required: 100,
+    valid_modes: ['CW']
+  },
+  digital: {
+    name: 'DXCC Digital',
+    description: 'Work and confirm 100 DXCC entities using digital modes',
+    requirements: 'QSL confirmation from 100 DXCC entities using digital modes',
+    entities_required: 100,
+    valid_modes: ['PSK31', 'FT8', 'FT4', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'CONTESTIA']
+  },
+  rtty: {
+    name: 'DXCC RTTY',
+    description: 'Work and confirm 100 DXCC entities using RTTY',
+    requirements: 'QSL confirmation from 100 DXCC entities using RTTY only',
+    entities_required: 100,
+    valid_modes: ['RTTY']
+  },
+  '160m': {
+    name: '160M DXCC',
+    description: 'Work and confirm 100 DXCC entities on 160 meters',
+    requirements: 'QSL confirmation from 100 DXCC entities on 160M band',
+    entities_required: 100,
+    valid_bands: ['160M']
+  },
+  '80m': {
+    name: '80M DXCC',
+    description: 'Work and confirm 100 DXCC entities on 80 meters',
+    requirements: 'QSL confirmation from 100 DXCC entities on 80M band',
+    entities_required: 100,
+    valid_bands: ['80M']
+  },
+  '40m': {
+    name: '40M DXCC',
+    description: 'Work and confirm 100 DXCC entities on 40 meters',
+    requirements: 'QSL confirmation from 100 DXCC entities on 40M band',
+    entities_required: 100,
+    valid_bands: ['40M']
+  },
+  '20m': {
+    name: '20M DXCC',
+    description: 'Work and confirm 100 DXCC entities on 20 meters',
+    requirements: 'QSL confirmation from 100 DXCC entities on 20M band',
+    entities_required: 100,
+    valid_bands: ['20M']
+  },
+  '15m': {
+    name: '15M DXCC',
+    description: 'Work and confirm 100 DXCC entities on 15 meters',
+    requirements: 'QSL confirmation from 100 DXCC entities on 15M band',
+    entities_required: 100,
+    valid_bands: ['15M']
+  },
+  '10m': {
+    name: '10M DXCC',
+    description: 'Work and confirm 100 DXCC entities on 10 meters',
+    requirements: 'QSL confirmation from 100 DXCC entities on 10M band',
+    entities_required: 100,
+    valid_bands: ['10M']
+  },
+  '6m': {
+    name: '6M DXCC',
+    description: 'Work and confirm 50 DXCC entities on 6 meters',
+    requirements: 'QSL confirmation from 50 DXCC entities on 6M band',
+    entities_required: 50,
+    valid_bands: ['6M']
+  },
+  '2m': {
+    name: '2M DXCC',
+    description: 'Work and confirm 50 DXCC entities on 2 meters',
+    requirements: 'QSL confirmation from 50 DXCC entities on 2M band',
+    entities_required: 50,
+    valid_bands: ['2M']
+  },
+  mixed: {
+    name: 'Mixed DXCC',
+    description: 'Work and confirm 100 DXCC entities using mixed modes',
+    requirements: 'QSL confirmation from 100 DXCC entities using any combination of modes',
+    entities_required: 100
+  }
 };
