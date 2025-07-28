@@ -36,6 +36,18 @@ export default function AwardsPage() {
       completed_awards: number;
     };
   } | null>(null);
+  
+  const [dxccProgress, setDxccProgress] = useState<{
+    overall_progress: {
+      confirmed_entities: number;
+      total_entities: number;
+      confirmed_percentage: number;
+      worked_entities: number;
+    };
+    statistics: {
+      completed_awards: number;
+    };
+  } | null>(null);
 
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
@@ -50,6 +62,15 @@ export default function AwardsPage() {
         const wasData = await wasResponse.json();
         if (wasData.success) {
           setWasProgress(wasData.data);
+        }
+      }
+
+      // Load DXCC progress for preview
+      const dxccResponse = await fetch('/api/awards/dxcc/summary');
+      if (dxccResponse.ok) {
+        const dxccData = await dxccResponse.json();
+        if (dxccData.success) {
+          setDxccProgress(dxccData.data);
         }
       }
     } catch (error) {
@@ -80,6 +101,13 @@ export default function AwardsPage() {
     return 'available';
   };
 
+  const getDXCCStatus = (): 'available' | 'in_progress' | 'completed' => {
+    if (!dxccProgress) return 'available';
+    if (dxccProgress.overall_progress.confirmed_entities >= 100) return 'completed';
+    if (dxccProgress.overall_progress.worked_entities > 0) return 'in_progress';
+    return 'available';
+  };
+
   const awards: AwardPreview[] = [
     {
       name: 'WAS - Worked All States',
@@ -97,8 +125,13 @@ export default function AwardsPage() {
       name: 'DXCC - DX Century Club',
       description: 'Work and confirm 100 different DXCC entities worldwide',
       icon: <Trophy className="h-8 w-8" />,
+      progress: dxccProgress ? {
+        current: dxccProgress.overall_progress.confirmed_entities,
+        total: 100, // Standard DXCC requirement
+        percentage: Math.min((dxccProgress.overall_progress.confirmed_entities / 100) * 100, 100)
+      } : undefined,
       href: '/awards/dxcc',
-      status: 'coming_soon'
+      status: getDXCCStatus()
     },
     {
       name: 'WPX - Worked All Prefixes',
