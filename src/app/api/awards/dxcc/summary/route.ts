@@ -86,10 +86,10 @@ async function calculateDXCCSummary(params: DXCCSummaryParams): Promise<DXCCSumm
 async function calculateBasicDXCCProgress(userId: number, stationId?: number): Promise<DXCCProgress> {
   // Get all DXCC entities
   const entitiesResult = await query(`
-    SELECT id, adif, name, prefix, continent, cq_zone, itu_zone, longitude, latitude
-    FROM dxcc_entities 
-    WHERE deleted = false OR deleted IS NULL
-    ORDER BY name
+    SELECT de.id, de.adif, de.name, de.prefix, de.continent, de.cq_zone, de.itu_zone, de.longitude, de.latitude
+    FROM dxcc_entities de
+    WHERE de.deleted = false OR de.deleted IS NULL
+    ORDER BY de.name
   `);
 
   // Get worked entities for this user/station
@@ -174,10 +174,10 @@ async function calculateBasicDXCCProgress(userId: number, stationId?: number): P
 async function calculateBandDXCCProgress(userId: number, stationId: number | undefined, band: string): Promise<DXCCProgress> {
   // Similar to basic but with band filter
   const entitiesResult = await query(`
-    SELECT id, adif, name, prefix, continent, cq_zone, itu_zone, longitude, latitude
-    FROM dxcc_entities 
-    WHERE deleted = false OR deleted IS NULL
-    ORDER BY name
+    SELECT de.id, de.adif, de.name, de.prefix, de.continent, de.cq_zone, de.itu_zone, de.longitude, de.latitude
+    FROM dxcc_entities de
+    WHERE de.deleted = false OR de.deleted IS NULL
+    ORDER BY de.name
   `);
 
   let contactQuery = `
@@ -261,10 +261,10 @@ async function calculateBandDXCCProgress(userId: number, stationId: number | und
 
 async function calculateModeDXCCProgress(userId: number, stationId: number | undefined, modeType: 'phone' | 'cw' | 'digital' | 'rtty'): Promise<DXCCProgress> {
   const entitiesResult = await query(`
-    SELECT id, adif, name, prefix, continent, cq_zone, itu_zone, longitude, latitude
-    FROM dxcc_entities 
-    WHERE deleted = false OR deleted IS NULL
-    ORDER BY name
+    SELECT de.id, de.adif, de.name, de.prefix, de.continent, de.cq_zone, de.itu_zone, de.longitude, de.latitude
+    FROM dxcc_entities de
+    WHERE de.deleted = false OR de.deleted IS NULL
+    ORDER BY de.name
   `);
 
   let modeFilter = '';
@@ -398,7 +398,7 @@ async function getRecentDXCCConfirmations(userId: number, stationId?: number) {
 async function calculateNeededEntities(userId: number, stationId?: number) {
   // Get all entities
   const allEntitiesResult = await query(`
-    SELECT adif FROM dxcc_entities WHERE deleted = false OR deleted IS NULL
+    SELECT de.adif FROM dxcc_entities de WHERE de.deleted = false OR de.deleted IS NULL
   `);
   const allEntities = allEntitiesResult.rows.map(row => row.adif);
 
@@ -475,7 +475,7 @@ async function calculateNeededEntities(userId: number, stationId?: number) {
     const continentWorked = new Set(continentWorkedResult.rows.map(row => row.dxcc));
     
     const continentEntitiesResult = await query(`
-      SELECT adif FROM dxcc_entities WHERE continent = $1 AND (deleted = false OR deleted IS NULL)
+      SELECT de.adif FROM dxcc_entities de WHERE de.continent = $1 AND (de.deleted = false OR de.deleted IS NULL)
     `, [continent]);
     const continentEntities = continentEntitiesResult.rows.map(row => row.adif);
     
