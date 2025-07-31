@@ -11,9 +11,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Combobox } from '@/components/ui/combobox';
 import { ArrowLeft, Save, Radio, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import ApiKeyManager from '@/components/stations/ApiKeyManager';
 
 interface Station {
   id: number;
+  user_id: number;
   callsign: string;
   station_name: string;
   operator_name?: string;
@@ -719,6 +721,9 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                 </div>
               </CardContent>
             </Card>
+
+            {/* API Key Management */}
+            <ApiKeyManager stationId={parseInt(stationId)} />
 
             <div className="flex justify-end space-x-4">
               <Button type="button" variant="outline" asChild>

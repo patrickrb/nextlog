@@ -187,5 +187,116 @@ CREATE TRIGGER set_default_station_for_contact_trigger
     BEFORE INSERT ON contacts
     FOR EACH ROW EXECUTE FUNCTION set_default_station_for_contact();
 
+-- API Keys Table for Cloudlog compatibility
+CREATE TABLE api_keys (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    station_id INTEGER REFERENCES stations(id) ON DELETE CASCADE,
+    
+    -- API key information
+    key_name VARCHAR(255) NOT NULL,
+    api_key VARCHAR(255) UNIQUE NOT NULL,
+    api_secret VARCHAR(255) NOT NULL, -- Hashed secret for verification
+    
+    -- Permissions and settings
+    is_enabled BOOLEAN DEFAULT true NOT NULL,
+    read_only BOOLEAN DEFAULT false NOT NULL,
+    allowed_endpoints TEXT[], -- Array of allowed endpoint patterns
+    rate_limit_per_hour INTEGER DEFAULT 1000,
+    
+    -- Usage tracking
+    last_used_at TIMESTAMP,
+    total_requests INTEGER DEFAULT 0,
+    
+    -- Metadata
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP, -- Optional expiration date
+    
+    -- Indexes
+    CONSTRAINT unique_user_key_name UNIQUE (user_id, key_name)
+);
+
+-- Create indexes for performance
+CREATE INDEX idx_api_keys_user_id ON api_keys(user_id);
+CREATE INDEX idx_api_keys_station_id ON api_keys(station_id);
+CREATE INDEX idx_api_keys_api_key ON api_keys(api_key);
+CREATE INDEX idx_api_keys_enabled ON api_keys(is_enabled);
+CREATE INDEX idx_api_keys_last_used ON api_keys(last_used_at);
+
+-- Create api_key_usage_logs table for detailed logging
+CREATE TABLE api_key_usage_logs (
+    id SERIAL PRIMARY KEY,
+    api_key_id INTEGER NOT NULL REFERENCES api_keys(id) ON DELETE CASCADE,
+    
+    -- Request details
+    endpoint VARCHAR(255) NOT NULL,
+    method VARCHAR(10) NOT NULL,
+    ip_address INET,
+    user_agent TEXT,
+    
+    -- Response details
+    status_code INTEGER NOT NULL,
+    response_time_ms INTEGER,
+    bytes_sent INTEGER,
+    
+    -- Metadata
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Error details (if applicable)
+    error_message TEXT
+);
+
+-- Create indexes for api_key_usage_logs
+CREATE INDEX idx_api_usage_logs_api_key_id ON api_key_usage_logs(api_key_id);
+CREATE INDEX idx_api_usage_logs_created_at ON api_key_usage_logs(created_at);
+CREATE INDEX idx_api_usage_logs_endpoint ON api_key_usage_logs(endpoint);
+CREATE INDEX idx_api_usage_logs_status_code ON api_key_usage_logs(status_code);
+
+-- Create function to generate secure API keys
+CREATE OR REPLACE FUNCTION generate_api_key()
+RETURNS TEXT AS $$
+DECLARE
+    key_prefix TEXT := 'nextlog_';
+    random_part TEXT;
+BEGIN
+    -- Generate a 32-character random string
+    SELECT string_agg(
+        substr('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', 
+               floor(random() * 62)::int + 1, 1),
+        ''
+    )
+    FROM generate_series(1, 32) INTO random_part;
+    
+    RETURN key_prefix || random_part;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create function to validate API key format
+CREATE OR REPLACE FUNCTION is_valid_api_key_format(key TEXT)
+RETURNS BOOLEAN AS $$
+BEGIN
+    RETURN key ~ '^nextlog_[A-Za-z0-9]{32}$';
+END;
+$$ LANGUAGE plpgsql;
+
+-- Add constraint to ensure API key format
+ALTER TABLE api_keys ADD CONSTRAINT check_api_key_format 
+    CHECK (is_valid_api_key_format(api_key));
+
+-- Create trigger to update api_keys.updated_at
+CREATE OR REPLACE FUNCTION update_api_keys_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_update_api_keys_updated_at
+    BEFORE UPDATE ON api_keys
+    FOR EACH ROW
+    EXECUTE FUNCTION update_api_keys_updated_at();
+
 -- Print success message
 SELECT 'Database initialized successfully!' as message;
