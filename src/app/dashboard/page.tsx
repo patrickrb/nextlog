@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, BarChart3, TrendingUp, Search, Trophy } from 'lucide-react';
+import { Loader2, BarChart3, TrendingUp, Search, Trophy, Radio } from 'lucide-react';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import EditContactDialog from '@/components/EditContactDialog';
 import DXpeditionWidget from '@/components/DXpeditionWidget';
@@ -177,6 +177,12 @@ export default function DashboardPage() {
               <Button variant="outline" size="sm">
                 <Trophy className="h-4 w-4 mr-2" />
                 Awards
+              </Button>
+            </Link>
+            <Link href="/propagation">
+              <Button variant="outline" size="sm">
+                <Radio className="h-4 w-4 mr-2" />
+                Propagation
               </Button>
             </Link>
             <Link href="/dxpeditions">
