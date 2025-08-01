@@ -143,6 +143,30 @@ export async function POST() {
       migrations.push('ALTER TABLE users ADD COLUMN qrz_password VARCHAR(255)');
     }
     
+    // Check if admin_audit_log table exists and create if not
+    const adminAuditLogExists = await db.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'admin_audit_log' AND table_schema = 'public'
+    `);
+    
+    if (adminAuditLogExists.rows.length === 0) {
+      migrations.push(`
+        CREATE TABLE admin_audit_log (
+          id SERIAL PRIMARY KEY,
+          admin_user_id INTEGER NOT NULL REFERENCES users(id),
+          action VARCHAR(100) NOT NULL,
+          target_type VARCHAR(50),
+          target_id INTEGER,
+          old_values JSONB,
+          new_values JSONB,
+          ip_address INET,
+          user_agent TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    }
+    
     console.log(`Running ${migrations.length} migrations...`);
     
     // Execute migrations

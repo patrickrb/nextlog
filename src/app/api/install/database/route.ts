@@ -177,6 +177,19 @@ export async function POST() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        
+        CREATE TABLE IF NOT EXISTS admin_audit_log (
+            id SERIAL PRIMARY KEY,
+            admin_user_id INTEGER NOT NULL REFERENCES users(id),
+            action VARCHAR(100) NOT NULL,
+            target_type VARCHAR(50),
+            target_id INTEGER,
+            old_values JSONB,
+            new_values JSONB,
+            ip_address INET,
+            user_agent TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
       `;
       
       await db.query(coreSQL);
