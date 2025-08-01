@@ -336,7 +336,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
       const data = await response.json();
 
       if (response.ok) {
-        router.push('/dashboard/stations');
+        router.push('/stations');
       } else {
         setError(data.error || 'Failed to update station');
       }
@@ -365,7 +365,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
           <h2 className="text-2xl font-bold mb-2">Station Not Found</h2>
           <p className="text-muted-foreground mb-4">The requested station could not be found.</p>
           <Button asChild>
-            <Link href="/dashboard/stations">
+            <Link href="/stations">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Stations
             </Link>
@@ -727,7 +727,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
 
             <div className="flex justify-end space-x-4">
               <Button type="button" variant="outline" asChild>
-                <Link href="/dashboard/stations">Cancel</Link>
+                <Link href="/stations">Cancel</Link>
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving ? (
