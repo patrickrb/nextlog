@@ -24,9 +24,16 @@ export async function POST() {
       WHERE table_name = 'stations' AND table_schema = 'public'
     `);
     
+    const usersColumns = await db.query(`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' AND table_schema = 'public'
+    `);
+    
     const contactsColumnNames = contactsColumns.rows.map(row => row.column_name);
     const apiKeysColumnNames = apiKeysColumns.rows.map(row => row.column_name);
     const stationsColumnNames = stationsColumns.rows.map(row => row.column_name);
+    const usersColumnNames = usersColumns.rows.map(row => row.column_name);
     
     const migrations = [];
     
@@ -78,6 +85,9 @@ export async function POST() {
     if (!apiKeysColumnNames.includes('usage_count')) {
       migrations.push('ALTER TABLE api_keys ADD COLUMN usage_count INTEGER DEFAULT 0');
     }
+    if (!apiKeysColumnNames.includes('description')) {
+      migrations.push('ALTER TABLE api_keys ADD COLUMN description TEXT');
+    }
     
     // Stations table migrations
     if (!stationsColumnNames.includes('operator_name')) {
@@ -85,6 +95,17 @@ export async function POST() {
     }
     if (!stationsColumnNames.includes('grid_locator')) {
       migrations.push('ALTER TABLE stations ADD COLUMN grid_locator VARCHAR(10)');
+    }
+    
+    // Users table migrations
+    if (!usersColumnNames.includes('last_login')) {
+      migrations.push('ALTER TABLE users ADD COLUMN last_login TIMESTAMP');
+    }
+    if (!usersColumnNames.includes('qrz_username')) {
+      migrations.push('ALTER TABLE users ADD COLUMN qrz_username VARCHAR(255)');
+    }
+    if (!usersColumnNames.includes('qrz_password')) {
+      migrations.push('ALTER TABLE users ADD COLUMN qrz_password VARCHAR(255)');
     }
     
     console.log(`Running ${migrations.length} migrations...`);

@@ -35,8 +35,11 @@ export async function POST() {
             name VARCHAR(255) NOT NULL,
             callsign VARCHAR(50),
             grid_locator VARCHAR(10),
+            qrz_username VARCHAR(255),
+            qrz_password VARCHAR(255),
             role VARCHAR(50) DEFAULT 'user' NOT NULL,
             status VARCHAR(50) DEFAULT 'active' NOT NULL,
+            last_login TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -143,6 +146,7 @@ export async function POST() {
             last_used_at TIMESTAMP,
             usage_count INTEGER DEFAULT 0,
             expires_at TIMESTAMP,
+            description TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
