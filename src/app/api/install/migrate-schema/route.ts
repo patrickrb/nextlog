@@ -90,11 +90,38 @@ export async function POST() {
     }
     
     // Stations table migrations
-    if (!stationsColumnNames.includes('operator_name')) {
-      migrations.push('ALTER TABLE stations ADD COLUMN operator_name VARCHAR(255)');
-    }
-    if (!stationsColumnNames.includes('grid_locator')) {
-      migrations.push('ALTER TABLE stations ADD COLUMN grid_locator VARCHAR(10)');
+    const stationsNeededColumns = [
+      'operator_name', 'qth_name', 'street_address', 'city', 'county', 
+      'state_province', 'postal_code', 'country', 'dxcc_entity_code',
+      'grid_locator', 'latitude', 'longitude', 'itu_zone', 'cq_zone',
+      'power_watts', 'rig_info', 'antenna_info', 'station_equipment',
+      'qrz_username', 'qrz_password', 'qrz_api_key', 'lotw_username'
+    ];
+    
+    for (const column of stationsNeededColumns) {
+      if (!stationsColumnNames.includes(column)) {
+        let columnDef = '';
+        switch (column) {
+          case 'operator_name': case 'qth_name': case 'qrz_username': 
+          case 'qrz_password': case 'qrz_api_key': case 'lotw_username': 
+            columnDef = 'VARCHAR(255)'; break;
+          case 'street_address': columnDef = 'VARCHAR(255)'; break;
+          case 'city': case 'county': case 'state_province': case 'country': 
+            columnDef = 'VARCHAR(100)'; break;
+          case 'postal_code': columnDef = 'VARCHAR(20)'; break;
+          case 'grid_locator': columnDef = 'VARCHAR(10)'; break;
+          case 'latitude': columnDef = 'DECIMAL(10, 8)'; break;
+          case 'longitude': columnDef = 'DECIMAL(11, 8)'; break;
+          case 'dxcc_entity_code': case 'itu_zone': case 'cq_zone': case 'power_watts': 
+            columnDef = 'INTEGER'; break;
+          case 'rig_info': case 'antenna_info': case 'station_equipment': 
+            columnDef = 'TEXT'; break;
+          default: columnDef = 'VARCHAR(255)'; break;
+        }
+        
+        const migration = `ALTER TABLE stations ADD COLUMN ${column} ${columnDef}`;
+        migrations.push(migration);
+      }
     }
     
     // Users table migrations
