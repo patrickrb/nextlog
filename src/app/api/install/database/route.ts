@@ -90,6 +90,33 @@ export async function POST() {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        
+        CREATE TABLE IF NOT EXISTS storage_config (
+            id SERIAL PRIMARY KEY,
+            config_type VARCHAR(50) NOT NULL UNIQUE,
+            account_name VARCHAR(255),
+            account_key TEXT,
+            container_name VARCHAR(255),
+            endpoint_url VARCHAR(500),
+            is_enabled BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by INTEGER REFERENCES users(id)
+        );
+        
+        CREATE TABLE IF NOT EXISTS api_keys (
+            id SERIAL PRIMARY KEY,
+            station_id INTEGER NOT NULL REFERENCES stations(id) ON DELETE CASCADE,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            api_key VARCHAR(255) NOT NULL UNIQUE,
+            key_hash VARCHAR(255) NOT NULL,
+            permissions JSONB DEFAULT '{}',
+            is_active BOOLEAN DEFAULT TRUE,
+            expires_at TIMESTAMP,
+            last_used_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
       `;
       
       await db.query(coreSQL);

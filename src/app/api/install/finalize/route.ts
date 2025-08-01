@@ -73,12 +73,16 @@ export async function POST() {
         throw new Error(`Insufficient states/provinces loaded. Expected ~1849, found ${statesCount}`);
       }
       
-      // Mark installation as complete by creating a system settings record
-      await client.query(`
-        INSERT INTO storage_config (config_type, is_enabled, created_at)
-        VALUES ('local_storage', true, NOW())
-        ON CONFLICT (config_type) DO NOTHING
-      `);
+      // Mark installation as complete by creating a system settings record (if table exists)
+      if (tableNames.includes('storage_config')) {
+        await client.query(`
+          INSERT INTO storage_config (config_type, is_enabled, created_at)
+          VALUES ('local_storage', true, NOW())
+          ON CONFLICT (config_type) DO NOTHING
+        `);
+      } else {
+        console.log('storage_config table not found, skipping installation marker');
+      }
       
       return NextResponse.json({ 
         success: true,
