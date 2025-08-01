@@ -108,3 +108,14 @@ process.on('SIGTERM', async () => {
   await closePool();
   process.exit(0);
 });
+
+// Default export for compatibility
+const db = {
+  query,
+  getClient,
+  transaction,
+  closePool,
+  connect: getClient // Alias for pool.connect() compatibility
+};
+
+export default db;
