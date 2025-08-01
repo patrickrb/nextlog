@@ -33,18 +33,44 @@ export async function POST(request: Request) {
       const user = userResult.rows[0];
       
       // Create a default station for the admin user
-      await client.query(`
-        INSERT INTO stations (
-          user_id, callsign, station_name, operator_name, 
-          grid_locator, is_active, is_default, created_at
-        ) VALUES ($1, $2, $3, $4, $5, true, true, NOW())
-      `, [
-        user.id,
-        callsign.toUpperCase(),
-        `${callsign.toUpperCase()} Station`,
-        name,
-        gridLocator?.toUpperCase() || null
-      ]);
+      // First check what columns exist in the stations table
+      const stationColumnsResult = await client.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'stations' AND table_schema = 'public'
+      `);
+      const stationColumns = stationColumnsResult.rows.map(row => row.column_name);
+      
+      // Build the insert query based on available columns
+      const hasOperatorName = stationColumns.includes('operator_name');
+      const hasGridLocator = stationColumns.includes('grid_locator');
+      
+      if (hasOperatorName && hasGridLocator) {
+        // Full schema with all columns
+        await client.query(`
+          INSERT INTO stations (
+            user_id, callsign, station_name, operator_name, 
+            grid_locator, is_active, is_default, created_at
+          ) VALUES ($1, $2, $3, $4, $5, true, true, NOW())
+        `, [
+          user.id,
+          callsign.toUpperCase(),
+          `${callsign.toUpperCase()} Station`,
+          name,
+          gridLocator?.toUpperCase() || null
+        ]);
+      } else {
+        // Fallback schema with minimal columns
+        await client.query(`
+          INSERT INTO stations (
+            user_id, callsign, station_name, is_active, is_default, created_at
+          ) VALUES ($1, $2, $3, true, true, NOW())
+        `, [
+          user.id,
+          callsign.toUpperCase(),
+          `${callsign.toUpperCase()} Station`
+        ]);
+      }
       
       await client.query('COMMIT');
       

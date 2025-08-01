@@ -71,6 +71,8 @@ export async function POST() {
             user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
             callsign VARCHAR(50) NOT NULL,
             station_name VARCHAR(255) NOT NULL,
+            operator_name VARCHAR(255),
+            grid_locator VARCHAR(10),
             is_active BOOLEAN DEFAULT TRUE,
             is_default BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
