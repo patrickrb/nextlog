@@ -97,6 +97,9 @@ export async function POST() {
             qrz_api_key VARCHAR(255),
             lotw_username VARCHAR(255),
             club_callsign VARCHAR(50),
+            lotw_password VARCHAR(255),
+            lotw_p12_cert BYTEA,
+            lotw_cert_created_at TIMESTAMP,
             is_active BOOLEAN DEFAULT TRUE,
             is_default BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -138,6 +141,9 @@ export async function POST() {
             operator VARCHAR(50),
             distance DECIMAL(10, 2),
             notes TEXT,
+            qsl_lotw BOOLEAN DEFAULT FALSE,
+            qsl_lotw_date DATE,
+            lotw_match_status VARCHAR(20) CHECK (lotw_match_status IN ('confirmed', 'partial', 'mismatch', null)),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );

@@ -43,7 +43,8 @@ export async function POST() {
       'latitude', 'longitude', 'country', 'dxcc', 'cont', 'cqz', 'ituz', 
       'state', 'cnty', 'qsl_rcvd', 'qsl_sent', 'qsl_via', 'eqsl_qsl_rcvd', 
       'eqsl_qsl_sent', 'lotw_qsl_rcvd', 'lotw_qsl_sent', 'qso_date_off', 
-      'time_off', 'operator', 'distance', 'notes'
+      'time_off', 'operator', 'distance', 'notes', 'qsl_lotw', 'qsl_lotw_date', 
+      'lotw_match_status'
     ];
     
     for (const column of contactsNeededColumns) {
@@ -65,11 +66,13 @@ export async function POST() {
           case 'qsl_rcvd': case 'qsl_sent': case 'eqsl_qsl_rcvd': case 'eqsl_qsl_sent': 
           case 'lotw_qsl_rcvd': case 'lotw_qsl_sent': columnDef = 'VARCHAR(10)'; break;
           case 'qsl_via': columnDef = 'VARCHAR(255)'; break;
-          case 'qso_date_off': columnDef = 'DATE'; break;
+          case 'qso_date_off': case 'qsl_lotw_date': columnDef = 'DATE'; break;
           case 'time_off': columnDef = 'TIME'; break;
           case 'operator': columnDef = 'VARCHAR(50)'; break;
           case 'distance': columnDef = 'DECIMAL(10, 2)'; break;
           case 'notes': columnDef = 'TEXT'; break;
+          case 'qsl_lotw': columnDef = 'BOOLEAN DEFAULT FALSE'; break;
+          case 'lotw_match_status': columnDef = "VARCHAR(20) CHECK (lotw_match_status IN ('confirmed', 'partial', 'mismatch', null))"; break;
           default: columnDef = 'VARCHAR(255)'; break;
         }
         
@@ -96,7 +99,7 @@ export async function POST() {
       'grid_locator', 'latitude', 'longitude', 'itu_zone', 'cq_zone',
       'power_watts', 'rig_info', 'antenna_info', 'station_equipment',
       'qrz_username', 'qrz_password', 'qrz_api_key', 'lotw_username',
-      'club_callsign'
+      'club_callsign', 'lotw_password', 'lotw_p12_cert', 'lotw_cert_created_at'
     ];
     
     for (const column of stationsNeededColumns) {
@@ -105,8 +108,11 @@ export async function POST() {
         switch (column) {
           case 'operator_name': case 'qth_name': case 'qrz_username': 
           case 'qrz_password': case 'qrz_api_key': case 'lotw_username': 
+          case 'lotw_password': 
             columnDef = 'VARCHAR(255)'; break;
           case 'club_callsign': columnDef = 'VARCHAR(50)'; break;
+          case 'lotw_p12_cert': columnDef = 'BYTEA'; break;
+          case 'lotw_cert_created_at': columnDef = 'TIMESTAMP'; break;
           case 'street_address': columnDef = 'VARCHAR(255)'; break;
           case 'city': case 'county': case 'state_province': case 'country': 
             columnDef = 'VARCHAR(100)'; break;
