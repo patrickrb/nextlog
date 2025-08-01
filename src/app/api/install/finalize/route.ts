@@ -41,7 +41,7 @@ export async function POST() {
       // Expected tables
       const expectedTables = [
         'users', 'stations', 'contacts', 'dxcc_entities', 'states_provinces',
-        'storage_config', 'api_keys', 'admin_audit_log', 'qsl_images',
+        'storage_config', 'api_keys', 'admin_audit_log', 'qsl_images', 'system_settings',
         'lotw_credentials', 'lotw_upload_logs', 'lotw_download_logs', 'lotw_job_queue'
       ];
       

@@ -38,7 +38,7 @@ export default function AdminSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [modifiedSettings, setModifiedSettings] = useState<Record<string, string>>({});
 
-  const fetchSettings = useCallback(async () => {
+  const fetchSettings = async () => {
     try {
       setError('');
       const response = await fetch('/api/admin/settings');
@@ -64,7 +64,7 @@ export default function AdminSettingsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     if (!loading) {
@@ -81,7 +81,7 @@ export default function AdminSettingsPage() {
       setIsAuthorized(true);
       fetchSettings();
     }
-  }, [user, loading, router, fetchSettings]);
+  }, [user, loading, router]);
 
   const handleSettingChange = (key: string, value: string) => {
     setModifiedSettings(prev => ({
@@ -261,9 +261,13 @@ export default function AdminSettingsPage() {
 
         {isLoading ? (
           <div className="text-center py-8">Loading settings...</div>
+        ) : Object.keys(settings).length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No settings found. Make sure the system_settings table exists and contains data.</p>
+          </div>
         ) : (
           <Tabs defaultValue={Object.keys(settings)[0]} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className={`grid w-full grid-cols-${Math.min(Object.keys(settings).length, 5)}`}>
               {Object.keys(settings).map((category) => (
                 <TabsTrigger key={category} value={category} className="capitalize">
                   {categoryTitles[category as keyof typeof categoryTitles] || category}

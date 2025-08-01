@@ -33,6 +33,7 @@ export default function InstallPage() {
   const [installSteps, setInstallSteps] = useState<InstallStep[]>([
     { id: 'validate', title: 'Validating installation requirements', status: 'pending' },
     { id: 'database', title: 'Setting up database schema', status: 'pending' },
+    { id: 'migrate', title: 'Running database migrations', status: 'pending' },
     { id: 'reference', title: 'Loading DXCC entities and reference data', status: 'pending' },
     { id: 'user', title: 'Creating administrator account', status: 'pending' },
     { id: 'finalize', title: 'Finalizing installation', status: 'pending' }
@@ -115,7 +116,24 @@ export default function InstallPage() {
       
       updateStepStatus('database', 'completed', 'Database schema created successfully');
 
-      // Step 3: Load reference data
+      // Step 3: Run schema migrations
+      updateStepStatus('migrate', 'running');
+      await sleep(1000);
+      
+      const migrateResponse = await fetch('/api/install/migrate-schema', {
+        method: 'POST'
+      });
+      
+      if (!migrateResponse.ok) {
+        const errorData = await migrateResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to run database migrations. Some features may not work properly.');
+      }
+      
+      const migrateResult = await migrateResponse.json();
+      updateStepStatus('migrate', 'completed', 
+        `Applied ${migrateResult.migrationsExecuted} database migrations`);
+
+      // Step 4: Load reference data
       updateStepStatus('reference', 'running');
       await sleep(3000); // This step takes longer
       
@@ -132,7 +150,7 @@ export default function InstallPage() {
       updateStepStatus('reference', 'completed', 
         `Loaded ${refDataResult.dxccCount} DXCC entities and ${refDataResult.statesCount} states/provinces`);
 
-      // Step 4: Create admin user
+      // Step 5: Create admin user
       updateStepStatus('user', 'running');
       await sleep(1000);
       
@@ -157,7 +175,7 @@ export default function InstallPage() {
       
       updateStepStatus('user', 'completed', 'Administrator account created');
 
-      // Step 5: Finalize
+      // Step 6: Finalize
       updateStepStatus('finalize', 'running');
       await sleep(500);
       
