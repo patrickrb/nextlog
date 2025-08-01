@@ -190,6 +190,39 @@ export async function POST() {
             user_agent TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        
+        CREATE TABLE IF NOT EXISTS system_settings (
+            id SERIAL PRIMARY KEY,
+            setting_key VARCHAR(255) NOT NULL UNIQUE,
+            setting_value TEXT NOT NULL,
+            data_type VARCHAR(50) NOT NULL DEFAULT 'string',
+            category VARCHAR(100) NOT NULL DEFAULT 'general',
+            description TEXT,
+            is_public BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_by INTEGER REFERENCES users(id)
+        );
+        
+        CREATE TABLE IF NOT EXISTS qsl_images (
+            id SERIAL PRIMARY KEY,
+            contact_id INTEGER NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            image_type VARCHAR(10) NOT NULL CHECK (image_type IN ('front', 'back')),
+            filename VARCHAR(255) NOT NULL,
+            original_filename VARCHAR(255) NOT NULL,
+            file_size INTEGER NOT NULL,
+            mime_type VARCHAR(100) NOT NULL CHECK (mime_type IN ('image/jpeg', 'image/jpg', 'image/png', 'image/webp')),
+            storage_path VARCHAR(500) NOT NULL,
+            storage_url VARCHAR(500),
+            storage_type VARCHAR(20) DEFAULT 'azure_blob' CHECK (storage_type IN ('azure_blob', 'aws_s3')),
+            width INTEGER,
+            height INTEGER,
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (contact_id, image_type)
+        );
       `;
       
       await db.query(coreSQL);

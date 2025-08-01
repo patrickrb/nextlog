@@ -167,6 +167,86 @@ export async function POST() {
       `);
     }
     
+    // Check if system_settings table exists and create if not
+    const systemSettingsExists = await db.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'system_settings' AND table_schema = 'public'
+    `);
+    
+    if (systemSettingsExists.rows.length === 0) {
+      migrations.push(`
+        CREATE TABLE system_settings (
+          id SERIAL PRIMARY KEY,
+          setting_key VARCHAR(255) NOT NULL UNIQUE,
+          setting_value TEXT NOT NULL,
+          data_type VARCHAR(50) NOT NULL DEFAULT 'string',
+          category VARCHAR(100) NOT NULL DEFAULT 'general',
+          description TEXT,
+          is_public BOOLEAN DEFAULT FALSE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_by INTEGER REFERENCES users(id)
+        )
+      `);
+      
+      migrations.push('CREATE INDEX IF NOT EXISTS idx_system_settings_key ON system_settings(setting_key)');
+      migrations.push('CREATE INDEX IF NOT EXISTS idx_system_settings_category ON system_settings(category)');
+      migrations.push('CREATE INDEX IF NOT EXISTS idx_system_settings_public ON system_settings(is_public)');
+      
+      // Insert default settings
+      migrations.push(`
+        INSERT INTO system_settings (setting_key, setting_value, data_type, category, description, is_public) VALUES
+        ('adif_max_file_size_mb', '10', 'number', 'import', 'Maximum ADIF file size in megabytes', false),
+        ('adif_max_record_count', '5000', 'number', 'import', 'Maximum number of records per ADIF import', false),
+        ('adif_batch_size', '50', 'number', 'import', 'Number of records to process per batch during import', false),
+        ('adif_timeout_seconds', '25', 'number', 'import', 'Maximum time in seconds for ADIF import processing', false),
+        ('app_name', 'Nextlog', 'string', 'general', 'Application name displayed in UI', true),
+        ('app_description', 'Amateur Radio Contact Logging System', 'string', 'general', 'Application description', true),
+        ('default_timezone', 'UTC', 'string', 'general', 'Default timezone for the application', false),
+        ('enable_registration', 'true', 'boolean', 'auth', 'Allow new user registration', false),
+        ('max_stations_per_user', '10', 'number', 'limits', 'Maximum stations per user (0 = unlimited)', false),
+        ('contact_pagination_default', '20', 'number', 'ui', 'Default number of contacts per page', true)
+        ON CONFLICT (setting_key) DO NOTHING
+      `);
+    }
+    
+    // Check if qsl_images table exists and create if not
+    const qslImagesExists = await db.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_name = 'qsl_images' AND table_schema = 'public'
+    `);
+    
+    if (qslImagesExists.rows.length === 0) {
+      migrations.push(`
+        CREATE TABLE qsl_images (
+          id SERIAL PRIMARY KEY,
+          contact_id INTEGER NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+          user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          image_type VARCHAR(10) NOT NULL CHECK (image_type IN ('front', 'back')),
+          filename VARCHAR(255) NOT NULL,
+          original_filename VARCHAR(255) NOT NULL,
+          file_size INTEGER NOT NULL,
+          mime_type VARCHAR(100) NOT NULL CHECK (mime_type IN ('image/jpeg', 'image/jpg', 'image/png', 'image/webp')),
+          storage_path VARCHAR(500) NOT NULL,
+          storage_url VARCHAR(500),
+          storage_type VARCHAR(20) DEFAULT 'azure_blob' CHECK (storage_type IN ('azure_blob', 'aws_s3')),
+          width INTEGER,
+          height INTEGER,
+          description TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE (contact_id, image_type)
+        )
+      `);
+      
+      migrations.push('CREATE INDEX IF NOT EXISTS idx_qsl_images_contact_id ON qsl_images(contact_id)');
+      migrations.push('CREATE INDEX IF NOT EXISTS idx_qsl_images_user_id ON qsl_images(user_id)');
+      migrations.push('CREATE INDEX IF NOT EXISTS idx_qsl_images_type ON qsl_images(image_type)');
+      migrations.push('CREATE INDEX IF NOT EXISTS idx_qsl_images_created_at ON qsl_images(created_at DESC)');
+    }
+    
     console.log(`Running ${migrations.length} migrations...`);
     
     // Execute migrations
