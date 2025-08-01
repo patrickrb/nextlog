@@ -96,6 +96,7 @@ export async function POST() {
             qrz_password VARCHAR(255),
             qrz_api_key VARCHAR(255),
             lotw_username VARCHAR(255),
+            club_callsign VARCHAR(50),
             is_active BOOLEAN DEFAULT TRUE,
             is_default BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

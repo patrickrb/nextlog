@@ -95,7 +95,8 @@ export async function POST() {
       'state_province', 'postal_code', 'country', 'dxcc_entity_code',
       'grid_locator', 'latitude', 'longitude', 'itu_zone', 'cq_zone',
       'power_watts', 'rig_info', 'antenna_info', 'station_equipment',
-      'qrz_username', 'qrz_password', 'qrz_api_key', 'lotw_username'
+      'qrz_username', 'qrz_password', 'qrz_api_key', 'lotw_username',
+      'club_callsign'
     ];
     
     for (const column of stationsNeededColumns) {
@@ -105,6 +106,7 @@ export async function POST() {
           case 'operator_name': case 'qth_name': case 'qrz_username': 
           case 'qrz_password': case 'qrz_api_key': case 'lotw_username': 
             columnDef = 'VARCHAR(255)'; break;
+          case 'club_callsign': columnDef = 'VARCHAR(50)'; break;
           case 'street_address': columnDef = 'VARCHAR(255)'; break;
           case 'city': case 'county': case 'state_province': case 'country': 
             columnDef = 'VARCHAR(100)'; break;
