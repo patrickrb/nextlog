@@ -4,6 +4,7 @@ import "./globals.css";
 import { UserProvider } from "@/contexts/UserContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Footer from "@/components/Footer";
+import InstallationChecker from "@/components/InstallationChecker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -57,10 +58,12 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <UserProvider>
-            <div className="flex flex-col min-h-screen">
-              {children}
-              <Footer />
-            </div>
+            <InstallationChecker>
+              <div className="flex flex-col min-h-screen">
+                {children}
+                <Footer />
+              </div>
+            </InstallationChecker>
           </UserProvider>
         </ThemeProvider>
       </body>

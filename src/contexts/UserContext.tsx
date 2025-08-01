@@ -42,6 +42,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return;
       }
       
+      // Handle 500 errors that might indicate database tables don't exist
+      if (response.status === 500) {
+        try {
+          const errorText = await response.text();
+          if (errorText.includes('relation "users" does not exist') || errorText.includes('42P01')) {
+            // Database tables don't exist - this is expected during first install
+            console.log('Database tables not found - installation may be needed');
+            setUser(null);
+            return;
+          }
+        } catch {
+          console.log('Could not read error response text');
+          setUser(null);
+          return;
+        }
+      }
+      
+      if (!response.ok) {
+        setUser(null);
+        return;
+      }
+      
       const data = await response.json();
       if (response.ok) {
         setUser(data.user);

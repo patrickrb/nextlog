@@ -265,7 +265,7 @@ export default function StationsPage() {
                                 asChild
                                 title="View station details"
                               >
-                                <Link href={`/dashboard/stations/${station.id}`}>
+                                <Link href={`/stations/${station.id}/edit`}>
                                   <BarChart3 className="h-4 w-4" />
                                 </Link>
                               </Button>

@@ -49,13 +49,13 @@ export async function GET(
         id,
         key_name,
         api_key,
-        is_enabled,
-        read_only,
-        rate_limit_per_hour,
+        is_active,
+        permissions,
         last_used_at,
-        total_requests,
+        usage_count,
         created_at,
-        expires_at
+        expires_at,
+        description
       FROM api_keys 
       WHERE station_id = $1 
       ORDER BY created_at DESC
@@ -91,9 +91,9 @@ export async function POST(
 
     const {
       key_name,
-      read_only = false,
-      rate_limit_per_hour = 1000,
-      expires_in_days
+      permissions = { read: true, write: false, delete: false },
+      expires_in_days,
+      description = ''
     } = body;
 
     // Validate required fields
@@ -131,8 +131,9 @@ export async function POST(
       );
     }
 
-    // Generate API key only (Cloudlog-compatible)
+    // Generate API key and hash
     const apiKey = generateApiKey();
+    const keyHash = crypto.createHash('sha256').update(apiKey).digest('hex');
 
     // Calculate expiration date if specified
     let expiresAt = null;
@@ -148,11 +149,11 @@ export async function POST(
         station_id,
         key_name,
         api_key,
-        api_secret,
-        is_enabled,
-        read_only,
-        rate_limit_per_hour,
-        expires_at
+        key_hash,
+        permissions,
+        is_active,
+        expires_at,
+        description
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       RETURNING id, created_at
     `, [
@@ -160,11 +161,11 @@ export async function POST(
       parseInt(stationId),
       key_name.trim(),
       apiKey,
-      '', // Empty secret for Cloudlog compatibility
+      keyHash,
+      JSON.stringify(permissions),
       true, // enabled by default
-      read_only,
-      rate_limit_per_hour,
-      expiresAt
+      expiresAt,
+      description
     ]);
 
     return NextResponse.json({

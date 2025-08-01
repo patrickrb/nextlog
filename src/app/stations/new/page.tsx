@@ -613,7 +613,7 @@ export default function NewStationPage() {
 
             <div className="flex justify-end space-x-4">
               <Button type="button" variant="outline" asChild>
-                <Link href="/dashboard/stations">Cancel</Link>
+                <Link href="/stations">Cancel</Link>
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading ? (
