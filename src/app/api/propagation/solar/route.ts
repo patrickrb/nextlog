@@ -44,10 +44,8 @@ export async function GET() {
       timestamp: new Date(latestSolarFlux.time_tag || latestGeomag.time_tag),
       solar_flux_index: parseFloat(latestSolarFlux.observed || latestSolarFlux.predicted || '100'),
       a_index: parseFloat(latestGeomag.a_running || '10'),
-      k_index: parseFloat(latestGeomag.kp || '2'),
-      solar_wind_speed: null, // Not available in free API
-      solar_wind_density: null, // Not available in free API
-      xray_class: null // Would need additional API call
+      k_index: parseFloat(latestGeomag.kp || '2')
+      // solar_wind_speed, solar_wind_density, xray_class are optional and not available in free API
     };
     
     // Save to database

@@ -172,7 +172,7 @@ export default function PropagationPage() {
                 </div>
               </div>
               <div className="mt-4 text-sm text-muted-foreground text-center">
-                Last updated: {formatTimestamp(data.solar_activity.timestamp)}
+                Last updated: {formatTimestamp(data.solar_activity.timestamp.toISOString())}
               </div>
             </CardContent>
           </Card>
@@ -233,7 +233,7 @@ export default function PropagationPage() {
                 </div>
                 <div className="text-right text-sm text-muted-foreground">
                   <div>Source: {data.forecast.source}</div>
-                  <div>Updated: {formatTimestamp(data.forecast.timestamp)}</div>
+                  <div>Updated: {formatTimestamp(data.forecast.timestamp.toISOString())}</div>
                 </div>
               </div>
             </CardContent>
