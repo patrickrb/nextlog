@@ -72,7 +72,7 @@ export default function DXpeditionWidget({ limit = 5 }: DXpeditionWidgetProps) {
 
   const getStatusBadge = (dx: DXpedition) => {
     if (dx.status === 'active' || isActive(dx.startDate, dx.endDate)) {
-      return <Badge className="bg-green-500 hover:bg-green-600">Active</Badge>;
+      return <Badge className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-500">Active</Badge>;
     } else if (new Date(dx.startDate) > new Date()) {
       return <Badge variant="outline">Upcoming</Badge>;
     } else {

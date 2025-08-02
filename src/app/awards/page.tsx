@@ -159,9 +159,9 @@ export default function AwardsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">Completed</Badge>;
+        return <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300 border-green-200 dark:border-green-800">Completed</Badge>;
       case 'in_progress':
-        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">In Progress</Badge>;
+        return <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-800">In Progress</Badge>;
       case 'coming_soon':
         return <Badge variant="outline" className="text-muted-foreground border-muted">Coming Soon</Badge>;
       default:
@@ -172,9 +172,9 @@ export default function AwardsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950';
+        return 'border-green-200 bg-green-50/50 dark:border-green-800/30 dark:bg-green-950/10';
       case 'in_progress':
-        return 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950';
+        return 'border-blue-200 bg-blue-50/50 dark:border-blue-800/30 dark:bg-blue-950/10';
       case 'coming_soon':
         return 'border-muted bg-muted/30 dark:border-muted dark:bg-muted/10';
       default:
@@ -224,7 +224,7 @@ export default function AwardsPage() {
           
           {/* Header */}
           <div className="text-center">
-            <Trophy className="h-16 w-16 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
+            <Trophy className="h-16 w-16 text-primary mx-auto mb-4" />
             <h1 className="text-4xl font-bold text-foreground mb-2">Amateur Radio Awards</h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Track your progress toward prestigious amateur radio awards. Work contacts, 
@@ -238,7 +238,7 @@ export default function AwardsPage() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                    <p className="text-2xl font-bold text-primary">
                       {wasProgress.overall_progress.worked_states}
                     </p>
                     <p className="text-sm text-muted-foreground">States Worked</p>
@@ -248,7 +248,7 @@ export default function AwardsPage() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-300">
                       {wasProgress.overall_progress.confirmed_states}
                     </p>
                     <p className="text-sm text-muted-foreground">States Confirmed</p>
@@ -324,8 +324,8 @@ export default function AwardsPage() {
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className={award.status === 'completed' ? 'text-green-600 dark:text-green-400' : 
-                                           award.status === 'in_progress' ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground'}>
+                            <div className={award.status === 'completed' ? 'text-green-600 dark:text-green-300' : 
+                                           award.status === 'in_progress' ? 'text-primary' : 'text-muted-foreground'}>
                               {award.icon}
                             </div>
                             <div>
@@ -350,7 +350,7 @@ export default function AwardsPage() {
                             <div className="w-full bg-muted rounded-full h-2">
                               <div 
                                 className={`h-2 rounded-full ${
-                                  award.status === 'completed' ? 'bg-green-500 dark:bg-green-400' : 'bg-blue-500 dark:bg-blue-400'
+                                  award.status === 'completed' ? 'bg-green-500 dark:bg-green-400' : 'bg-primary'
                                 }`}
                                 style={{ width: `${award.progress.percentage}%` }}
                               />
@@ -375,15 +375,15 @@ export default function AwardsPage() {
           </div>
 
           {/* Info Section */}
-          <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800/30">
+          <Card className="bg-accent/30 border-accent">
             <CardHeader>
-              <CardTitle className="text-lg text-blue-900 dark:text-blue-100">About Amateur Radio Awards</CardTitle>
+              <CardTitle className="text-lg">About Amateur Radio Awards</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-blue-800 dark:text-blue-200">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                 <div>
-                  <h4 className="font-medium mb-2 text-blue-900 dark:text-blue-100">How Awards Work</h4>
-                  <ul className="space-y-1 text-blue-700 dark:text-blue-300">
+                  <h4 className="font-medium mb-2">How Awards Work</h4>
+                  <ul className="space-y-1 text-muted-foreground">
                     <li>• Make contacts with required stations/entities</li>
                     <li>• Obtain QSL confirmations as required</li>
                     <li>• Submit application with verification</li>
@@ -391,8 +391,8 @@ export default function AwardsPage() {
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2 text-blue-900 dark:text-blue-100">Nextlog Features</h4>
-                  <ul className="space-y-1 text-blue-700 dark:text-blue-300">
+                  <h4 className="font-medium mb-2">Nextlog Features</h4>
+                  <ul className="space-y-1 text-muted-foreground">
                     <li>• Automatic progress tracking</li>
                     <li>• QSL confirmation integration</li>
                     <li>• Export award applications</li>

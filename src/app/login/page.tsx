@@ -66,7 +66,7 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           {showInstallSuccess && (
-            <Alert className="mb-4 border-green-200 bg-green-50 text-green-800">
+            <Alert className="mb-4 border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
                 🎉 Installation completed successfully! You can now log in with your administrator account.
