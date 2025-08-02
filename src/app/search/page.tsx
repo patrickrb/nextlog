@@ -337,6 +337,17 @@ export default function SearchPage() {
     );
   };
 
+  const handleContactDelete = (deletedContactId: number) => {
+    setContacts(prevContacts => 
+      prevContacts.filter(contact => contact.id !== deletedContactId)
+    );
+    // Update pagination total count
+    setPagination(prev => ({
+      ...prev,
+      total: prev.total - 1
+    }));
+  };
+
   const handleDialogClose = () => {
     setIsEditDialogOpen(false);
     setSelectedContact(null);
@@ -728,6 +739,7 @@ export default function SearchPage() {
         isOpen={isEditDialogOpen}
         onClose={handleDialogClose}
         onSave={handleContactSave}
+        onDelete={handleContactDelete}
       />
     </div>
   );

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -48,13 +49,14 @@ interface EditContactDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (contact: Contact) => void;
+  onDelete?: (contactId: number) => void;
 }
 
 const modeOptions = [
   'SSB', 'CW', 'FM', 'AM', 'FT8', 'FT4', 'PSK31', 'RTTY', 'JT65', 'JT9', 'MFSK'
 ];
 
-export default function EditContactDialog({ contact, isOpen, onClose, onSave }: EditContactDialogProps) {
+export default function EditContactDialog({ contact, isOpen, onClose, onSave, onDelete }: EditContactDialogProps) {
   const [formData, setFormData] = useState<Partial<Contact>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -64,6 +66,8 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave }: 
   const [imageSuccess, setImageSuccess] = useState('');
   const [storageAvailable, setStorageAvailable] = useState(false);
   const [uploadingType, setUploadingType] = useState<'front' | 'back' | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const isValidDate = (dateString: string): boolean => {
     const parsedDate = Date.parse(dateString);
@@ -227,6 +231,30 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave }: 
     }
   };
 
+  const handleDelete = async () => {
+    if (!contact || !onDelete) return;
+
+    setDeleteLoading(true);
+    setDeleteError('');
+
+    try {
+      const response = await fetch(`/api/contacts/${contact.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete contact');
+      }
+
+      onDelete(contact.id);
+      onClose();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete contact');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   if (!contact) return null;
 
   return (
@@ -381,14 +409,57 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave }: 
             />
           </div>
 
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Save Changes
-                </Button>
+              <DialogFooter className="flex justify-between">
+                <div>
+                  {onDelete && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          disabled={loading || deleteLoading}
+                        >
+                          {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                          Delete QSO
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete this QSO with {contact?.callsign}? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        {deleteError && (
+                          <Alert className="border-destructive/20 bg-destructive/10">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription className="text-destructive">{deleteError}</AlertDescription>
+                          </Alert>
+                        )}
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={handleDelete}
+                            disabled={deleteLoading}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Delete QSO
+                          </AlertDialogAction>
+                        </AlertDialogFooter>  
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
+                <div className="flex space-x-2">
+                  <Button type="button" variant="outline" onClick={onClose}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Changes
+                  </Button>
+                </div>
               </DialogFooter>
             </form>
           </TabsContent>
