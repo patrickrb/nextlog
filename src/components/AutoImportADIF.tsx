@@ -237,13 +237,13 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-center w-full">
-          <label htmlFor="auto-adif-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+          <label htmlFor="auto-adif-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80 border-border">
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <FileText className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" />
-              <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+              <FileText className="w-8 h-8 mb-4 text-muted-foreground" />
+              <p className="mb-2 text-sm text-muted-foreground">
                 <span className="font-semibold">Click to upload</span> your ADIF file
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Any size ADIF file (.adi, .adif)
               </p>
             </div>
@@ -282,7 +282,7 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
             <h4 className="font-semibold">Chunk Results:</h4>
             <div className="max-h-40 overflow-y-auto space-y-1">
               {[...results].reverse().map((result) => (
-                <div key={result.chunkIndex} className="flex items-center justify-between text-sm p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                <div key={result.chunkIndex} className="flex items-center justify-between text-sm p-2 bg-muted rounded">
                   <div className="flex items-center">
                     {result.success ? (
                       <CheckCircle className="h-4 w-4 text-green-500 mr-2" />

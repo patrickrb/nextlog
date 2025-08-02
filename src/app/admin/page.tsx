@@ -192,11 +192,11 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-          <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+        <div className="mt-8 p-4 bg-card rounded-lg border border-border">
+          <h3 className="font-semibold text-card-foreground mb-2">
             🔐 Admin Access Granted
           </h3>
-          <p className="text-blue-800 dark:text-blue-200 text-sm">
+          <p className="text-muted-foreground text-sm">
             You have full administrative access to Nextlog. Use these tools responsibly to manage 
             users, configure system settings, and monitor activity. All admin actions are logged 
             for security and auditing purposes.

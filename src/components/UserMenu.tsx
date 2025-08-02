@@ -55,10 +55,10 @@ export default function UserMenu({ user }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center space-x-2 rounded-full p-1 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+        <button className="flex items-center space-x-2 rounded-full p-1 hover:bg-accent hover:text-accent-foreground transition-colors">
           <Avatar className="h-8 w-8">
             <AvatarImage src="" alt={user.name} />
-            <AvatarFallback className="text-sm font-medium bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-200">
+            <AvatarFallback className="text-sm font-medium bg-primary/10 text-primary">
               {getInitials(user.name)}
             </AvatarFallback>
           </Avatar>

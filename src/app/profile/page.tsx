@@ -378,17 +378,17 @@ export default function ProfilePage() {
                         />
                       </div>
                     </div>
-                    <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md p-4">
-                      <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                    <div className="bg-red-200 dark:bg-blue-950/50 border-2 border-red-500 dark:border-blue-800 rounded-md p-4">
+                      <h4 className="font-medium text-red-900 dark:text-blue-100 mb-2">
                         QRZ.com Account Required:
                       </h4>
-                      <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+                      <ul className="text-sm text-red-800 dark:text-blue-200 space-y-1 list-disc list-inside">
                         <li>You need a valid QRZ.com account to use callsign lookup</li>
                         <li>Enter your QRZ.com username and password above</li>
                         <li>This enables automatic lookup of callsign information when adding contacts</li>
                         <li>Your credentials are stored securely and only used for lookups</li>
                       </ul>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 mt-2">
+                      <p className="text-sm text-red-700 dark:text-blue-300 mt-2">
                         <strong>Note:</strong> QRZ.com subscription may be required for full XML API access.
                       </p>
                     </div>
@@ -526,11 +526,11 @@ export default function ProfilePage() {
                       </div>
                     )}
 
-                    <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md p-4">
-                      <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+                    <div className="bg-red-200 dark:bg-blue-950/50 border-2 border-red-500 dark:border-blue-800 rounded-md p-4">
+                      <h4 className="font-medium text-red-900 dark:text-blue-100 mb-2">
                         LoTW Integration:
                       </h4>
-                      <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+                      <ul className="text-sm text-red-800 dark:text-blue-200 space-y-1 list-disc list-inside">
                         <li>Enter your ARRL LoTW website username and password</li>
                         <li>Upload your .p12 certificate file for each station to enable uploads</li>
                         <li>Use the LoTW sync page to upload QSOs and download confirmations</li>
@@ -547,7 +547,7 @@ export default function ProfilePage() {
                 )}
 
                 {success && (
-                  <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-3 rounded-md text-sm">
+                  <div className="bg-green-50/50 dark:bg-green-950/50 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-3 rounded-md text-sm">
                     {success}
                   </div>
                 )}

@@ -259,7 +259,7 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto bg-background">
         <DialogHeader>
           <DialogTitle>Edit Contact - {contact.callsign}</DialogTitle>
         </DialogHeader>
@@ -473,14 +473,14 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
             )}
 
             {imageSuccess && (
-              <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+              <Alert className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/50">
                 <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                 <AlertDescription className="text-green-800 dark:text-green-200">{imageSuccess}</AlertDescription>
               </Alert>
             )}
 
             {!storageAvailable && (
-              <Alert className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
+              <Alert className="border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-950/50">
                 <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
                 <AlertDescription className="text-orange-800 dark:text-orange-200">
                   File uploads are disabled. Please contact your administrator to configure storage.
@@ -525,7 +525,7 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
                             </div>
                             <Button
                               type="button"
-                              variant="outline"
+                              variant="destructive"
                               size="sm"
                               onClick={() => handleImageDelete('front')}
                               disabled={imageLoading || !storageAvailable}
@@ -616,7 +616,7 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
                             </div>
                             <Button
                               type="button"
-                              variant="outline"
+                              variant="destructive"
                               size="sm"
                               onClick={() => handleImageDelete('back')}
                               disabled={imageLoading || !storageAvailable}

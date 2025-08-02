@@ -45,26 +45,26 @@ export default function Home() {
 
   if (isChecking) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Checking system status...</p>
+          <p className="text-muted-foreground">Checking system status...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex-1 bg-background">
       <div className="container mx-auto px-4 py-16">
         <div className="text-center">
-          <h1 className="text-6xl font-bold text-gray-900 dark:text-white mb-6">
+          <h1 className="text-6xl font-bold text-foreground mb-6">
             Nextlog
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
+          <p className="text-xl text-muted-foreground mb-8">
             Amateur Radio Logging Software
           </p>
-          <p className="text-lg text-gray-500 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">
             Log your amateur radio contacts from anywhere. Built with Next.js
             and PostgreSQL for modern, reliable amateur radio logging.
           </p>
@@ -86,31 +86,31 @@ export default function Home() {
         </div>
 
         <div className="mt-16 grid md:grid-cols-3 gap-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-card rounded-lg p-6 shadow-lg">
+            <h3 className="text-xl font-semibold text-card-foreground mb-4">
               Contact Logging
             </h3>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-muted-foreground">
               Log your amateur radio contacts with detailed information
               including frequency, mode, RST, and QSL status.
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-card rounded-lg p-6 shadow-lg">
+            <h3 className="text-xl font-semibold text-card-foreground mb-4">
               Search & Filter
             </h3>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-muted-foreground">
               Quickly find contacts using powerful search and filtering options
               by callsign, date, band, and more.
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg">
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-card rounded-lg p-6 shadow-lg">
+            <h3 className="text-xl font-semibold text-card-foreground mb-4">
               Export Data
             </h3>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-muted-foreground">
               Export your logbook data in various formats including ADIF for use
               with other amateur radio software.
             </p>

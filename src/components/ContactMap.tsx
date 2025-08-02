@@ -175,7 +175,7 @@ export default function ContactMap({ contacts, user, height = '400px' }: Contact
               <Popup>
                 <div className="min-w-[200px]">
                   <h3 className="font-semibold text-lg text-blue-600">📻 {contact.callsign}</h3>
-                  {contact.name && <p className="text-sm text-gray-600">{contact.name}</p>}
+                  {contact.name && <p className="text-sm text-muted-foreground">{contact.name}</p>}
                   <div className="mt-2 space-y-1 text-sm">
                     <p><strong>Date:</strong> {new Date(contact.datetime).toLocaleDateString()}</p>
                     <p><strong>Frequency:</strong> {contact.frequency} MHz</p>

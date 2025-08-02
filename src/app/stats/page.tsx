@@ -115,7 +115,7 @@ export default function StatsPage() {
                   {band}
                 </TableHead>
               ))}
-              <TableHead className="text-center font-semibold bg-gray-50 dark:bg-gray-800">
+              <TableHead className="text-center font-semibold bg-muted">
                 Total
               </TableHead>
             </TableRow>
@@ -134,13 +134,13 @@ export default function StatsPage() {
                       </TableCell>
                     );
                   })}
-                  <TableCell className="text-center font-semibold bg-gray-50 dark:bg-gray-800">
+                  <TableCell className="text-center font-semibold bg-muted">
                     {modeTotal.toLocaleString()}
                   </TableCell>
                 </TableRow>
               );
             })}
-            <TableRow className="bg-gray-50 dark:bg-gray-800 font-semibold">
+            <TableRow className="bg-muted font-semibold">
               <TableCell>Total</TableCell>
               {bands.map(band => {
                 const bandTotal = statsData.qsosByBand.find(b => b.band === band)?.count || 0;
