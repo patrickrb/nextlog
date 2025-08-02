@@ -147,7 +147,7 @@ export default function DXCCPage() {
                   </CardDescription>
                 </div>
                 {isBasicEligible && (
-                  <Badge variant="default" className="bg-green-600 hover:bg-green-700">
+                  <Badge variant="default" className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600">
                     <Award className="h-4 w-4 mr-1" />
                     DXCC Eligible
                   </Badge>
@@ -157,19 +157,19 @@ export default function DXCCPage() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-2xl font-bold text-primary">
                     {overallProgress.total_entities}
                   </div>
                   <div className="text-sm text-muted-foreground">Total Entities</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-600">
+                  <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                     {overallProgress.worked_entities}
                   </div>
                   <div className="text-sm text-muted-foreground">Worked</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {overallProgress.confirmed_entities}
                   </div>
                   <div className="text-sm text-muted-foreground">Confirmed</div>

@@ -105,22 +105,22 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
       case 'worked':
-        return <Circle className="h-4 w-4 text-yellow-600" />;
+        return <Circle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />;
       default:
-        return <Circle className="h-4 w-4 text-gray-300" />;
+        return <Circle className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300';
       case 'worked':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-secondary text-secondary-foreground';
     }
   };
 
@@ -199,7 +199,7 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <Trophy className="h-8 w-8 text-blue-600" />
+              <Trophy className="h-8 w-8 text-primary" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-muted-foreground">Overall Progress</p>
                 <div className="flex items-center">
@@ -222,7 +222,7 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <CheckCircle className="h-8 w-8 text-green-600" />
+              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-muted-foreground">Confirmed</p>
                 <div className="flex items-center">
@@ -390,7 +390,7 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
                   {summary.recent_confirmations.map((confirmation, index) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-600" />
+                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
                         <div>
                           <p className="font-medium">{confirmation.state_code}</p>
                           <p className="text-sm text-muted-foreground">
