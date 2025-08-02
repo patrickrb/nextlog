@@ -156,7 +156,7 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
                 <p className="text-sm font-medium text-muted-foreground">Total Entities</p>
                 <p className="text-2xl font-bold">{currentProgress.total_entities}</p>
               </div>
-              <Globe className="h-8 w-8 text-blue-600" />
+              <Globe className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -192,9 +192,9 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Needed</p>
-                <p className="text-2xl font-bold text-gray-600">{currentProgress.needed_entities}</p>
+                <p className="text-2xl font-bold text-muted-foreground">{currentProgress.needed_entities}</p>
               </div>
-              <Zap className="h-8 w-8 text-gray-600" />
+              <Zap className="h-8 w-8 text-muted-foreground" />
             </div>
           </CardContent>
         </Card>

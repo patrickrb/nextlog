@@ -84,13 +84,13 @@ export default function DXCCEntityList({
   const getStatusIcon = (status: DXCCStatus) => {
     switch (status) {
       case 'confirmed':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
       case 'worked':
-        return <Target className="h-4 w-4 text-yellow-600" />;
+        return <Target className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />;
       case 'needed':
-        return <Circle className="h-4 w-4 text-gray-400" />;
+        return <Circle className="h-4 w-4 text-muted-foreground" />;
       default:
-        return <Circle className="h-4 w-4 text-gray-400" />;
+        return <Circle className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -102,8 +102,8 @@ export default function DXCCEntityList({
     };
     
     const colors = {
-      'confirmed': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-      'worked': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+      'confirmed': 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
+      'worked': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300',
       'needed': ''
     };
 
@@ -152,13 +152,13 @@ export default function DXCCEntityList({
           </div>
           {!compact && (
             <div className="flex gap-2">
-              <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-200">
+              <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300">
                 {stats.confirmed} Confirmed
               </Badge>
-              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200">
+              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300">
                 {stats.worked} Worked
               </Badge>
-              <Badge variant="outline" className="bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-200">
+              <Badge variant="outline">
                 {stats.needed} Needed
               </Badge>
             </div>
