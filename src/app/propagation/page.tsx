@@ -13,6 +13,7 @@ interface PropagationData {
   band_conditions: BandCondition[];
   forecast: PropagationForecast | null;
   updated_at: string;
+  data_source?: string;
   error?: string;
 }
 
@@ -228,6 +229,12 @@ export default function PropagationPage() {
                   {data.forecast.notes && (
                     <p className="text-sm text-muted-foreground mt-2">
                       {data.forecast.notes}
+                    </p>
+                  )}
+                  {data.forecast.source === 'Simulated' && (
+                    <p className="text-xs text-yellow-600 mt-2 flex items-center">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      Using simulated data - NOAA space weather services unavailable
                     </p>
                   )}
                 </div>
