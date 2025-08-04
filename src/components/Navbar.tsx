@@ -7,6 +7,7 @@ import { Plus } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import UserMenu from '@/components/UserMenu';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
+import { ContactsMenu, ToolsMenu, DataMenu } from '@/components/navigation';
 
 interface NavbarProps {
   title?: string;
@@ -30,10 +31,17 @@ export default function Navbar({ title, breadcrumbs, actions }: NavbarProps) {
     <nav className="border-b bg-card">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex items-center">
+          <div className="flex items-center space-x-6">
             <Link href="/dashboard" className="text-xl font-semibold hover:text-primary">
               Nextlog
             </Link>
+            
+            {/* Navigation Menus */}
+            <div className="hidden md:flex items-center space-x-1">
+              <ContactsMenu />
+              <ToolsMenu />
+              <DataMenu />
+            </div>
             
             {breadcrumbs && breadcrumbs.length > 0 && (
               <>
@@ -64,7 +72,7 @@ export default function Navbar({ title, breadcrumbs, actions }: NavbarProps) {
             {/* Custom actions for specific pages */}
             {actions}
             
-            {/* Default navigation buttons */}
+            {/* Default actions if no custom actions provided */}
             {!actions && (
               <>
                 <Button asChild>

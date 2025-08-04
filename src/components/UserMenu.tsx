@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, Radio, Upload, Shield, BarChart3 } from 'lucide-react';
+import { LogOut, User, Radio, Shield } from 'lucide-react';
 
 interface User {
   id: number;
@@ -92,21 +92,9 @@ export default function UserMenu({ user }: UserMenuProps) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/stats" className="cursor-pointer">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            <span>Statistics</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
           <Link href="/profile" className="cursor-pointer">
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/adif" className="cursor-pointer">
-            <Upload className="mr-2 h-4 w-4" />
-            <span>ADIF Import/Export</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
