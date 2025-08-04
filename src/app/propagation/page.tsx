@@ -9,10 +9,11 @@ import { SolarActivity, BandCondition, PropagationForecast } from '@/types/propa
 
 interface PropagationData {
   success: boolean;
-  solar_activity: SolarActivity | null;
+  solar_activity: (Omit<SolarActivity, 'timestamp'> & { timestamp: string }) | null;
   band_conditions: BandCondition[];
-  forecast: PropagationForecast | null;
+  forecast: (Omit<PropagationForecast, 'timestamp'> & { timestamp: string }) | null;
   updated_at: string;
+  data_source?: string;
   error?: string;
 }
 
@@ -172,7 +173,7 @@ export default function PropagationPage() {
                 </div>
               </div>
               <div className="mt-4 text-sm text-muted-foreground text-center">
-                Last updated: {formatTimestamp(data.solar_activity.timestamp.toISOString())}
+                Last updated: {formatTimestamp(data.solar_activity.timestamp)}
               </div>
             </CardContent>
           </Card>
@@ -230,10 +231,16 @@ export default function PropagationPage() {
                       {data.forecast.notes}
                     </p>
                   )}
+                  {data.forecast.source === 'Simulated' && (
+                    <p className="text-xs text-yellow-600 mt-2 flex items-center">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      Using simulated data - NOAA space weather services unavailable
+                    </p>
+                  )}
                 </div>
                 <div className="text-right text-sm text-muted-foreground">
                   <div>Source: {data.forecast.source}</div>
-                  <div>Updated: {formatTimestamp(data.forecast.timestamp.toISOString())}</div>
+                  <div>Updated: {formatTimestamp(data.forecast.timestamp)}</div>
                 </div>
               </div>
             </CardContent>
