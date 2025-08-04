@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, BarChart3, TrendingUp, Search, Trophy, Radio } from 'lucide-react';
+import { Loader2, BarChart3, TrendingUp } from 'lucide-react';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import EditContactDialog from '@/components/EditContactDialog';
 import DXpeditionWidget from '@/components/DXpeditionWidget';
@@ -174,46 +174,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar 
-        title="Dashboard" 
-        actions={
-          <div className="flex items-center space-x-2">
-            <Link href="/search">
-              <Button variant="outline" size="sm">
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
-            </Link>
-            <Link href="/awards">
-              <Button variant="outline" size="sm">
-                <Trophy className="h-4 w-4 mr-2" />
-                Awards
-              </Button>
-            </Link>
-            <Link href="/propagation">
-              <Button variant="outline" size="sm">
-                <Radio className="h-4 w-4 mr-2" />
-                Propagation
-              </Button>
-            </Link>
-            <Link href="/dxpeditions">
-              <Button variant="outline" size="sm">
-                DXpeditions
-              </Button>
-            </Link>
-            <Link href="/qsl-cards">
-              <Button variant="outline" size="sm">
-                QSL Cards
-              </Button>
-            </Link>
-            <Link href="/new-contact">
-              <Button size="sm">
-                New Contact
-              </Button>
-            </Link>
-          </div>
-        }
-      />
+      <Navbar title="Dashboard" />
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0 space-y-6">
