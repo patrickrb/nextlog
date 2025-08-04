@@ -190,14 +190,8 @@ export class Propagation {
       generalConditions = 'poor';
     }
     
-    // Check if database is available for source indication
-    let source = 'Simulated';
-    try {
-      // Try a simple database query to see if it's available
-      await query('SELECT 1');
-    } catch {
-      source = 'Simulated (No DB)';
-    }
+    // This is a fallback function, so always use 'Simulated' as source
+    const source = 'Simulated';
     
     return {
       timestamp: now,
