@@ -19,7 +19,7 @@ export default function ToolsMenu() {
           <ChevronDown className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-56">
+      <DropdownMenuContent align="start" className="w-56" style={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))' }}>
         <DropdownMenuItem asChild>
           <Link href="/awards" className="cursor-pointer">
             <Trophy className="mr-2 h-4 w-4" />
