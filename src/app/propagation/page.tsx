@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, Activity, Radio, Sun, AlertTriangle } from 'lucide-react';
 import { SolarActivity, BandCondition, PropagationForecast } from '@/types/propagation';
+import Navbar from '@/components/Navbar';
 
 interface PropagationData {
   success: boolean;
@@ -80,26 +81,32 @@ export default function PropagationPage() {
 
   if (loading && !data) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <RefreshCw className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Loading propagation data...</span>
+      <div className="min-h-screen bg-background">
+        <Navbar title="Propagation Conditions" />
+        <div className="container mx-auto p-6">
+          <div className="flex items-center justify-center h-64">
+            <RefreshCw className="h-8 w-8 animate-spin" />
+            <span className="ml-2">Loading propagation data...</span>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex flex-col space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Propagation Conditions</h1>
-            <p className="text-muted-foreground">
-              Real-time HF propagation analysis and band conditions
-            </p>
-          </div>
+    <div className="min-h-screen bg-background">
+      <Navbar title="Propagation Conditions" />
+      
+      <div className="container mx-auto p-6">
+        <div className="flex flex-col space-y-6">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Propagation Conditions</h1>
+              <p className="text-muted-foreground">
+                Real-time HF propagation analysis and band conditions
+              </p>
+            </div>
           <div className="flex space-x-2">
             <Button
               onClick={updateFromNOAA}
@@ -254,6 +261,7 @@ export default function PropagationPage() {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }
