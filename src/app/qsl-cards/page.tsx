@@ -55,6 +55,7 @@ export default function QSLCardsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [storageAvailable, setStorageAvailable] = useState(false);
+  const [storageChecked, setStorageChecked] = useState(false);
   const [imageTypeFilter, setImageTypeFilter] = useState<'all' | 'front' | 'back'>('all');
 
   const fetchQSLImages = useCallback(async () => {
@@ -76,12 +77,15 @@ export default function QSLCardsPage() {
         setImages(data.images || []);
         setPagination(prev => data.pagination || prev);
         setStorageAvailable(data.storage_available || false);
+        setStorageChecked(true);
       } else {
         setError(data.error || 'Failed to fetch QSL images');
+        // Don't update storageAvailable on error - we don't know the status
       }
     } catch (fetchError) {
       console.error('Error fetching QSL images:', fetchError);
       setError('Network error occurred');
+      // Don't update storageAvailable on error - we don't know the status
     } finally {
       setIsLoading(false);
     }
@@ -170,7 +174,7 @@ export default function QSLCardsPage() {
           </Alert>
         )}
 
-        {!isLoading && !storageAvailable && (
+        {!isLoading && storageChecked && !storageAvailable && (
           <Alert className="mb-6 border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
             <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
             <AlertDescription className="text-orange-800 dark:text-orange-200">
