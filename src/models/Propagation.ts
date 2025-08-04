@@ -40,18 +40,22 @@ export class Propagation {
    * Get latest solar activity data
    */
   static async getLatestSolarActivity(): Promise<SolarActivity | null> {
-    const sql = `
-      SELECT * FROM solar_activity 
-      ORDER BY timestamp DESC 
-      LIMIT 1
-    `;
-    
-    const result = await query(sql);
-    if (result.rows[0]) {
-      return result.rows[0];
+    try {
+      const sql = `
+        SELECT * FROM solar_activity 
+        ORDER BY timestamp DESC 
+        LIMIT 1
+      `;
+      
+      const result = await query(sql);
+      if (result.rows[0]) {
+        return result.rows[0];
+      }
+    } catch (error) {
+      console.warn('Database unavailable for solar activity query, using fallback:', error);
     }
     
-    // If no data available, generate realistic sample data
+    // If no data available or database unavailable, generate realistic sample data
     return this.generateRealisticSolarActivity();
   }
 
@@ -141,21 +145,25 @@ export class Propagation {
    * Get current propagation forecast
    */
   static async getCurrentForecast(): Promise<PropagationForecast | null> {
-    const sql = `
-      SELECT * FROM propagation_forecasts 
-      WHERE forecast_for >= CURRENT_TIMESTAMP
-      ORDER BY forecast_for ASC 
-      LIMIT 1
-    `;
-    
-    const result = await query(sql);
-    if (result.rows[0]) {
-      const forecast = result.rows[0];
-      // Parse band_conditions if it's a string, otherwise keep as is
-      if (typeof forecast.band_conditions === 'string') {
-        forecast.band_conditions = JSON.parse(forecast.band_conditions);
+    try {
+      const sql = `
+        SELECT * FROM propagation_forecasts 
+        WHERE forecast_for >= CURRENT_TIMESTAMP
+        ORDER BY forecast_for ASC 
+        LIMIT 1
+      `;
+      
+      const result = await query(sql);
+      if (result.rows[0]) {
+        const forecast = result.rows[0];
+        // Parse band_conditions if it's a string, otherwise keep as is
+        if (typeof forecast.band_conditions === 'string') {
+          forecast.band_conditions = JSON.parse(forecast.band_conditions);
+        }
+        return forecast;
       }
-      return forecast;
+    } catch (error) {
+      console.warn('Database unavailable for forecast query, using fallback:', error);
     }
     return null;
   }

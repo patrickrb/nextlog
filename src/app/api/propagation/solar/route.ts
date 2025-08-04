@@ -55,41 +55,79 @@ export async function GET() {
       dataSource = 'Simulated';
     }
     
-    // Save to database
-    const savedActivity = await Propagation.saveSolarActivity(solarActivity);
+    // Try to save to database, but continue if database is unavailable
+    let savedActivity = solarActivity;
+    let forecast = null;
+    let databaseAvailable = true;
+    
+    try {
+      savedActivity = await Propagation.saveSolarActivity(solarActivity);
+      
+      // Save forecast
+      forecast = await Propagation.savePropagationForecast({
+        timestamp: new Date(),
+        forecast_for: new Date(),
+        band_conditions: Propagation.calculateBandConditions(savedActivity),
+        general_conditions: calculateGeneralConditions(savedActivity),
+        notes: `Automated forecast based on ${dataSource} space weather data`,
+        source: dataSource
+      });
+    } catch (dbError) {
+      console.warn('Database unavailable, using in-memory data only:', dbError);
+      databaseAvailable = false;
+      // Add IDs and timestamps for consistency
+      savedActivity = {
+        ...solarActivity,
+        id: Math.floor(Math.random() * 1000000),
+        created_at: new Date(),
+        updated_at: new Date()
+      };
+    }
     
     // Calculate band conditions
     const bandConditions = Propagation.calculateBandConditions(savedActivity);
-    
-    // Save forecast
-    const forecast = await Propagation.savePropagationForecast({
-      timestamp: new Date(),
-      forecast_for: new Date(),
-      band_conditions: bandConditions,
-      general_conditions: calculateGeneralConditions(savedActivity),
-      notes: `Automated forecast based on ${dataSource} space weather data`,
-      source: dataSource
-    });
     
     return NextResponse.json({
       success: true,
       solar_activity: savedActivity,
       band_conditions: bandConditions,
       forecast: forecast,
-      data_source: dataSource,
+      data_source: databaseAvailable ? dataSource : `${dataSource} (No DB)`,
       updated_at: new Date().toISOString()
     });
     
   } catch (error) {
     console.error('Solar data fetch error:', error);
     
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred',
-      solar_activity: null,
-      band_conditions: [],
-      forecast: null
-    }, { status: 500 });
+    // If everything fails, provide fallback data
+    try {
+      const fallbackSolarActivity = Propagation.generateRealisticSolarActivity();
+      const fallbackBandConditions = Propagation.generateRealisticFallbackConditions();
+      
+      return NextResponse.json({
+        success: true,
+        solar_activity: {
+          ...fallbackSolarActivity,
+          id: Math.floor(Math.random() * 1000000),
+          created_at: new Date(),
+          updated_at: new Date()
+        },
+        band_conditions: fallbackBandConditions,
+        forecast: null,
+        data_source: 'Fallback',
+        updated_at: new Date().toISOString()
+      });
+    } catch (fallbackError) {
+      console.error('Even fallback failed:', fallbackError);
+      
+      return NextResponse.json({
+        success: false,
+        error: 'Unable to generate propagation data',
+        solar_activity: null,
+        band_conditions: [],
+        forecast: null
+      }, { status: 500 });
+    }
   }
 }
 
