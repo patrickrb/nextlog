@@ -165,7 +165,48 @@ export class Propagation {
     } catch (error) {
       console.warn('Database unavailable for forecast query, using fallback:', error);
     }
-    return null;
+    
+    // Generate realistic fallback forecast when no data is available
+    return this.generateRealisticForecast();
+  }
+
+  /**
+   * Generate realistic fallback forecast
+   */
+  static generateRealisticForecast(): PropagationForecast {
+    const now = new Date();
+    const bandConditions = this.generateRealisticFallbackConditions();
+    
+    // Determine general conditions based on band conditions
+    const goodConditions = bandConditions.filter(b => b.condition === 'good' || b.condition === 'excellent').length;
+    const totalBands = bandConditions.length;
+    
+    let generalConditions: PropagationForecast['general_conditions'];
+    if (goodConditions >= totalBands * 0.7) {
+      generalConditions = 'good';
+    } else if (goodConditions >= totalBands * 0.4) {
+      generalConditions = 'fair';
+    } else {
+      generalConditions = 'poor';
+    }
+    
+    // Check if database is available for source indication
+    let source = 'Simulated';
+    try {
+      // Try a simple database query to see if it's available
+      await query('SELECT 1');
+    } catch {
+      source = 'Simulated (No DB)';
+    }
+    
+    return {
+      timestamp: now,
+      forecast_for: now,
+      band_conditions: bandConditions,
+      general_conditions: generalConditions,
+      notes: 'Realistic propagation simulation based on solar cycle patterns and time of day',
+      source: source
+    };
   }
 
   /**
