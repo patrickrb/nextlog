@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, User, Radio, Shield } from 'lucide-react';
+import { LogOut, User, Radio } from 'lucide-react';
 
 // Standalone Navbar Demo Component
 function DemoNavbar() {

@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Trophy, Radio, ChevronDown } from 'lucide-react';
+import { Trophy, Radio, ChevronDown, Globe, CreditCard } from 'lucide-react';
 
 export default function ToolsMenu() {
   return (
@@ -34,13 +34,13 @@ export default function ToolsMenu() {
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/dxpeditions" className="cursor-pointer">
-            <Radio className="mr-2 h-4 w-4" />
+            <Globe className="mr-2 h-4 w-4" />
             <span>DXpeditions</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/qsl-cards" className="cursor-pointer">
-            <Radio className="mr-2 h-4 w-4" />
+            <CreditCard className="mr-2 h-4 w-4" />
             <span>QSL Cards</span>
           </Link>
         </DropdownMenuItem>

@@ -1,17 +1,6 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Nextlog Navbar Demo",
@@ -50,13 +39,10 @@ export default function DemoLayout({
           }}
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className="antialiased font-sans">
         <ThemeProvider>
-          <div className="flex flex-col min-h-screen">
-            {children}
-          </div>
+          {/* Bypass InstallationChecker for demo */}
+          {children}
         </ThemeProvider>
       </body>
     </html>
