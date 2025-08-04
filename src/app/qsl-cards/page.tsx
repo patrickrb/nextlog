@@ -170,7 +170,7 @@ export default function QSLCardsPage() {
           </Alert>
         )}
 
-        {!storageAvailable && (
+        {!isLoading && !storageAvailable && (
           <Alert className="mb-6 border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
             <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
             <AlertDescription className="text-orange-800 dark:text-orange-200">
