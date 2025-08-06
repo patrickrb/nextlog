@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { Button } from '@/components/ui/button';
+import { Grid3X3 } from 'lucide-react';
 import L from 'leaflet';
+import MaidenheadGridOverlay from './MaidenheadGridOverlay';
 
 // Fix for default markers in React Leaflet
 delete (L.Icon.Default.prototype as L.Icon.Default & { _getIconUrl?: () => string })._getIconUrl;
@@ -91,6 +94,7 @@ const gridToLatLng = (grid: string): [number, number] | null => {
 
 export default function ContactMap({ contacts, user, height = '400px' }: ContactMapProps) {
   const [mounted, setMounted] = useState(false);
+  const [showGrid, setShowGrid] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -121,7 +125,20 @@ export default function ContactMap({ contacts, user, height = '400px' }: Contact
   const mapCenter = getMapCenter();
 
   return (
-    <div className="w-full rounded-lg overflow-hidden border" style={{ height }}>
+    <div className="w-full rounded-lg overflow-hidden border relative" style={{ height }}>
+      {/* Grid Toggle Button */}
+      <div className="absolute top-2 right-2 z-[1000]">
+        <Button
+          onClick={() => setShowGrid(!showGrid)}
+          variant={showGrid ? "default" : "outline"}
+          size="sm"
+          className="bg-white/90 hover:bg-white shadow-lg"
+        >
+          <Grid3X3 className="h-4 w-4 mr-2" />
+          Grid
+        </Button>
+      </div>
+      
       <MapContainer
         center={mapCenter}
         zoom={user?.grid_locator ? 8 : 4}
@@ -132,6 +149,9 @@ export default function ContactMap({ contacts, user, height = '400px' }: Contact
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        
+        {/* Maidenhead Grid Overlay */}
+        <MaidenheadGridOverlay visible={showGrid} />
         
         {/* User's QTH marker */}
         {user?.grid_locator && (() => {
