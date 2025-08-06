@@ -7,6 +7,7 @@ import { Plus } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import UserMenu from '@/components/UserMenu';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
+import SearchInput from '@/components/SearchInput';
 import { ContactsMenu, ToolsMenu, DataMenu } from '@/components/navigation';
 
 interface NavbarProps {
@@ -69,6 +70,11 @@ export default function Navbar({ title, breadcrumbs, actions }: NavbarProps) {
           </div>
           
           <div className="flex items-center space-x-4">
+            {/* Search Input */}
+            <div className="hidden lg:block">
+              <SearchInput className="w-64" />
+            </div>
+            
             {/* Custom actions for specific pages */}
             {actions}
             
