@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+// Font loading temporarily disabled for build in restricted environment
 // import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { UserProvider } from "@/contexts/UserContext";
@@ -53,9 +54,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-        className="antialiased"
-      >
+      <body className="font-sans antialiased">
         <ThemeProvider>
           <UserProvider>
             <InstallationChecker>

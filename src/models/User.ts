@@ -1,7 +1,7 @@
-import { query } from '../lib/db';
-import { encrypt, decrypt } from '../lib/crypto';
+import { query } from '@/lib/db';
+import { encrypt, decrypt } from '@/lib/crypto';
 
-export interface IUser {
+export interface UserData {
   id: number;
   email: string;
   password: string;
@@ -18,7 +18,7 @@ export interface IUser {
 }
 
 export class User {
-  static getDecryptedQrzPassword(user: IUser): string | null {
+  static getDecryptedQrzPassword(user: UserData): string | null {
     return user.qrz_password ? decrypt(user.qrz_password) : null;
   }
   static async create(userData: {
@@ -29,7 +29,7 @@ export class User {
     grid_locator?: string;
     qrz_username?: string;
     qrz_password?: string;
-  }): Promise<IUser> {
+  }): Promise<UserData> {
     const { email, password, name, callsign, grid_locator, qrz_username, qrz_password } = userData;
     
     const sql = `
@@ -51,21 +51,21 @@ export class User {
     return result.rows[0];
   }
 
-  static async findByEmail(email: string): Promise<IUser | null> {
+  static async findByEmail(email: string): Promise<UserData | null> {
     const sql = 'SELECT * FROM users WHERE email = $1';
     const result = await query(sql, [email.toLowerCase().trim()]);
     
     return result.rows[0] || null;
   }
 
-  static async findById(id: number): Promise<IUser | null> {
+  static async findById(id: number): Promise<UserData | null> {
     const sql = 'SELECT * FROM users WHERE id = $1';
     const result = await query(sql, [id]);
     
     return result.rows[0] || null;
   }
 
-  static async update(id: number, userData: Partial<IUser>): Promise<IUser | null> {
+  static async update(id: number, userData: Partial<UserData>): Promise<UserData | null> {
     const fields = [];
     const values = [];
     let paramCount = 1;
