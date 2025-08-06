@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import ThemeToggleButton from '@/components/ThemeToggleButton';
+import SearchInput from '@/components/SearchInput';
 import { ContactsMenu, ToolsMenu, DataMenu } from '@/components/navigation';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -58,6 +59,11 @@ function DemoNavbar() {
           </div>
           
           <div className="flex items-center space-x-4">
+            {/* Search Input */}
+            <div className="hidden lg:block">
+              <SearchInput className="w-64" />
+            </div>
+            
             {/* Default new contact button */}
             <Button asChild>
               <Link href="/new-contact">
@@ -122,12 +128,18 @@ export default function NavbarDemoPage() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-card border rounded-lg p-8 text-center">
-            <h1 className="text-3xl font-bold mb-4">Navbar Layout Demo</h1>
+            <h1 className="text-3xl font-bold mb-4">Navbar Layout Demo with Search</h1>
             <p className="text-muted-foreground mb-6">
-              This page demonstrates the improved navbar layout with dropdown navigation menus.
+              This page demonstrates the improved navbar layout with dropdown navigation menus and the new callsign search functionality.
             </p>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <h3 className="font-semibold mb-2">🔍 Search Input</h3>
+                <p className="text-sm text-muted-foreground">
+                  Callsign search with autocomplete and navigation to advanced search
+                </p>
+              </div>
               <div className="bg-muted/50 p-4 rounded-lg">
                 <h3 className="font-semibold mb-2">📞 Contacts Menu</h3>
                 <p className="text-sm text-muted-foreground">
@@ -148,8 +160,19 @@ export default function NavbarDemoPage() {
               </div>
             </div>
             
-            <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
-              <h3 className="font-semibold mb-2">✅ Improvements Made</h3>
+            <div className="mt-8 p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+              <h3 className="font-semibold mb-2">🆕 New Search Feature</h3>
+              <ul className="text-sm text-left space-y-1">
+                <li>• Added search input to navbar with callsign autocomplete</li>
+                <li>• Provides suggestions from user&apos;s existing contacts</li>
+                <li>• Shows callsign, name, QTH, and contact count</li>
+                <li>• Supports keyboard navigation and direct search</li>
+                <li>• Navigates to advanced search with selected callsign pre-filled</li>
+              </ul>
+            </div>
+            
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+              <h3 className="font-semibold mb-2">✅ Previous Improvements</h3>
               <ul className="text-sm text-left space-y-1">
                 <li>• Organized navigation into logical dropdown menus</li>
                 <li>• Removed cluttered individual buttons from navbar</li>

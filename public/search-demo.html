@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nextlog Search Feature Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950">
+    <!-- Navbar -->
+    <nav class="border-b bg-white dark:bg-gray-900 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-6">
+                    <span class="text-xl font-semibold text-blue-600">Nextlog</span>
+                    <span class="mx-2 text-gray-400">/</span>
+                    <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Search Demo</h1>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Search Input -->
+                    <div class="relative">
+                        <button 
+                            id="searchButton"
+                            class="flex items-center justify-between w-64 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <div class="flex items-center">
+                                <svg class="h-4 w-4 mr-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                                <span>Search callsigns...</span>
+                            </div>
+                            <svg class="h-4 w-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Dropdown Demo -->
+                        <div 
+                            id="searchDropdown" 
+                            class="absolute top-full left-0 mt-1 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50 hidden"
+                        >
+                            <div class="border-b border-gray-200 dark:border-gray-700 px-3 py-2">
+                                <input 
+                                    type="text" 
+                                    placeholder="Type a callsign..." 
+                                    class="w-full bg-transparent text-sm outline-none placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100"
+                                    id="searchInput"
+                                >
+                            </div>
+                            <div class="max-h-72 overflow-y-auto">
+                                <div class="py-1">
+                                    <div class="px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                                        <div class="flex flex-col">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-medium text-gray-900 dark:text-gray-100">W1AW</span>
+                                                <span class="text-xs text-gray-500 dark:text-gray-400">5 contacts</span>
+                                            </div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">John Smith - Connecticut</span>
+                                        </div>
+                                    </div>
+                                    <div class="px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                                        <div class="flex flex-col">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-medium text-gray-900 dark:text-gray-100">K2ABC</span>
+                                                <span class="text-xs text-gray-500 dark:text-gray-400">3 contacts</span>
+                                            </div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">Mike Johnson - New York</span>
+                                        </div>
+                                    </div>
+                                    <div class="px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                                        <div class="flex flex-col">
+                                            <div class="flex items-center justify-between">
+                                                <span class="font-medium text-gray-900 dark:text-gray-100">VE3XYZ</span>
+                                                <span class="text-xs text-gray-500 dark:text-gray-400">2 contacts</span>
+                                            </div>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">Bob Wilson - Ontario</span>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-gray-200 dark:border-gray-700 px-2 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                                        <div class="flex items-center">
+                                            <svg class="h-4 w-4 mr-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                            </svg>
+                                            <span class="text-gray-900 dark:text-gray-100">Search for "W1AW"</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700">
+                        New Contact
+                    </button>
+                    
+                    <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                        <span class="text-xs font-medium text-blue-600 dark:text-blue-400">DU</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-8 text-center">
+                <h1 class="text-3xl font-bold mb-4 text-gray-900 dark:text-gray-100">Navbar Search Feature Demo</h1>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">
+                    This demonstrates the new callsign search functionality in the navbar.
+                </p>
+                
+                <div class="mt-8 p-4 bg-green-50 dark:bg-green-950 rounded-lg text-left">
+                    <h3 class="font-semibold mb-4 text-green-800 dark:text-green-200">🔍 How the Search Feature Works:</h3>
+                    <ul class="space-y-2 text-sm text-green-700 dark:text-green-300">
+                        <li><strong>1. Click the search input</strong> - Located in the top right of the navbar</li>
+                        <li><strong>2. Start typing a callsign</strong> - Autocomplete suggestions will appear</li>
+                        <li><strong>3. Select from suggestions</strong> - Shows name, QTH, and contact count</li>
+                        <li><strong>4. Navigate to advanced search</strong> - Selected callsign is pre-filled</li>
+                        <li><strong>5. Press Enter for direct search</strong> - If callsign not in suggestions</li>
+                    </ul>
+                </div>
+
+                <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg text-left">
+                    <h3 class="font-semibold mb-4 text-blue-800 dark:text-blue-200">⚡ Features:</h3>
+                    <ul class="space-y-2 text-sm text-blue-700 dark:text-blue-300">
+                        <li>• <strong>Real-time autocomplete</strong> - Searches as you type</li>
+                        <li>• <strong>Smart suggestions</strong> - Based on your contact history</li>
+                        <li>• <strong>Contact details</strong> - Shows name, location, and contact count</li>
+                        <li>• <strong>Keyboard navigation</strong> - Use arrow keys and Enter</li>
+                        <li>• <strong>Direct search fallback</strong> - Search for any callsign</li>
+                        <li>• <strong>Responsive design</strong> - Hidden on small screens to save space</li>
+                    </ul>
+                </div>
+
+                <div class="mt-6 p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg text-left">
+                    <h3 class="font-semibold mb-4 text-yellow-800 dark:text-yellow-200">🔧 Technical Implementation:</h3>
+                    <ul class="space-y-2 text-sm text-yellow-700 dark:text-yellow-300">
+                        <li>• <strong>API Endpoint:</strong> <code class="bg-gray-200 dark:bg-gray-700 px-1 rounded">/api/contacts/callsigns</code> - Provides autocomplete suggestions</li>
+                        <li>• <strong>Component:</strong> <code class="bg-gray-200 dark:bg-gray-700 px-1 rounded">SearchInput</code> - Reusable search component with popover</li>
+                        <li>• <strong>Integration:</strong> Added to existing Navbar component</li>
+                        <li>• <strong>Navigation:</strong> Routes to <code class="bg-gray-200 dark:bg-gray-700 px-1 rounded">/search?callsign=SELECTED</code></li>
+                        <li>• <strong>Libraries:</strong> Uses existing shadcn/ui Command and Popover components</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const searchButton = document.getElementById('searchButton');
+        const searchDropdown = document.getElementById('searchDropdown');
+        const searchInput = document.getElementById('searchInput');
+
+        searchButton.addEventListener('click', () => {
+            searchDropdown.classList.toggle('hidden');
+            if (!searchDropdown.classList.contains('hidden')) {
+                searchInput.focus();
+            }
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchButton.contains(e.target) && !searchDropdown.contains(e.target)) {
+                searchDropdown.classList.add('hidden');
+            }
+        });
+
+        // Demo typing effect
+        searchInput.addEventListener('input', (e) => {
+            if (e.target.value.length > 0) {
+                searchDropdown.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

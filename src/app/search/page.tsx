@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -108,6 +108,7 @@ export default function SearchPage() {
 
   const { } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Fetch DXCC entities
   const fetchDxccEntities = useCallback(async () => {
@@ -137,6 +138,20 @@ export default function SearchPage() {
   useEffect(() => {
     fetchDxccEntities();
   }, [fetchDxccEntities]);
+
+  // Handle URL parameters (e.g., from navbar search)
+  useEffect(() => {
+    const callsignParam = searchParams.get('callsign');
+    if (callsignParam) {
+      const newFilters = {
+        ...filters,
+        callsign: callsignParam
+      };
+      setFilters(newFilters);
+      // Trigger search with the callsign
+      debouncedSearch(newFilters, 1);
+    }
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Convert DXCC entities to combobox options
   const dxccOptions = useMemo(() => {
