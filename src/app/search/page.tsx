@@ -12,11 +12,12 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/combobox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Search, Filter, Download, RotateCcw, ArrowLeft } from 'lucide-react';
+import { Loader2, Search, Filter, Download, RotateCcw, ArrowLeft, Table as TableIcon, Map } from 'lucide-react';
 import EditContactDialog from '@/components/EditContactDialog';
 import Pagination from '@/components/Pagination';
 import Navbar from '@/components/Navbar';
 import LotwSyncIndicator from '@/components/LotwSyncIndicator';
+import DynamicContactMap from '@/components/DynamicContactMap';
 import { useUser } from '@/contexts/UserContext';
 
 interface Contact {
@@ -84,6 +85,7 @@ export default function SearchPage() {
   const [exportLoading, setExportLoading] = useState(false);
   const [dxccEntities, setDxccEntities] = useState<DXCCEntity[]>([]);
   const [dxccLoading, setDxccLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'table' | 'map'>('table');
   
   const [filters, setFilters] = useState<SearchFilters>({
     callsign: '',
@@ -106,7 +108,7 @@ export default function SearchPage() {
     pages: 0
   });
 
-  const { } = useUser();
+  const { user } = useUser();
   const router = useRouter();
 
   // Fetch DXCC entities
@@ -623,12 +625,37 @@ export default function SearchPage() {
                     }
                   </CardDescription>
                 </div>
-                {loading && (
-                  <div className="flex items-center space-x-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm text-muted-foreground">Searching...</span>
-                  </div>
-                )}
+                <div className="flex items-center space-x-2">
+                  {/* View Mode Toggle */}
+                  {contacts.length > 0 && (
+                    <div className="flex items-center border rounded-md">
+                      <Button
+                        variant={viewMode === 'table' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('table')}
+                        className="rounded-r-none"
+                      >
+                        <TableIcon className="h-4 w-4 mr-2" />
+                        Table
+                      </Button>
+                      <Button
+                        variant={viewMode === 'map' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setViewMode('map')}
+                        className="rounded-l-none"
+                      >
+                        <Map className="h-4 w-4 mr-2" />
+                        Map
+                      </Button>
+                    </div>
+                  )}
+                  {loading && (
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm text-muted-foreground">Searching...</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -641,6 +668,39 @@ export default function SearchPage() {
                     }
                   </p>
                 </div>
+              ) : viewMode === 'map' ? (
+                <>
+                  <div className="mb-4">
+                    <DynamicContactMap 
+                      contacts={contacts} 
+                      user={user} 
+                      height="500px"
+                    />
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    <p>
+                      🏠 Red markers show your QTH location • 📻 Blue markers show contact locations
+                      {contacts.filter(c => (c.latitude && c.longitude) || c.grid_locator).length < contacts.length && (
+                        <span className="block mt-1">
+                          Note: Only contacts with location data (coordinates or grid locator) are displayed on the map.
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  {pagination.pages > 1 && (
+                    <div className="mt-4">
+                      <Pagination
+                        currentPage={pagination.page}
+                        totalPages={pagination.pages}
+                        pageSize={pagination.limit}
+                        totalItems={pagination.total}
+                        onPageChange={handlePageChange}
+                        onPageSizeChange={handlePageSizeChange}
+                        pageSizeOptions={[10, 20, 50, 100]}
+                      />
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   <div className="rounded-md border">
