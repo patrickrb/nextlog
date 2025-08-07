@@ -168,23 +168,30 @@ npm run test:headed
 
 # Run tests in UI mode for debugging
 npm run test:ui
+
+# View test report
+npm run test:report
 ```
 
 ### Test Coverage
 
 The test suite covers:
 - **Authentication**: Login and registration flows
-- **Navigation**: Page routing and redirects
+- **Navigation**: Page routing and redirects  
 - **Forms**: Input validation and submission
 - **Responsive Design**: Mobile and desktop layouts
 - **Error Handling**: Database connection failures
 - **Core Features**: Contact management, awards, ADIF import/export
+- **Build Quality**: JavaScript errors, CSS loading, performance
+- **Security**: Protected routes and authentication redirects
 
 ### Continuous Integration
 
 Tests run automatically on:
 - Pull requests to main/develop branches
 - Pushes to main/develop branches
+
+The CI workflow requires all tests to pass before merging. See `/.github/workflows/ci.yml` and `/.github/branch-protection.md` for setup details.
 
 See `/tests/README.md` for detailed testing documentation.
 
