@@ -1,6 +1,6 @@
-import { query } from '../lib/db';
+import { query } from '@/lib/db';
 
-export interface IContact {
+export interface ContactData {
   id: number;
   user_id: number;
   station_id?: number;
@@ -63,7 +63,7 @@ export class Contact {
     latitude?: number;
     longitude?: number;
     notes?: string;
-  }): Promise<IContact> {
+  }): Promise<ContactData> {
     const {
       user_id,
       station_id,
@@ -112,7 +112,7 @@ export class Contact {
     return result.rows[0];
   }
 
-  static async findByUserId(userId: number, limit?: number, offset?: number): Promise<IContact[]> {
+  static async findByUserId(userId: number, limit?: number, offset?: number): Promise<ContactData[]> {
     let sql = 'SELECT * FROM contacts WHERE user_id = $1 ORDER BY datetime DESC';
     const params = [userId];
     
@@ -130,14 +130,14 @@ export class Contact {
     return result.rows;
   }
 
-  static async findById(id: number): Promise<IContact | null> {
+  static async findById(id: number): Promise<ContactData | null> {
     const sql = 'SELECT * FROM contacts WHERE id = $1';
     const result = await query(sql, [id]);
     
     return result.rows[0] || null;
   }
 
-  static async update(id: number, contactData: Partial<IContact>): Promise<IContact | null> {
+  static async update(id: number, contactData: Partial<ContactData>): Promise<ContactData | null> {
     const fields = [];
     const values = [];
     let paramCount = 1;
@@ -187,7 +187,7 @@ export class Contact {
     return parseInt(result.rows[0].count);
   }
 
-  static async findByStationId(stationId: number, limit?: number, offset?: number): Promise<IContact[]> {
+  static async findByStationId(stationId: number, limit?: number, offset?: number): Promise<ContactData[]> {
     let sql = 'SELECT * FROM contacts WHERE station_id = $1 ORDER BY datetime DESC';
     const params = [stationId];
     
@@ -205,7 +205,7 @@ export class Contact {
     return result.rows;
   }
 
-  static async findByUserIdAndStationId(userId: number, stationId: number, limit?: number, offset?: number): Promise<IContact[]> {
+  static async findByUserIdAndStationId(userId: number, stationId: number, limit?: number, offset?: number): Promise<ContactData[]> {
     let sql = 'SELECT * FROM contacts WHERE user_id = $1 AND station_id = $2 ORDER BY datetime DESC';
     const params = [userId, stationId];
     
@@ -230,7 +230,7 @@ export class Contact {
     return parseInt(result.rows[0].count);
   }
 
-  static async findWithStation(userId: number, limit?: number, offset?: number): Promise<(IContact & { station?: { id: number; callsign: string; station_name: string } })[]> {
+  static async findWithStation(userId: number, limit?: number, offset?: number): Promise<(ContactData & { station?: { id: number; callsign: string; station_name: string } })[]> {
     let sql = `
       SELECT 
         c.*,

@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50');
     const offset = (page - 1) * limit;
     const since = searchParams.get('since');
-    const countOnly = searchParams.get('count_only') === 'true';
+    const countOnly = searchParams.get('countOnly') === 'true';
 
     const userId = typeof user.userId === 'string' ? parseInt(user.userId, 10) : user.userId;
     

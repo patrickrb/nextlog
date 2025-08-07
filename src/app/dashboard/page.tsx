@@ -98,7 +98,7 @@ export default function DashboardPage() {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const response = await fetch(`/api/contacts?since=${thirtyDaysAgo.toISOString()}&count_only=true`);
+      const response = await fetch(`/api/contacts?since=${thirtyDaysAgo.toISOString()}&countOnly=true`);
       if (response.ok) {
         const data = await response.json();
         setRecentContactsCount(data.count || 0);
