@@ -29,7 +29,7 @@ export default function NewContactPage() {
     frequency: '',
     mode: 'SSB',
     band: '',
-    datetime: new Date().toISOString().slice(0, 16),
+    datetime: new Date().toISOString().slice(0, 19),
     rst_sent: '59',
     rst_received: '59',
     name: '',
@@ -69,7 +69,7 @@ export default function NewContactPage() {
       interval = setInterval(() => {
         setFormData(prev => ({
           ...prev,
-          datetime: new Date().toISOString().slice(0, 16)
+          datetime: new Date().toISOString().slice(0, 19) // Include seconds for visible ticking
         }));
       }, 1000);
     }
@@ -86,7 +86,7 @@ export default function NewContactPage() {
     if (isLiveLogging) {
       setFormData(prev => ({
         ...prev,
-        datetime: new Date().toISOString().slice(0, 16)
+        datetime: new Date().toISOString().slice(0, 19) // Include seconds for visible ticking
       }));
     }
   }, [isLiveLogging]);
@@ -458,6 +458,7 @@ export default function NewContactPage() {
                       type="datetime-local"
                       name="datetime"
                       id="datetime"
+                      step={isLiveLogging ? "1" : undefined}
                       required
                       value={formData.datetime}
                       onChange={handleChange}
@@ -466,7 +467,7 @@ export default function NewContactPage() {
                     />
                     {isLiveLogging && (
                       <p className="text-xs text-muted-foreground">
-                        Time automatically updates to current time when live logging is enabled
+                        ⏱️ Time updates every second - watch the seconds tick!
                       </p>
                     )}
                   </div>

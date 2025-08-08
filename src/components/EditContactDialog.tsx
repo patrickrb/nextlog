@@ -97,7 +97,7 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
       setFormData({
         ...contact,
         datetime: contact.datetime && isValidDate(contact.datetime) 
-          ? new Date(contact.datetime).toISOString().slice(0, 16) 
+          ? new Date(contact.datetime).toISOString().slice(0, 19) 
           : ''
       });
       setIsLiveLogging(false); // Reset live logging when contact changes
@@ -113,7 +113,7 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
       interval = setInterval(() => {
         setFormData(prev => ({
           ...prev,
-          datetime: new Date().toISOString().slice(0, 16)
+          datetime: new Date().toISOString().slice(0, 19) // Include seconds for visible ticking
         }));
       }, 1000);
     }
@@ -130,7 +130,7 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
     if (isLiveLogging) {
       setFormData(prev => ({
         ...prev,
-        datetime: new Date().toISOString().slice(0, 16)
+        datetime: new Date().toISOString().slice(0, 19) // Include seconds for visible ticking
       }));
     }
   }, [isLiveLogging]);
@@ -398,6 +398,7 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
               <Input
                 id="datetime"
                 type="datetime-local"
+                step={isLiveLogging ? "1" : undefined}
                 value={formData.datetime || ''}
                 onChange={(e) => handleInputChange('datetime', e.target.value)}
                 disabled={isLiveLogging}
@@ -406,7 +407,7 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
               />
               {isLiveLogging && (
                 <p className="text-xs text-muted-foreground">
-                  Time automatically updates to current time when live logging is enabled
+                  ⏱️ Time updates every second - watch the seconds tick!
                 </p>
               )}
             </div>
