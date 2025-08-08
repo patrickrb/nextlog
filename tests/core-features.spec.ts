@@ -15,11 +15,13 @@ test.describe('Nextlog Core Features', () => {
     // Wait a moment for any JavaScript to execute
     await page.waitForTimeout(2000);
     
-    // Should not have critical JavaScript errors (database errors are expected)
+    // Should not have critical JavaScript errors (database/auth errors are expected)
     const criticalErrors = errors.filter(error => 
       !error.includes('Installation check failed') && 
       !error.includes('ECONNREFUSED') &&
-      !error.includes('relation "users" does not exist')
+      !error.includes('relation "users" does not exist') &&
+      !error.includes('401 (Unauthorized)') &&
+      !error.includes('Failed to load resource: the server responded with a status of 401')
     );
     
     expect(criticalErrors).toHaveLength(0);

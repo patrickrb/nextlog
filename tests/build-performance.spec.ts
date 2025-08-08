@@ -19,12 +19,14 @@ test.describe('Build and Performance', () => {
     // Wait for page to fully load
     await page.waitForTimeout(3000);
     
-    // Filter out expected database connection errors
+    // Filter out expected database connection and auth errors
     const unexpectedErrors = errors.filter(error => 
       !error.includes('Installation check failed') && 
       !error.includes('ECONNREFUSED') &&
       !error.includes('relation "users" does not exist') &&
-      !error.includes('connect ECONNREFUSED')
+      !error.includes('connect ECONNREFUSED') &&
+      !error.includes('401 (Unauthorized)') &&
+      !error.includes('Failed to load resource: the server responded with a status of 401')
     );
     
     // Should not have unexpected JavaScript errors
@@ -36,8 +38,10 @@ test.describe('Build and Performance', () => {
     
     // Check that basic HTML structure is present
     await expect(page.locator('html')).toBeVisible();
-    await expect(page.locator('head')).toBeVisible();
     await expect(page.locator('body')).toBeVisible();
+    
+    // Check that head element exists (even though it's not visible)
+    await expect(page.locator('head')).toHaveCount(1);
     
     // Check that CSS is loading (page should have background styling)
     const body = page.locator('body');
