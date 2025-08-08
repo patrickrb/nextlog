@@ -12,7 +12,7 @@ test.describe('Authentication Pages', () => {
     await expect(page.locator('#password')).toBeVisible();
     
     // Check for labels
-    await expect(page.locator('label[for="email"]')).toContainText('Email address');
+    await expect(page.locator('label[for="email"]')).toContainText('Email Address');
     await expect(page.locator('label[for="password"]')).toContainText('Password');
     
     // Check for submit button

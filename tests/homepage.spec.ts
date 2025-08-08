@@ -56,8 +56,10 @@ test.describe('Nextlog Application Flow', () => {
     
     // Check for proper HTML structure
     await expect(page.locator('html')).toBeVisible();
-    await expect(page.locator('head')).toBeVisible();
     await expect(page.locator('body')).toBeVisible();
+    
+    // Check that head element exists (even though it's not visible)
+    await expect(page.locator('head')).toHaveCount(1);
     
     // Check for viewport meta tag
     const viewport = await page.locator('meta[name="viewport"]').getAttribute('content');

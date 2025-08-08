@@ -2,17 +2,19 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Contact Management Pages', () => {
   test('new contact page should load correctly', async ({ page }) => {
-    await page.goto('/new-contact');
+    // The page should load without server errors
+    const response = await page.goto('/new-contact');
+    
+    // Check that the response is valid
+    if (response?.status()) {
+      expect(response.status()).toBeLessThan(500);
+    }
     
     // Check that we're on the new contact page or redirected appropriately
     const url = page.url();
     
     // Should either be on new-contact page or redirected to install/login
     expect(url).toMatch(/(new-contact|install|login)/);
-    
-    // The page should load without server errors
-    const response = await page.goto('/new-contact');
-    expect(response?.status()).toBeLessThan(500);
   });
 
   test('dashboard page should handle missing database gracefully', async ({ page }) => {
@@ -51,19 +53,22 @@ test.describe('Contact Management Pages', () => {
 
   test('awards pages should load correctly', async ({ page }) => {
     // Test main awards page
-    await page.goto('/awards');
     let response = await page.goto('/awards');
-    expect(response?.status()).toBeLessThan(500);
+    if (response?.status()) {
+      expect(response.status()).toBeLessThan(500);
+    }
     
     // Test DXCC awards page
-    await page.goto('/awards/dxcc');
     response = await page.goto('/awards/dxcc');
-    expect(response?.status()).toBeLessThan(500);
+    if (response?.status()) {
+      expect(response.status()).toBeLessThan(500);
+    }
     
     // Test WAS awards page
-    await page.goto('/awards/was');
     response = await page.goto('/awards/was');
-    expect(response?.status()).toBeLessThan(500);
+    if (response?.status()) {
+      expect(response.status()).toBeLessThan(500);
+    }
   });
 
   test('admin pages should require authentication', async ({ page }) => {

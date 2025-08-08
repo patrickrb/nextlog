@@ -30,6 +30,7 @@ export default defineConfig({
       name: 'chromium',
       use: { 
         ...devices['Desktop Chrome'],
+        // Use system Chrome instead of downloading Chromium
         channel: 'chrome',
       },
     },
@@ -59,6 +60,6 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true, // Always reuse existing server for development
   },
 });
