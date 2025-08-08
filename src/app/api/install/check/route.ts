@@ -52,6 +52,18 @@ export async function GET() {
       });
     }
     
+    // If database connection fails, installation is needed
+    if ((error as { code?: string })?.code === 'ECONNREFUSED' || 
+        (error as { code?: string })?.code === 'ENOTFOUND' ||
+        (error as Error).message?.includes('database') ||
+        (error as Error).message?.includes('connection')) {
+      return NextResponse.json({ 
+        isInstalled: false,
+        requiresInstallation: true,
+        reason: 'Database connection failed'
+      });
+    }
+    
     console.error('Installation check error:', error);
     return NextResponse.json(
       { error: 'Failed to check installation status' },

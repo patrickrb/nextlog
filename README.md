@@ -150,6 +150,51 @@ The script requires these data files to be present:
 
 Both files are included in the repository.
 
+## Testing
+
+Nextlog includes comprehensive end-to-end tests using Playwright to ensure application stability and feature reliability.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests for specific browser
+npm run test:chromium
+
+# Run tests in headed mode (visible browser)
+npm run test:headed
+
+# Run tests in UI mode for debugging
+npm run test:ui
+
+# View test report
+npm run test:report
+```
+
+### Test Coverage
+
+The test suite covers:
+- **Authentication**: Login and registration flows
+- **Navigation**: Page routing and redirects  
+- **Forms**: Input validation and submission
+- **Responsive Design**: Mobile and desktop layouts
+- **Error Handling**: Database connection failures
+- **Core Features**: Contact management, awards, ADIF import/export
+- **Build Quality**: JavaScript errors, CSS loading, performance
+- **Security**: Protected routes and authentication redirects
+
+### Continuous Integration
+
+Tests run automatically on:
+- Pull requests to main/develop branches
+- Pushes to main/develop branches
+
+The CI workflow requires all tests to pass before merging. See `/.github/workflows/ci.yml` and `/.github/branch-protection.md` for setup details.
+
+See `/tests/README.md` for detailed testing documentation.
+
 ## Usage
 
 1. **Register**: Create a new account with your amateur radio callsign
