@@ -8,10 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Upload, Image as ImageIcon, Trash2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, Upload, Image as ImageIcon, Trash2, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import Image from 'next/image';
 
 interface Contact {
@@ -58,6 +59,7 @@ const modeOptions = [
 
 export default function EditContactDialog({ contact, isOpen, onClose, onSave, onDelete }: EditContactDialogProps) {
   const [formData, setFormData] = useState<Partial<Contact>>({});
+  const [isLiveLogging, setIsLiveLogging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [qslImages, setQslImages] = useState<QSLImage[]>([]);
@@ -95,12 +97,43 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
       setFormData({
         ...contact,
         datetime: contact.datetime && isValidDate(contact.datetime) 
-          ? new Date(contact.datetime).toISOString().slice(0, 16) 
+          ? new Date(contact.datetime).toISOString().slice(0, 19) 
           : ''
       });
+      setIsLiveLogging(false); // Reset live logging when contact changes
       fetchQSLImages();
     }
   }, [contact, fetchQSLImages]);
+
+  // Live logging effect - update datetime every second when enabled
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isLiveLogging) {
+      interval = setInterval(() => {
+        setFormData(prev => ({
+          ...prev,
+          datetime: new Date().toISOString().slice(0, 19) // Include seconds for visible ticking
+        }));
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isLiveLogging]);
+
+  // Update datetime immediately when toggling to live mode
+  useEffect(() => {
+    if (isLiveLogging) {
+      setFormData(prev => ({
+        ...prev,
+        datetime: new Date().toISOString().slice(0, 19) // Include seconds for visible ticking
+      }));
+    }
+  }, [isLiveLogging]);
 
   const calculateBand = (frequency: number): string => {
     if (frequency >= 1.8 && frequency <= 2.0) return '160m';
@@ -348,14 +381,35 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="datetime">Date/Time *</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="datetime">Date/Time *</Label>
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <Label htmlFor="live-logging-edit" className="text-sm text-muted-foreground">
+                    Live logging
+                  </Label>
+                  <Switch
+                    id="live-logging-edit"
+                    checked={isLiveLogging}
+                    onCheckedChange={setIsLiveLogging}
+                  />
+                </div>
+              </div>
               <Input
                 id="datetime"
                 type="datetime-local"
+                step={isLiveLogging ? "1" : undefined}
                 value={formData.datetime || ''}
                 onChange={(e) => handleInputChange('datetime', e.target.value)}
+                disabled={isLiveLogging}
+                className={isLiveLogging ? "bg-muted" : ""}
                 required
               />
+              {isLiveLogging && (
+                <p className="text-xs text-muted-foreground">
+                  ⏱️ Time updates every second - watch the seconds tick!
+                </p>
+              )}
             </div>
           </div>
 
