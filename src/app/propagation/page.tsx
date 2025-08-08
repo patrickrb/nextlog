@@ -156,7 +156,9 @@ export default function PropagationPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
-                    {data.solar_activity.solar_flux_index.toFixed(1)}
+                    {(typeof data.solar_activity.solar_flux_index === 'number' 
+                      ? data.solar_activity.solar_flux_index 
+                      : parseFloat(data.solar_activity.solar_flux_index)).toFixed(1)}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Solar Flux Index (SFI)
@@ -164,7 +166,9 @@ export default function PropagationPage() {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-orange-600">
-                    {data.solar_activity.a_index.toFixed(1)}
+                    {(typeof data.solar_activity.a_index === 'number' 
+                      ? data.solar_activity.a_index 
+                      : parseFloat(data.solar_activity.a_index)).toFixed(1)}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     A-Index (Daily)
@@ -172,7 +176,9 @@ export default function PropagationPage() {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-purple-600">
-                    {data.solar_activity.k_index.toFixed(1)}
+                    {(typeof data.solar_activity.k_index === 'number' 
+                      ? data.solar_activity.k_index 
+                      : parseFloat(data.solar_activity.k_index)).toFixed(1)}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     K-Index (3-hour)

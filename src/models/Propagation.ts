@@ -1,6 +1,20 @@
 import { query } from '@/lib/db';
 import { SolarActivity, PropagationForecast, BandCondition, PropagationAlert } from '@/types/propagation';
 
+// Database row types for DECIMAL fields that come back as strings
+interface SolarActivityRow {
+  id?: number;
+  timestamp: Date;
+  solar_flux_index: string; // DECIMAL comes back as string
+  a_index: string; // DECIMAL comes back as string
+  k_index: string; // DECIMAL comes back as string
+  solar_wind_speed?: string | null; // DECIMAL comes back as string
+  solar_wind_density?: string | null; // DECIMAL comes back as string
+  xray_class?: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
 export class Propagation {
   /**
    * Save solar activity data
@@ -33,7 +47,16 @@ export class Propagation {
       data.xray_class || null
     ]);
     
-    return result.rows[0];
+    const row = result.rows[0] as SolarActivityRow;
+    // Convert DECIMAL fields from strings to numbers
+    return {
+      ...row,
+      solar_flux_index: parseFloat(row.solar_flux_index),
+      a_index: parseFloat(row.a_index),
+      k_index: parseFloat(row.k_index),
+      solar_wind_speed: row.solar_wind_speed ? parseFloat(row.solar_wind_speed) : undefined,
+      solar_wind_density: row.solar_wind_density ? parseFloat(row.solar_wind_density) : undefined
+    };
   }
 
   /**
@@ -49,7 +72,16 @@ export class Propagation {
       
       const result = await query(sql);
       if (result.rows[0]) {
-        return result.rows[0];
+        const row = result.rows[0] as SolarActivityRow;
+        // Convert DECIMAL fields from strings to numbers
+        return {
+          ...row,
+          solar_flux_index: parseFloat(row.solar_flux_index),
+          a_index: parseFloat(row.a_index),
+          k_index: parseFloat(row.k_index),
+          solar_wind_speed: row.solar_wind_speed ? parseFloat(row.solar_wind_speed) : undefined,
+          solar_wind_density: row.solar_wind_density ? parseFloat(row.solar_wind_density) : undefined
+        };
       }
     } catch (error) {
       console.warn('Database unavailable for solar activity query, using fallback:', error);
@@ -109,7 +141,15 @@ export class Propagation {
     `;
     
     const result = await query(sql, [startDate, endDate]);
-    return result.rows;
+    // Convert DECIMAL fields from strings to numbers for all rows
+    return result.rows.map((row: SolarActivityRow): SolarActivity => ({
+      ...row,
+      solar_flux_index: parseFloat(row.solar_flux_index),
+      a_index: parseFloat(row.a_index),
+      k_index: parseFloat(row.k_index),
+      solar_wind_speed: row.solar_wind_speed ? parseFloat(row.solar_wind_speed) : undefined,
+      solar_wind_density: row.solar_wind_density ? parseFloat(row.solar_wind_density) : undefined
+    }));
   }
 
   /**
