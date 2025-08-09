@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Loader2, Search, Check, AlertCircle, Radio } from 'lucide-react';
+import { ArrowLeft, Loader2, Search, Check, AlertCircle, Radio, Clock } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
 interface Station {
@@ -22,12 +23,13 @@ interface Station {
 export default function NewContactPage() {
   const [stations, setStations] = useState<Station[]>([]);
   const [selectedStationId, setSelectedStationId] = useState<string>('');
+  const [isLiveLogging, setIsLiveLogging] = useState(false);
   const [formData, setFormData] = useState({
     callsign: '',
     frequency: '',
     mode: 'SSB',
     band: '',
-    datetime: new Date().toISOString().slice(0, 16),
+    datetime: new Date().toISOString().slice(0, 19),
     rst_sent: '59',
     rst_received: '59',
     name: '',
@@ -58,6 +60,36 @@ export default function NewContactPage() {
   useEffect(() => {
     fetchStations();
   }, []);
+
+  // Live logging effect - update datetime every second when enabled
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isLiveLogging) {
+      interval = setInterval(() => {
+        setFormData(prev => ({
+          ...prev,
+          datetime: new Date().toISOString().slice(0, 19) // Include seconds for visible ticking
+        }));
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isLiveLogging]);
+
+  // Update datetime immediately when toggling to live mode
+  useEffect(() => {
+    if (isLiveLogging) {
+      setFormData(prev => ({
+        ...prev,
+        datetime: new Date().toISOString().slice(0, 19) // Include seconds for visible ticking
+      }));
+    }
+  }, [isLiveLogging]);
 
   const fetchStations = async () => {
     try {
@@ -408,15 +440,36 @@ export default function NewContactPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="datetime">Date & Time *</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="datetime">Date & Time *</Label>
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <Label htmlFor="live-logging" className="text-sm text-muted-foreground">
+                          Live logging
+                        </Label>
+                        <Switch
+                          id="live-logging"
+                          checked={isLiveLogging}
+                          onCheckedChange={setIsLiveLogging}
+                        />
+                      </div>
+                    </div>
                     <Input
                       type="datetime-local"
                       name="datetime"
                       id="datetime"
+                      step={isLiveLogging ? "1" : undefined}
                       required
                       value={formData.datetime}
                       onChange={handleChange}
+                      disabled={isLiveLogging}
+                      className={isLiveLogging ? "bg-muted" : ""}
                     />
+                    {isLiveLogging && (
+                      <p className="text-xs text-muted-foreground">
+                        ⏱️ Time updates every second - watch the seconds tick!
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
