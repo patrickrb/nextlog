@@ -56,11 +56,12 @@ interface WASCalculationParams {
 async function calculateWASProgress(params: WASCalculationParams): Promise<WASProgress> {
   const { userId, stationId, awardType, band, mode } = params;
 
-  // Get all US states
+  // Get all US states (exclude territories like DC)
   const statesResult = await query(`
     SELECT code, name, dxcc_entity 
     FROM states_provinces 
-    WHERE dxcc_entity IN (6, 110, 291)  -- Alaska, Hawaii, US
+    WHERE dxcc_entity IN (6, 110, 291)
+      AND type = 'State'
     ORDER BY name
   `);
 
