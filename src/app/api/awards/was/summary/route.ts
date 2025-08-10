@@ -89,7 +89,7 @@ async function calculateBasicWASProgress(userId: number, stationId?: number): Pr
     SELECT code, name 
     FROM states_provinces 
     WHERE dxcc_entity IN (6, 110, 291)
-      AND type = 'State'
+      AND code != 'DC'
     ORDER BY name
   `);
 
@@ -156,7 +156,7 @@ async function calculateBandWASProgress(userId: number, stationId: number | unde
     SELECT code, name 
     FROM states_provinces 
     WHERE dxcc_entity IN (6, 110, 291)
-      AND type = 'State'
+      AND code != 'DC'
     ORDER BY name
   `);
 
@@ -223,7 +223,7 @@ async function calculateModeWASProgress(userId: number, stationId: number | unde
     SELECT code, name 
     FROM states_provinces 
     WHERE dxcc_entity IN (6, 110, 291)
-      AND type = 'State'
+      AND code != 'DC'
     ORDER BY name
   `);
 
@@ -340,7 +340,7 @@ async function calculateNeededStates(userId: number, stationId?: number) {
   const allStatesResult = await query(`
     SELECT code FROM states_provinces 
     WHERE dxcc_entity IN (6, 110, 291)
-      AND type = 'State'
+      AND code != 'DC'
   `);
   const allStates = allStatesResult.rows.map(row => row.code);
 

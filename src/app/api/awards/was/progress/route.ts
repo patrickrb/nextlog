@@ -61,7 +61,7 @@ async function calculateWASProgress(params: WASCalculationParams): Promise<WASPr
     SELECT code, name, dxcc_entity 
     FROM states_provinces 
     WHERE dxcc_entity IN (6, 110, 291)
-      AND type = 'State'
+      AND code != 'DC'
     ORDER BY name
   `);
 
