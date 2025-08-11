@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart3, Radio, Calendar, Activity, Loader2 } from 'lucide-react';
+import { YearlyStatsChart } from '@/components/charts/YearlyStatsChart';
+import { ModeDistributionChart } from '@/components/charts/ModeDistributionChart';
 
 interface Station {
   id: number;
@@ -298,43 +300,23 @@ export default function StatsPage() {
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* QSOs by Year */}
+                {/* QSOs by Year Chart */}
                 <Card>
                   <CardHeader>
                     <CardTitle>QSOs by Year</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      {statsData.qsosByYear.map(item => (
-                        <div key={item.year} className="flex justify-between items-center">
-                          <span className="font-medium">{item.year}</span>
-                          <span className="text-muted-foreground">{item.count.toLocaleString()}</span>
-                        </div>
-                      ))}
-                      {statsData.qsosByYear.length === 0 && (
-                        <p className="text-muted-foreground text-center py-4">No data available</p>
-                      )}
-                    </div>
+                    <YearlyStatsChart data={statsData.qsosByYear} />
                   </CardContent>
                 </Card>
 
-                {/* QSOs by Mode */}
+                {/* QSOs by Mode Chart */}
                 <Card>
                   <CardHeader>
                     <CardTitle>QSOs by Mode</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
-                      {statsData.qsosByMode.map(item => (
-                        <div key={item.mode} className="flex justify-between items-center">
-                          <span className="font-medium">{item.mode}</span>
-                          <span className="text-muted-foreground">{item.count.toLocaleString()}</span>
-                        </div>
-                      ))}
-                      {statsData.qsosByMode.length === 0 && (
-                        <p className="text-muted-foreground text-center py-4">No data available</p>
-                      )}
-                    </div>
+                    <ModeDistributionChart data={statsData.qsosByMode} />
                   </CardContent>
                 </Card>
 
