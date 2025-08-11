@@ -31,6 +31,7 @@ export default function AwardsPage() {
       total_states: number;
       confirmed_percentage: number;
       worked_states: number;
+      progress_percentage: number;
     };
     statistics: {
       completed_awards: number;
@@ -96,7 +97,7 @@ export default function AwardsPage() {
 
   const getWASStatus = (): 'available' | 'in_progress' | 'completed' => {
     if (!wasProgress) return 'available';
-    if (wasProgress.overall_progress.confirmed_states >= 50) return 'completed';
+    if (wasProgress.overall_progress.worked_states >= 50) return 'completed';
     if (wasProgress.overall_progress.worked_states > 0) return 'in_progress';
     return 'available';
   };
@@ -114,9 +115,9 @@ export default function AwardsPage() {
       description: 'Work and confirm all 50 US states for the prestigious Worked All States award',
       icon: <MapPin className="h-8 w-8" />,
       progress: wasProgress ? {
-        current: wasProgress.overall_progress.confirmed_states,
+        current: wasProgress.overall_progress.worked_states,
         total: wasProgress.overall_progress.total_states,
-        percentage: wasProgress.overall_progress.confirmed_percentage
+        percentage: wasProgress.overall_progress.progress_percentage
       } : undefined,
       href: '/awards/was',
       status: getWASStatus()

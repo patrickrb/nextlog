@@ -84,11 +84,12 @@ async function calculateWASSummary(params: WASummaryParams): Promise<WASSummary>
 }
 
 async function calculateBasicWASProgress(userId: number, stationId?: number): Promise<WASProgress> {
-  // Get all US states
+  // Get all US states (exclude territories like DC)
   const statesResult = await query(`
     SELECT code, name 
     FROM states_provinces 
     WHERE dxcc_entity IN (6, 110, 291)
+      AND code != 'DC'
     ORDER BY name
   `);
 
@@ -150,11 +151,12 @@ async function calculateBasicWASProgress(userId: number, stationId?: number): Pr
 }
 
 async function calculateBandWASProgress(userId: number, stationId: number | undefined, band: string): Promise<WASProgress> {
-  // Similar to basic but with band filter
+  // Similar to basic but with band filter (exclude territories like DC)
   const statesResult = await query(`
     SELECT code, name 
     FROM states_provinces 
     WHERE dxcc_entity IN (6, 110, 291)
+      AND code != 'DC'
     ORDER BY name
   `);
 
@@ -221,6 +223,7 @@ async function calculateModeWASProgress(userId: number, stationId: number | unde
     SELECT code, name 
     FROM states_provinces 
     WHERE dxcc_entity IN (6, 110, 291)
+      AND code != 'DC'
     ORDER BY name
   `);
 
@@ -333,9 +336,11 @@ async function getRecentWASConfirmations(userId: number, stationId?: number) {
 }
 
 async function calculateNeededStates(userId: number, stationId?: number) {
-  // Get all states
+  // Get all states (exclude territories like DC)
   const allStatesResult = await query(`
-    SELECT code FROM states_provinces WHERE dxcc_entity IN (6, 110, 291)
+    SELECT code FROM states_provinces 
+    WHERE dxcc_entity IN (6, 110, 291)
+      AND code != 'DC'
   `);
   const allStates = allStatesResult.rows.map(row => row.code);
 
