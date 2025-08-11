@@ -42,6 +42,11 @@ export interface ContactData {
   time_off?: string;
   operator?: string;
   distance?: number;
+  // QRZ sync fields
+  qrz_sync_status?: 'not_synced' | 'synced' | 'error' | 'already_exists';
+  qrz_sync_date?: Date;
+  qrz_logbook_id?: number;
+  qrz_sync_error?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -263,5 +268,39 @@ export class Contact {
         station_name: row.station_name
       } : undefined
     }));
+  }
+
+  static async updateQrzSyncStatus(
+    id: number, 
+    status: 'not_synced' | 'synced' | 'error' | 'already_exists',
+    qrz_logbook_id?: number,
+    error?: string
+  ): Promise<ContactData | null> {
+    const sql = `
+      UPDATE contacts 
+      SET qrz_sync_status = $1, qrz_sync_date = CURRENT_TIMESTAMP, qrz_logbook_id = $2, qrz_sync_error = $3
+      WHERE id = $4
+      RETURNING *
+    `;
+    
+    const result = await query(sql, [status, qrz_logbook_id || null, error || null, id]);
+    return result.rows[0] || null;
+  }
+
+  static async findNotSynced(userId: number, limit?: number): Promise<ContactData[]> {
+    let sql = `
+      SELECT * FROM contacts 
+      WHERE user_id = $1 AND (qrz_sync_status = 'not_synced' OR qrz_sync_status = 'error')
+      ORDER BY datetime DESC
+    `;
+    const params = [userId];
+    
+    if (limit) {
+      sql += ` LIMIT $${params.length + 1}`;
+      params.push(limit);
+    }
+    
+    const result = await query(sql, params);
+    return result.rows;
   }
 }

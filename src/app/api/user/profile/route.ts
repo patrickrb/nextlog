@@ -13,7 +13,7 @@ export async function PUT(request: NextRequest) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
     const body = await request.json();
 
-    const { name, callsign, grid_locator, qrz_username, qrz_password } = body;
+    const { name, callsign, grid_locator, qrz_username, qrz_password, qrz_auto_sync } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -25,7 +25,8 @@ export async function PUT(request: NextRequest) {
       callsign: callsign?.trim() || null,
       grid_locator: grid_locator?.trim() || null,
       qrz_username: qrz_username?.trim() || null,
-      qrz_password: qrz_password?.trim() || null
+      qrz_password: qrz_password?.trim() || null,
+      qrz_auto_sync: qrz_auto_sync
     });
 
     if (!updatedUser) {
