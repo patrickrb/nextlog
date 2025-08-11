@@ -217,7 +217,7 @@ const FilterChips = ({ chips, onRemoveFilter }: {
         <Badge 
           key={chip.key} 
           variant="secondary" 
-          className="flex items-center gap-1 pr-1 cursor-pointer hover:bg-secondary/80"
+          className="flex items-center gap-1 pr-1 cursor-pointer hover:bg-secondary/80 border border-border"
           onClick={() => onRemoveFilter(chip.key)}
         >
           <span className="text-xs">
