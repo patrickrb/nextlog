@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Contact } from '@/models/Contact';
 import { verifyToken } from '@/lib/auth';
+import { backgroundAutoSync } from '@/lib/qrz-auto-sync';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -54,6 +55,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         { error: 'Contact not found' },
         { status: 404 }
       );
+    }
+
+    // Trigger auto-sync in background if enabled
+    // Reset sync status when contact is updated so it can be re-synced
+    if (data.callsign || data.datetime || data.frequency || data.mode || data.band) {
+      await Contact.updateQrzSyncStatus(parseInt(id), 'not_synced');
+      backgroundAutoSync(parseInt(id), parseInt(user.userId, 10));
     }
 
     return NextResponse.json(contact);

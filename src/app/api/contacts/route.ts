@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Contact } from '@/models/Contact';
 import { verifyToken } from '@/lib/auth';
+import { backgroundAutoSync } from '@/lib/qrz-auto-sync';
 
 export async function GET(request: NextRequest) {
   try {
@@ -58,6 +59,9 @@ export async function POST(request: NextRequest) {
       ...data,
       user_id: user.userId
     });
+
+    // Trigger auto-sync in background if enabled
+    backgroundAutoSync(contact.id, parseInt(user.userId, 10));
 
     return NextResponse.json(contact, { status: 201 });
   } catch (error) {

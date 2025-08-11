@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Loader2, User, Key, MapPin, Settings, Radio, Upload, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -19,6 +20,7 @@ interface User {
   grid_locator?: string;
   qrz_username?: string;
   qrz_password?: string;
+  qrz_auto_sync?: boolean;
 }
 
 export default function ProfilePage() {
@@ -29,6 +31,7 @@ export default function ProfilePage() {
     grid_locator: '',
     qrz_username: '',
     qrz_password: '',
+    qrz_auto_sync: false,
     lotw_username: '',
     lotw_password: ''
   });
@@ -38,6 +41,8 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState('');
   const [showLotwPassword, setShowLotwPassword] = useState(false);
   const [testingLotw, setTestingLotw] = useState(false);
+  const [validatingQrz, setValidatingQrz] = useState(false);
+  const [qrzValidationResult, setQrzValidationResult] = useState<{valid?: boolean; error?: string} | null>(null);
   const [certFile, setCertFile] = useState<File | null>(null);
   const [uploadingCert, setUploadingCert] = useState(false);
   const [stations, setStations] = useState<{id: number; callsign: string; station_name: string; is_default: boolean}[]>([]);
@@ -61,6 +66,7 @@ export default function ProfilePage() {
           grid_locator: data.user.grid_locator || '',
           qrz_username: data.user.qrz_username || '',
           qrz_password: data.user.qrz_password || '',
+          qrz_auto_sync: data.user.qrz_auto_sync || false,
           lotw_username: data.user.third_party_services?.lotw?.username || '',
           lotw_password: ''
         });
@@ -103,6 +109,37 @@ export default function ProfilePage() {
       ...prev,
       [name]: value
     }));
+  };
+
+  const validateQrzCredentials = async () => {
+    if (!formData.qrz_username || !formData.qrz_password) {
+      setQrzValidationResult({ valid: false, error: 'Both QRZ username and password are required' });
+      return;
+    }
+
+    try {
+      setValidatingQrz(true);
+      setQrzValidationResult(null);
+
+      const response = await fetch('/api/user/qrz/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setQrzValidationResult({ valid: true });
+      } else {
+        setQrzValidationResult({ valid: false, error: data.error || 'QRZ validation failed' });
+      }
+
+    } catch (error) {
+      console.error('QRZ validation error:', error);
+      setQrzValidationResult({ valid: false, error: 'Network error during validation' });
+    } finally {
+      setValidatingQrz(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -391,6 +428,66 @@ export default function ProfilePage() {
                       <p className="text-sm text-red-700 dark:text-blue-300 mt-2">
                         <strong>Note:</strong> QRZ.com subscription may be required for full XML API access.
                       </p>
+                    </div>
+                    
+                    {/* QRZ Validation and Auto-sync */}
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={validateQrzCredentials}
+                          disabled={validatingQrz || !formData.qrz_username || !formData.qrz_password}
+                          className="min-w-[120px]"
+                        >
+                          {validatingQrz ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Testing...
+                            </>
+                          ) : (
+                            'Validate Credentials'
+                          )}
+                        </Button>
+                        
+                        {qrzValidationResult && (
+                          <div className="flex items-center">
+                            {qrzValidationResult.valid ? (
+                              <div className="flex items-center text-green-600">
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                <span className="text-sm">Valid</span>
+                              </div>
+                            ) : (
+                              <div className="text-red-600 text-sm">
+                                {qrzValidationResult.error}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="qrz_auto_sync"
+                          checked={formData.qrz_auto_sync}
+                          onCheckedChange={(checked) => 
+                            setFormData(prev => ({ ...prev, qrz_auto_sync: checked }))
+                          }
+                        />
+                        <Label htmlFor="qrz_auto_sync" className="text-sm font-medium">
+                          Auto-sync new contacts to QRZ logbook
+                        </Label>
+                      </div>
+                      
+                      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+                        <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-1 text-sm">
+                          QRZ Logbook Sync
+                        </h4>
+                        <p className="text-xs text-blue-800 dark:text-blue-200">
+                          When enabled, new contacts will automatically sync to your QRZ.com logbook. 
+                          You can also manually sync individual contacts or bulk sync from the contacts page.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
