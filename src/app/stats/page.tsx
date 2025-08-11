@@ -7,9 +7,12 @@ import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BarChart3, Radio, Calendar, Activity, Loader2 } from 'lucide-react';
+import { BarChart3, Radio, Activity, Loader2, Globe, TrendingUp } from 'lucide-react';
 import { YearlyStatsChart } from '@/components/charts/YearlyStatsChart';
 import { ModeDistributionChart } from '@/components/charts/ModeDistributionChart';
+import { ActivityTrendChart } from '@/components/charts/ActivityTrendChart';
+import { BandDistributionChart } from '@/components/charts/BandDistributionChart';
+import { BandActivityHeatmap } from '@/components/charts/BandActivityHeatmap';
 
 interface Station {
   id: number;
@@ -26,6 +29,32 @@ interface StatsData {
   totalQsos: number;
 }
 
+interface AdvancedStatsData {
+  monthlyActivity: Array<{ date: string; qsos: number }>;
+  dailyActivity: Array<{ date: string; qsos: number }>;
+  qsoRates: {
+    total_qsos: number;
+    active_days: number;
+    qsos_per_day: number;
+    qsos_per_month: number;
+  };
+  uniqueCallsigns: {
+    unique_callsigns: number;
+    total_qsos: number;
+    qsos_per_callsign: number;
+  };
+}
+
+interface GeographicStatsData {
+  countryDistribution: Array<{ country: string; continent: string; qsos: number }>;
+  continentDistribution: Array<{ continent: string; qsos: number }>;
+  gridActivity: Array<{ gridSquare: string; qsos: number }>;
+}
+
+interface HeatmapStatsData {
+  heatmapData: Array<{ hour: number; day: number; dayName: string; qsos: number }>;
+}
+
 export default function StatsPage() {
   const { user, loading } = useUser();
   const router = useRouter();
@@ -34,6 +63,9 @@ export default function StatsPage() {
   const [selectedStation, setSelectedStation] = useState<string>('all');
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [statsData, setStatsData] = useState<StatsData | null>(null);
+  const [advancedStats, setAdvancedStats] = useState<AdvancedStatsData | null>(null);
+  const [geographicStats, setGeographicStats] = useState<GeographicStatsData | null>(null);
+  const [heatmapStats, setHeatmapStats] = useState<HeatmapStatsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -74,13 +106,38 @@ export default function StatsPage() {
         params.append('year', selectedYear);
       }
 
+      // Fetch basic stats
       const response = await fetch(`/api/stats?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         setStatsData(data);
       } else {
         setError('Failed to fetch statistics');
+        return;
       }
+
+      // Fetch advanced analytics in parallel
+      const [activityResponse, geographicResponse, heatmapResponse] = await Promise.all([
+        fetch(`/api/stats/advanced?type=activity&${params.toString()}`),
+        fetch(`/api/stats/advanced?type=geographic&${params.toString()}`),
+        fetch(`/api/stats/advanced?type=heatmap&${params.toString()}`)
+      ]);
+
+      if (activityResponse.ok) {
+        const activityData = await activityResponse.json();
+        setAdvancedStats(activityData);
+      }
+
+      if (geographicResponse.ok) {
+        const geographicData = await geographicResponse.json();
+        setGeographicStats(geographicData);
+      }
+
+      if (heatmapResponse.ok) {
+        const heatmapData = await heatmapResponse.json();
+        setHeatmapStats(heatmapData);
+      }
+
     } catch (err) {
       setError('Network error occurred');
       console.error('Stats fetch error:', err);
@@ -249,7 +306,7 @@ export default function StatsPage() {
           ) : statsData ? (
             <>
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <Card>
                   <CardContent className="p-6">
                     <div className="flex items-center">
@@ -289,57 +346,206 @@ export default function StatsPage() {
                 <Card>
                   <CardContent className="p-6">
                     <div className="flex items-center">
-                      <Calendar className="h-8 w-8 text-orange-600" />
+                      <Globe className="h-8 w-8 text-orange-600" />
                       <div className="ml-4">
-                        <p className="text-sm font-medium text-muted-foreground">Years Active</p>
-                        <p className="text-2xl font-bold">{statsData.availableYears.length}</p>
+                        <p className="text-sm font-medium text-muted-foreground">Unique Callsigns</p>
+                        <p className="text-2xl font-bold">
+                          {advancedStats?.uniqueCallsigns?.unique_callsigns?.toLocaleString() || '-'}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* QSOs by Year Chart */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>QSOs by Year</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <YearlyStatsChart data={statsData.qsosByYear} />
-                  </CardContent>
-                </Card>
+              {/* QSO Activity Charts */}
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* QSOs by Year Chart */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>QSOs by Year</CardTitle>
+                      <CardDescription>Annual QSO activity over time</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <YearlyStatsChart data={statsData.qsosByYear} />
+                    </CardContent>
+                  </Card>
 
-                {/* QSOs by Mode Chart */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>QSOs by Mode</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ModeDistributionChart data={statsData.qsosByMode} />
-                  </CardContent>
-                </Card>
+                  {/* QSOs by Mode Chart */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>QSOs by Mode</CardTitle>
+                      <CardDescription>Distribution of QSOs across different modes</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ModeDistributionChart data={statsData.qsosByMode} />
+                    </CardContent>
+                  </Card>
+                </div>
 
-                {/* QSOs by Band */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>QSOs by Band</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {statsData.qsosByBand.map(item => (
-                        <div key={item.band} className="flex justify-between items-center">
-                          <span className="font-medium">{item.band}</span>
-                          <span className="text-muted-foreground">{item.count.toLocaleString()}</span>
-                        </div>
-                      ))}
-                      {statsData.qsosByBand.length === 0 && (
-                        <p className="text-muted-foreground text-center py-4">No data available</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* QSOs by Band Chart */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>QSOs by Band</CardTitle>
+                      <CardDescription>Band usage following amateur radio frequency order</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <BandDistributionChart data={statsData.qsosByBand} />
+                    </CardContent>
+                  </Card>
+
+                  {/* Activity Trend Chart */}
+                  {advancedStats && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Monthly Activity Trend</CardTitle>
+                        <CardDescription>QSO activity patterns over recent months</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ActivityTrendChart 
+                          data={advancedStats.monthlyActivity} 
+                          timeUnit="month" 
+                        />
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
               </div>
+
+              {/* Geographic Analytics */}
+              {geographicStats && (
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <Globe className="mr-2 h-5 w-5" />
+                    Geographic Distribution
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Continent Distribution */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>QSOs by Continent</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {geographicStats.continentDistribution.map(item => (
+                            <div key={item.continent} className="flex justify-between items-center">
+                              <span className="font-medium">{item.continent}</span>
+                              <span className="text-muted-foreground">{item.qsos.toLocaleString()}</span>
+                            </div>
+                          ))}
+                          {geographicStats.continentDistribution.length === 0 && (
+                            <p className="text-muted-foreground text-center py-4">No data available</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Top Countries */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Top Countries</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {geographicStats.countryDistribution.slice(0, 10).map(item => (
+                            <div key={item.country} className="flex justify-between items-center">
+                              <span className="font-medium text-sm">{item.country}</span>
+                              <span className="text-muted-foreground text-sm">{item.qsos.toLocaleString()}</span>
+                            </div>
+                          ))}
+                          {geographicStats.countryDistribution.length === 0 && (
+                            <p className="text-muted-foreground text-center py-4">No data available</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Grid Squares */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Top Grid Squares</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2">
+                          {geographicStats.gridActivity.slice(0, 10).map(item => (
+                            <div key={item.gridSquare} className="flex justify-between items-center">
+                              <span className="font-medium font-mono">{item.gridSquare}</span>
+                              <span className="text-muted-foreground">{item.qsos.toLocaleString()}</span>
+                            </div>
+                          ))}
+                          {geographicStats.gridActivity.length === 0 && (
+                            <p className="text-muted-foreground text-center py-4">No data available</p>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              )}
+
+              {/* Activity Analysis */}
+              {advancedStats && (
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <TrendingUp className="mr-2 h-5 w-5" />
+                    Activity Analysis
+                  </h3>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Activity Metrics */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>QSO Rates</CardTitle>
+                        <CardDescription>Activity pattern metrics</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">Active Days</span>
+                            <span className="text-sm text-muted-foreground">
+                              {advancedStats.qsoRates.active_days?.toLocaleString() || '-'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">QSOs per Day</span>
+                            <span className="text-sm text-muted-foreground">
+                              {advancedStats.qsoRates.qsos_per_day || '-'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">QSOs per Month</span>
+                            <span className="text-sm text-muted-foreground">
+                              {advancedStats.qsoRates.qsos_per_month || '-'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">QSOs per Callsign</span>
+                            <span className="text-sm text-muted-foreground">
+                              {advancedStats.uniqueCallsigns.qsos_per_callsign || '-'}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Activity Heatmap */}
+                    {heatmapStats && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Activity Heatmap</CardTitle>
+                          <CardDescription>QSO activity by hour and day of week</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <BandActivityHeatmap data={heatmapStats.heatmapData} />
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* QSOs Matrix Table */}
               <Card>
