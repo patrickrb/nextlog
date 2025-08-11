@@ -12,11 +12,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/combobox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Search, Filter, Download, RotateCcw, ArrowLeft, Table as TableIcon, Map, X } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, Search, Filter, Download, RotateCcw, ArrowLeft, Table as TableIcon, Map, X, Upload } from 'lucide-react';
 import EditContactDialog from '@/components/EditContactDialog';
 import Pagination from '@/components/Pagination';
 import Navbar from '@/components/Navbar';
 import LotwSyncIndicator from '@/components/LotwSyncIndicator';
+import QRZSyncIndicator from '@/components/QRZSyncIndicator';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import { useUser } from '@/contexts/UserContext';
 
@@ -42,6 +44,11 @@ interface Contact {
   qsl_lotw?: boolean;
   qsl_lotw_date?: string;
   lotw_match_status?: 'confirmed' | 'partial' | 'mismatch' | null;
+  // QRZ sync fields
+  qrz_sync_status?: 'not_synced' | 'synced' | 'error' | 'already_exists';
+  qrz_sync_date?: string;
+  qrz_logbook_id?: number;
+  qrz_sync_error?: string;
 }
 
 interface SearchFilters {
@@ -242,6 +249,11 @@ export default function SearchPage() {
   const [dxccEntities, setDxccEntities] = useState<DXCCEntity[]>([]);
   const [dxccLoading, setDxccLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'map'>('table');
+  
+  // QRZ sync state
+  const [selectedContacts, setSelectedContacts] = useState<Set<number>>(new Set());
+  const [syncingContacts, setSyncingContacts] = useState<Set<number>>(new Set());
+  const [bulkSyncing, setBulkSyncing] = useState(false);
   
   const [filters, setFilters] = useState<SearchFilters>({
     callsign: '',
@@ -526,6 +538,103 @@ export default function SearchPage() {
     setSelectedContact(null);
   };
 
+  // QRZ sync functions
+  const handleContactSelection = (contactId: number, selected: boolean) => {
+    const newSelected = new Set(selectedContacts);
+    if (selected) {
+      newSelected.add(contactId);
+    } else {
+      newSelected.delete(contactId);
+    }
+    setSelectedContacts(newSelected);
+  };
+
+  const handleSelectAll = (selected: boolean) => {
+    if (selected) {
+      setSelectedContacts(new Set(contacts.map(c => c.id)));
+    } else {
+      setSelectedContacts(new Set());
+    }
+  };
+
+  const syncSingleContact = async (contactId: number) => {
+    try {
+      setSyncingContacts(prev => new Set(prev).add(contactId));
+      
+      const response = await fetch(`/api/contacts/${contactId}/qrz-sync`, {
+        method: 'POST'
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        // Update the contact in the list with new sync status
+        setContacts(prevContacts => 
+          prevContacts.map(contact => 
+            contact.id === contactId ? { ...contact, ...data.contact } : contact
+          )
+        );
+      } else {
+        setError(data.error || 'Failed to sync contact to QRZ');
+      }
+    } catch (error) {
+      console.error('QRZ sync error:', error);
+      setError('Failed to sync contact to QRZ');
+    } finally {
+      setSyncingContacts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(contactId);
+        return newSet;
+      });
+    }
+  };
+
+  const syncSelectedContacts = async () => {
+    if (selectedContacts.size === 0) return;
+    
+    try {
+      setBulkSyncing(true);
+      setError('');
+      
+      const response = await fetch('/api/contacts/qrz-sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contactIds: Array.from(selectedContacts)
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Refresh the contacts to get updated sync status
+        await performSearch(filters, pagination.page);
+        setSelectedContacts(new Set());
+        
+        // Show success message
+        const { successful, failed, skipped } = data.summary;
+        const messages = [];
+        if (successful > 0) messages.push(`${successful} contact(s) synced successfully`);
+        if (skipped > 0) messages.push(`${skipped} contact(s) skipped (already synced)`);
+        if (failed > 0) messages.push(`${failed} contact(s) failed to sync`);
+        
+        if (messages.length > 0) {
+          // You could add a toast notification here
+          console.log('QRZ Sync Results:', messages.join(', '));
+        }
+      } else {
+        setError(data.error || 'Failed to sync contacts to QRZ');
+      }
+    } catch (error) {
+      console.error('Bulk QRZ sync error:', error);
+      setError('Failed to sync contacts to QRZ');
+    } finally {
+      setBulkSyncing(false);
+    }
+  };
+
   const handlePageChange = (page: number) => {
     performSearch(filters, page);
   };
@@ -603,14 +712,36 @@ export default function SearchPage() {
               </p>
             </div>
             {contacts.length > 0 && (
-              <Button onClick={handleExport} disabled={exportLoading} variant="outline">
-                {exportLoading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4 mr-2" />
+              <div className="flex items-center space-x-2">
+                {selectedContacts.size > 0 && (
+                  <>
+                    <Button
+                      onClick={syncSelectedContacts}
+                      disabled={bulkSyncing}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {bulkSyncing ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4 mr-2" />
+                      )}
+                      Sync {selectedContacts.size} to QRZ
+                    </Button>
+                    <div className="text-sm text-muted-foreground">
+                      {selectedContacts.size} contact{selectedContacts.size !== 1 ? 's' : ''} selected
+                    </div>
+                  </>
                 )}
-                Export Results
-              </Button>
+                <Button onClick={handleExport} disabled={exportLoading} variant="outline">
+                  {exportLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
+                  Export Results
+                </Button>
+              </div>
             )}
           </div>
 
@@ -916,6 +1047,13 @@ export default function SearchPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
+                          <TableHead className="w-12">
+                            <Checkbox
+                              checked={selectedContacts.size === contacts.length && contacts.length > 0}
+                              onCheckedChange={handleSelectAll}
+                              aria-label="Select all contacts"
+                            />
+                          </TableHead>
                           <TableHead>Callsign</TableHead>
                           <TableHead>Date/Time</TableHead>
                           <TableHead>Frequency</TableHead>
@@ -925,12 +1063,13 @@ export default function SearchPage() {
                           <TableHead>Name</TableHead>
                           <TableHead>QTH</TableHead>
                           <TableHead>LoTW</TableHead>
+                          <TableHead>QRZ</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {loading && contacts.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={9} className="text-center py-8">
+                            <TableCell colSpan={11} className="text-center py-8">
                               <div className="flex items-center justify-center space-x-2">
                                 <Loader2 className="h-4 w-4 animate-spin" />
                                 <span>Searching contacts...</span>
@@ -941,34 +1080,43 @@ export default function SearchPage() {
                           contacts.map((contact) => (
                             <TableRow 
                               key={contact.id} 
-                              className="cursor-pointer hover:bg-muted/50 transition-colors"
-                              onClick={() => handleContactClick(contact)}
+                              className="hover:bg-muted/50 transition-colors"
                             >
-                              <TableCell className="font-medium">
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                <Checkbox
+                                  checked={selectedContacts.has(contact.id)}
+                                  onCheckedChange={(checked) => handleContactSelection(contact.id, checked as boolean)}
+                                  aria-label={`Select contact ${contact.callsign}`}
+                                />
+                              </TableCell>
+                              <TableCell 
+                                className="font-medium cursor-pointer"
+                                onClick={() => handleContactClick(contact)}
+                              >
                                 {contact.callsign}
                               </TableCell>
-                              <TableCell>
+                              <TableCell onClick={() => handleContactClick(contact)} className="cursor-pointer">
                                 {formatDate(contact.datetime)}
                               </TableCell>
-                              <TableCell>
+                              <TableCell onClick={() => handleContactClick(contact)} className="cursor-pointer">
                                 {contact.frequency} MHz
                               </TableCell>
-                              <TableCell>
+                              <TableCell onClick={() => handleContactClick(contact)} className="cursor-pointer">
                                 <Badge variant="secondary">{contact.mode}</Badge>
                               </TableCell>
-                              <TableCell>
+                              <TableCell onClick={() => handleContactClick(contact)} className="cursor-pointer">
                                 <Badge variant="outline">{contact.band}</Badge>
                               </TableCell>
-                              <TableCell>
+                              <TableCell onClick={() => handleContactClick(contact)} className="cursor-pointer">
                                 {contact.rst_sent}/{contact.rst_received}
                               </TableCell>
-                              <TableCell>
+                              <TableCell onClick={() => handleContactClick(contact)} className="cursor-pointer">
                                 {contact.name || '-'}
                               </TableCell>
-                              <TableCell>
+                              <TableCell onClick={() => handleContactClick(contact)} className="cursor-pointer">
                                 {contact.qth || '-'}
                               </TableCell>
-                              <TableCell>
+                              <TableCell onClick={() => handleContactClick(contact)} className="cursor-pointer">
                                 <LotwSyncIndicator
                                   lotwQslSent={contact.lotw_qsl_sent}
                                   lotwQslRcvd={contact.lotw_qsl_rcvd}
@@ -976,6 +1124,14 @@ export default function SearchPage() {
                                   qslLotwDate={contact.qsl_lotw_date}
                                   lotwMatchStatus={contact.lotw_match_status}
                                   size="sm"
+                                />
+                              </TableCell>
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                <QRZSyncIndicator
+                                  contact={contact}
+                                  onSync={syncSingleContact}
+                                  syncing={syncingContacts.has(contact.id)}
+                                  compact={true}
                                 />
                               </TableCell>
                             </TableRow>
