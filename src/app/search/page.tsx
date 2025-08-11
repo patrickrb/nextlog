@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Combobox } from '@/components/ui/combobox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Search, Filter, Download, RotateCcw, ArrowLeft, Table as TableIcon, Map } from 'lucide-react';
+import { Loader2, Search, Filter, Download, RotateCcw, ArrowLeft, Table as TableIcon, Map, X } from 'lucide-react';
 import EditContactDialog from '@/components/EditContactDialog';
 import Pagination from '@/components/Pagination';
 import Navbar from '@/components/Navbar';
@@ -73,6 +73,162 @@ interface PaginationInfo {
 
 const MODES = ['AM', 'FM', 'FT8', 'MFSK', 'RTTY', 'SSB', 'CW', 'FT4', 'PSK31', 'DMR', 'DSTAR', 'YSF'];
 const BANDS = ['2m', '6m', '10m', '12m', '15m', '17m', '20m', '30m', '40m', '60m', '80m', '160m', '70cm', '23cm'];
+
+interface FilterChip {
+  key: keyof SearchFilters;
+  label: string;
+  value: string;
+  displayValue: string;
+}
+
+// Helper function to get active filters as chips
+const getActiveFilterChips = (filters: SearchFilters, dxccEntities: DXCCEntity[]): FilterChip[] => {
+  const chips: FilterChip[] = [];
+  
+  // Text-based filters
+  if (filters.callsign.trim()) {
+    chips.push({
+      key: 'callsign',
+      label: 'Callsign',
+      value: filters.callsign,
+      displayValue: filters.callsign
+    });
+  }
+  
+  if (filters.name.trim()) {
+    chips.push({
+      key: 'name',
+      label: 'Name',
+      value: filters.name,
+      displayValue: filters.name
+    });
+  }
+  
+  if (filters.qth.trim()) {
+    chips.push({
+      key: 'qth',
+      label: 'QTH',
+      value: filters.qth,
+      displayValue: filters.qth
+    });
+  }
+  
+  if (filters.gridLocator.trim()) {
+    chips.push({
+      key: 'gridLocator',
+      label: 'Grid',
+      value: filters.gridLocator,
+      displayValue: filters.gridLocator
+    });
+  }
+  
+  // Dropdown filters (exclude 'all' values)
+  if (filters.mode !== 'all' && filters.mode.trim()) {
+    chips.push({
+      key: 'mode',
+      label: 'Mode',
+      value: filters.mode,
+      displayValue: filters.mode
+    });
+  }
+  
+  if (filters.band !== 'all' && filters.band.trim()) {
+    chips.push({
+      key: 'band',
+      label: 'Band',
+      value: filters.band,
+      displayValue: filters.band
+    });
+  }
+  
+  if (filters.qslStatus !== 'all' && filters.qslStatus.trim()) {
+    const qslStatusLabels: Record<string, string> = {
+      'confirmed': 'QSL Confirmed',
+      'pending': 'QSL Pending',
+      'not_confirmed': 'QSL Not Confirmed'
+    };
+    chips.push({
+      key: 'qslStatus',
+      label: 'QSL Status',
+      value: filters.qslStatus,
+      displayValue: qslStatusLabels[filters.qslStatus] || filters.qslStatus
+    });
+  }
+  
+  // DXCC filter
+  if (filters.dxcc !== 'all' && filters.dxcc.trim()) {
+    const dxccEntity = dxccEntities.find(entity => entity.adif.toString() === filters.dxcc);
+    chips.push({
+      key: 'dxcc',
+      label: 'DXCC',
+      value: filters.dxcc,
+      displayValue: dxccEntity ? dxccEntity.name : filters.dxcc
+    });
+  }
+  
+  // Date filters
+  if (filters.startDate.trim()) {
+    chips.push({
+      key: 'startDate',
+      label: 'From',
+      value: filters.startDate,
+      displayValue: new Date(filters.startDate).toLocaleDateString()
+    });
+  }
+  
+  if (filters.endDate.trim()) {
+    chips.push({
+      key: 'endDate',
+      label: 'To',
+      value: filters.endDate,
+      displayValue: new Date(filters.endDate).toLocaleDateString()
+    });
+  }
+  
+  // Quick filter
+  if (filters.quickFilter.trim()) {
+    const quickFilterLabels: Record<string, string> = {
+      'today': 'Today',
+      'week': 'This Week',
+      'month': 'This Month',
+      'year': 'This Year'
+    };
+    chips.push({
+      key: 'quickFilter',
+      label: 'Period',
+      value: filters.quickFilter,
+      displayValue: quickFilterLabels[filters.quickFilter] || filters.quickFilter
+    });
+  }
+  
+  return chips;
+};
+
+// FilterChips component to display active filters
+const FilterChips = ({ chips, onRemoveFilter }: { 
+  chips: FilterChip[], 
+  onRemoveFilter: (key: keyof SearchFilters) => void 
+}) => {
+  if (chips.length === 0) return null;
+  
+  return (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {chips.map((chip) => (
+        <Badge 
+          key={chip.key} 
+          variant="secondary" 
+          className="flex items-center gap-1 pr-1 cursor-pointer hover:bg-secondary/80"
+          onClick={() => onRemoveFilter(chip.key)}
+        >
+          <span className="text-xs">
+            <span className="font-medium">{chip.label}:</span> {chip.displayValue}
+          </span>
+          <X className="h-3 w-3 hover:bg-secondary-foreground/20 rounded-full p-0.5" />
+        </Badge>
+      ))}
+    </div>
+  );
+};
 
 export default function SearchPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -384,6 +540,42 @@ export default function SearchPage() {
     return Object.values(filters).filter(value => value.trim() !== '' && value !== 'all').length;
   }, [filters]);
 
+  // Get active filter chips for display
+  const activeFilterChips = useMemo(() => {
+    return getActiveFilterChips(filters, dxccEntities);
+  }, [filters, dxccEntities]);
+
+  // Remove individual filter
+  const removeFilter = (key: keyof SearchFilters) => {
+    const newFilters = { ...filters };
+    
+    // Reset the specific filter to its default value
+    switch (key) {
+      case 'mode':
+      case 'band':
+      case 'qslStatus':
+      case 'dxcc':
+        newFilters[key] = 'all';
+        break;
+      case 'quickFilter':
+        // When removing quick filter, also clear the auto-set date fields
+        newFilters.quickFilter = '';
+        if (filters.quickFilter === 'today') {
+          newFilters.startDate = '';
+          newFilters.endDate = '';
+        } else if (filters.quickFilter) {
+          newFilters.startDate = '';
+        }
+        break;
+      default:
+        newFilters[key] = '';
+    }
+    
+    setFilters(newFilters);
+    // Reset to page 1 when filters change
+    debouncedSearch(newFilters, 1);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar 
@@ -452,6 +644,8 @@ export default function SearchPage() {
                   )}
                 </div>
               </div>
+              {/* Active Filter Chips */}
+              <FilterChips chips={activeFilterChips} onRemoveFilter={removeFilter} />
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Quick Filters */}

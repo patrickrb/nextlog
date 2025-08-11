@@ -14,6 +14,12 @@ export default function InstallationChecker({ children }: InstallationCheckerPro
   const [isChecking, setIsChecking] = useState(true);
 
   const checkInstallation = useCallback(async () => {
+    // Skip installation check for demo pages
+    if (pathname === '/filter-chips-demo' || pathname === '/search-demo' || pathname === '/navbar-demo') {
+      setIsChecking(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/install/check');
       
