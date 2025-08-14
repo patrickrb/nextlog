@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { Button } from '@/components/ui/button';
 import { Grid3X3 } from 'lucide-react';
 import L from 'leaflet';
@@ -92,6 +92,64 @@ const gridToLatLng = (grid: string): [number, number] | null => {
   return [lat, lon];
 };
 
+// Component to handle map bounds fitting after markers are loaded
+function MapBoundsController({ contactsWithLocation, user }: { contactsWithLocation: Contact[], user?: User | null }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (!map) return;
+    
+    // Collect all marker positions
+    const allPositions: [number, number][] = [];
+    
+    // Add user's QTH if available
+    if (user?.grid_locator) {
+      const userLocation = gridToLatLng(user.grid_locator);
+      if (userLocation) {
+        allPositions.push(userLocation);
+      }
+    }
+    
+    // Add contact positions
+    contactsWithLocation.forEach(contact => {
+      let position: [number, number] | null = null;
+      
+      if (contact.latitude && contact.longitude) {
+        position = [contact.latitude, contact.longitude];
+      } else if (contact.grid_locator) {
+        position = gridToLatLng(contact.grid_locator);
+      }
+      
+      if (position) {
+        allPositions.push(position);
+      }
+    });
+    
+    // Fit bounds to show all markers
+    if (allPositions.length > 0) {
+      if (allPositions.length === 1) {
+        // If only one position, center on it with reasonable zoom
+        map.setView(allPositions[0], 8);
+      } else {
+        // If multiple positions, fit bounds with padding
+        const bounds = L.latLngBounds(allPositions);
+        map.fitBounds(bounds, { 
+          padding: [20, 20],
+          maxZoom: 10 // Prevent zooming in too much
+        });
+      }
+    } else {
+      // Fallback to default view if no contacts with location
+      const mapCenter: [number, number] = user?.grid_locator 
+        ? (gridToLatLng(user.grid_locator) || [39.8283, -98.5795])
+        : [39.8283, -98.5795];
+      map.setView(mapCenter, user?.grid_locator ? 8 : 4);
+    }
+  }, [map, contactsWithLocation, user]);
+  
+  return null;
+}
+
 export default function ContactMap({ contacts, user, height = '400px' }: ContactMapProps) {
   const [mounted, setMounted] = useState(false);
   const [showGrid, setShowGrid] = useState(false);
@@ -111,9 +169,8 @@ export default function ContactMap({ contacts, user, height = '400px' }: Contact
     return hasCoords || hasGrid;
   });
 
-
-  // Determine map center - use user's grid locator if available, otherwise default to US center
-  const getMapCenter = (): [number, number] => {
+  // Determine initial map center for first render - use user's grid locator if available, otherwise default to US center
+  const getInitialMapCenter = (): [number, number] => {
     if (user?.grid_locator) {
       const userLocation = gridToLatLng(user.grid_locator);
       if (userLocation) return userLocation;
@@ -122,7 +179,7 @@ export default function ContactMap({ contacts, user, height = '400px' }: Contact
     return [39.8283, -98.5795];
   };
 
-  const mapCenter = getMapCenter();
+  const initialMapCenter = getInitialMapCenter();
 
   return (
     <div className="w-full rounded-lg overflow-hidden border relative" style={{ height }}>
@@ -140,7 +197,7 @@ export default function ContactMap({ contacts, user, height = '400px' }: Contact
       </div>
       
       <MapContainer
-        center={mapCenter}
+        center={initialMapCenter}
         zoom={user?.grid_locator ? 8 : 4}
         style={{ height: '100%', width: '100%' }}
         className="z-0"
@@ -149,6 +206,9 @@ export default function ContactMap({ contacts, user, height = '400px' }: Contact
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        
+        {/* Component to handle automatic bounds fitting */}
+        <MapBoundsController contactsWithLocation={contactsWithLocation} user={user} />
         
         {/* Maidenhead Grid Overlay */}
         <MaidenheadGridOverlay visible={showGrid} />
