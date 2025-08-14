@@ -14,6 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Upload, Download, FileText, CheckCircle, AlertCircle, Loader2, Calendar } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import AutoImportADIF from '@/components/AutoImportADIF';
+import EnhancedProgressBar from '@/components/EnhancedProgressBar';
 
 interface Station {
   id: number;
@@ -32,6 +33,17 @@ interface ImportResult {
   details?: string[];
 }
 
+interface ProgressData {
+  processed: number;
+  total: number;
+  imported: number;
+  skipped: number;
+  errors: number;
+  rate?: number;
+  estimatedTimeRemaining?: number;
+  message?: string;
+}
+
 export default function ADIFPage() {
   const [stations, setStations] = useState<Station[]>([]);
   const [selectedStationId, setSelectedStationId] = useState<string>('');
@@ -43,6 +55,7 @@ export default function ADIFPage() {
   const [uploading, setUploading] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importProgress, setImportProgress] = useState(0);
+  const [progressData, setProgressData] = useState<ProgressData | null>(null);
   const [importError, setImportError] = useState('');
   
   // Export states
@@ -142,6 +155,7 @@ export default function ADIFPage() {
 
     setUploading(true);
     setImportProgress(0);
+    setProgressData(null);
     setImportError('');
     setImportResult(null);
 
@@ -150,10 +164,34 @@ export default function ADIFPage() {
       formData.append('file', file);
       formData.append('stationId', selectedStationId);
 
-      // Show progress while uploading
+      // Enhanced progress simulation based on file size
+      const estimatedRecords = Math.ceil(file.size / 150); // Rough estimate: 150 bytes per record
+      let currentProgress = 0;
+      
       const progressInterval = setInterval(() => {
-        setImportProgress(prev => Math.min(prev + 5, 90));
-      }, 500);
+        currentProgress += Math.random() * 8 + 2; // 2-10% increments
+        const progress = Math.min(currentProgress, 85);
+        setImportProgress(progress);
+        
+        // Update progress data with estimates
+        const processed = Math.floor((progress / 100) * estimatedRecords);
+        const rate = progress > 20 ? Math.round(processed / ((Date.now() - startTime) / 1000)) : 0;
+        const remaining = estimatedRecords - processed;
+        const estimatedTime = rate > 0 ? Math.round(remaining / rate) : 0;
+        
+        setProgressData({
+          processed,
+          total: estimatedRecords,
+          imported: Math.floor(processed * 0.8), // Estimate 80% imported
+          skipped: Math.floor(processed * 0.15), // Estimate 15% skipped  
+          errors: Math.floor(processed * 0.05),  // Estimate 5% errors
+          rate: rate > 0 ? rate : undefined,
+          estimatedTimeRemaining: estimatedTime > 0 ? estimatedTime : undefined,
+          message: `Processing ADIF file... (${Math.round(progress)}%)`
+        });
+      }, 300); // Update every 300ms
+
+      const startTime = Date.now();
 
       const response = await fetch('/api/adif/import', {
         method: 'POST',
@@ -161,13 +199,22 @@ export default function ADIFPage() {
       });
 
       clearInterval(progressInterval);
-      setImportProgress(95);
+      setImportProgress(100);
 
       const data = await response.json();
 
       if (response.ok) {
+        // Update with final actual results
+        setProgressData({
+          processed: data.imported + data.skipped + data.errors,
+          total: data.imported + data.skipped + data.errors,
+          imported: data.imported,
+          skipped: data.skipped,
+          errors: data.errors,
+          message: `Import completed: ${data.imported} imported, ${data.skipped} skipped, ${data.errors} errors`
+        });
+        
         setImportResult(data);
-        setImportProgress(100);
         // Reset form
         setFile(null);
         const fileInput = document.getElementById('adif-file') as HTMLInputElement;
@@ -194,7 +241,6 @@ export default function ADIFPage() {
       }
     } finally {
       setUploading(false);
-      setImportProgress(0);
     }
   };
 
@@ -378,11 +424,22 @@ export default function ADIFPage() {
                     {/* Progress */}
                     {uploading && (
                       <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          <span className="text-sm">Processing ADIF file...</span>
-                        </div>
-                        <Progress value={importProgress} className="w-full" />
+                        {progressData ? (
+                          <EnhancedProgressBar 
+                            progress={progressData}
+                            percentage={importProgress}
+                            isComplete={importResult !== null}
+                            hasError={!!importError}
+                          />
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span className="text-sm">Starting ADIF import...</span>
+                            </div>
+                            <Progress value={0} className="w-full" />
+                          </div>
+                        )}
                       </div>
                     )}
 
@@ -458,6 +515,7 @@ export default function ADIFPage() {
                         <Button 
                           onClick={() => {
                             setImportResult(null);
+                            setProgressData(null);
                             setImportProgress(0);
                           }}
                           variant="outline"
