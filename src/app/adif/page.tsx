@@ -167,6 +167,7 @@ export default function ADIFPage() {
       // Enhanced progress simulation based on file size
       const estimatedRecords = Math.ceil(file.size / 150); // Rough estimate: 150 bytes per record
       let currentProgress = 0;
+      const startTime = Date.now();
       
       const progressInterval = setInterval(() => {
         currentProgress += Math.random() * 8 + 2; // 2-10% increments
@@ -190,8 +191,6 @@ export default function ADIFPage() {
           message: `Processing ADIF file... (${Math.round(progress)}%)`
         });
       }, 300); // Update every 300ms
-
-      const startTime = Date.now();
 
       const response = await fetch('/api/adif/import', {
         method: 'POST',
