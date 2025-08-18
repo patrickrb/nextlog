@@ -163,7 +163,7 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
       let totalErrors = 0;
 
       for (let i = 0; i < chunks; i++) {
-        setProgress(((i) / chunks) * 100);
+        setProgress(Math.round(((i) / chunks) * 100));
 
         const startIdx = i * chunkSize;
         const endIdx = Math.min(startIdx + chunkSize, allRecords.length);
@@ -172,7 +172,7 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
         console.log(`Processing chunk ${i + 1}/${chunks} (${chunkRecords.length} records)`);
 
         // Update progress data for current chunk
-        const currentProgress = ((i) / chunks) * 100;
+        const currentProgress = Math.round(((i) / chunks) * 100);
         const processed = startIdx;
         const rate = i > 0 ? Math.round(processed / ((Date.now() - startTime) / 1000)) : 0;
         const remaining = allRecords.length - processed;
@@ -186,7 +186,7 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
           errors: totalErrors,
           rate: rate > 0 ? rate : undefined,
           estimatedTimeRemaining: estimatedTime > 0 ? estimatedTime : undefined,
-          message: `Processing chunk ${i + 1} of ${chunks}... (${Math.round(currentProgress)}%)`
+          message: `Processing chunk ${i + 1} of ${chunks}... (${currentProgress}%)`
         });
 
         try {

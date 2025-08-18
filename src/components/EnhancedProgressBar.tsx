@@ -24,7 +24,7 @@ interface EnhancedProgressBarProps {
 }
 
 export default function EnhancedProgressBar({ progress, percentage, isComplete, hasError }: EnhancedProgressBarProps) {
-  const displayPercentage = percentage ?? (progress.total > 0 ? Math.round((progress.processed / progress.total) * 100) : 0);
+  const displayPercentage = Math.round(percentage ?? (progress.total > 0 ? (progress.processed / progress.total) * 100 : 0));
   
   const formatTime = (seconds: number): string => {
     if (seconds < 60) {
@@ -43,7 +43,7 @@ export default function EnhancedProgressBar({ progress, percentage, isComplete, 
   return (
     <div className="space-y-4">
       {/* Main Progress Bar */}
-      <div className="space-y-2">
+      <div className="space-y-3 p-4 bg-muted/30 rounded-lg border">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-2">
             {isComplete ? (
@@ -62,7 +62,7 @@ export default function EnhancedProgressBar({ progress, percentage, isComplete, 
         
         <Progress 
           value={displayPercentage} 
-          className="h-3"
+          className="h-4 w-full border border-border"
         />
         
         <div className="flex justify-between text-xs text-muted-foreground">
