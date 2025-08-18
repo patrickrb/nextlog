@@ -62,7 +62,7 @@ export default function EnhancedProgressBar({ progress, percentage, isComplete, 
         
         <Progress 
           value={displayPercentage} 
-          className="h-4 w-full border border-border"
+          className="h-4 w-full border-2 border-border bg-gray-200 dark:bg-gray-800"
         />
         
         <div className="flex justify-between text-xs text-muted-foreground">
