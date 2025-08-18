@@ -155,7 +155,6 @@ export default function ADIFPage() {
 
     setUploading(true);
     setImportProgress(0);
-    setProgressData(null);
     setImportError('');
     setImportResult(null);
 
@@ -168,6 +167,16 @@ export default function ADIFPage() {
       const estimatedRecords = Math.ceil(file.size / 150); // Rough estimate: 150 bytes per record
       let currentProgress = 0;
       const startTime = Date.now();
+      
+      // Set initial progress data immediately to ensure progress bar shows
+      setProgressData({
+        processed: 0,
+        total: estimatedRecords,
+        imported: 0,
+        skipped: 0,
+        errors: 0,
+        message: 'Starting ADIF import...'
+      });
       
       const progressInterval = setInterval(() => {
         currentProgress += Math.random() * 8 + 2; // 2-10% increments
@@ -192,11 +201,19 @@ export default function ADIFPage() {
         });
       }, 300); // Update every 300ms
 
-      const response = await fetch('/api/adif/import', {
+      // Ensure minimum display time for progress bar (at least 1 second)
+      const importPromise = fetch('/api/adif/import', {
         method: 'POST',
         body: formData,
       });
-
+      
+      const minDisplayTime = new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const response = await importPromise;
+      
+      // Wait for minimum display time before clearing progress
+      await minDisplayTime;
+      
       clearInterval(progressInterval);
       setImportProgress(100);
 
