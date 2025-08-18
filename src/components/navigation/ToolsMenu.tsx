@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Trophy, Radio, ChevronDown, Globe, CreditCard } from 'lucide-react';
+import { Trophy, Radio, ChevronDown, Globe, CreditCard, Image } from 'lucide-react';
 
 export default function ToolsMenu() {
   return (
@@ -42,6 +42,12 @@ export default function ToolsMenu() {
           <Link href="/qsl-cards" className="cursor-pointer">
             <CreditCard className="mr-2 h-4 w-4" />
             <span>QSL Cards</span>
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/sstv" className="cursor-pointer">
+            <Image className="mr-2 h-4 w-4" />
+            <span>SSTV Gallery</span>
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
