@@ -22,6 +22,7 @@ interface Station {
 
 export default function NewContactPage() {
   const [stations, setStations] = useState<Station[]>([]);
+  const [stationsLoading, setStationsLoading] = useState(true);
   const [selectedStationId, setSelectedStationId] = useState<string>('');
   const [isLiveLogging, setIsLiveLogging] = useState(false);
   const [formData, setFormData] = useState({
@@ -93,6 +94,7 @@ export default function NewContactPage() {
 
   const fetchStations = async () => {
     try {
+      setStationsLoading(true);
       const response = await fetch('/api/stations');
       if (response.ok) {
         const data = await response.json();
@@ -106,6 +108,8 @@ export default function NewContactPage() {
       }
     } catch {
       // Silent error handling for stations fetch
+    } finally {
+      setStationsLoading(false);
     }
   };
 
@@ -321,7 +325,7 @@ export default function NewContactPage() {
                 )}
 
                 {/* No stations warning */}
-                {stations.length === 0 && (
+                {!stationsLoading && stations.length === 0 && (
                   <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
                     <div className="flex items-start">
                       <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-3" />
