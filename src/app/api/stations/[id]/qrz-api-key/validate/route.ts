@@ -5,7 +5,7 @@ import { validateQRZApiKey } from '@/lib/qrz';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = request.cookies.get('token')?.value;
@@ -15,7 +15,8 @@ export async function POST(
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
-    const stationId = parseInt(params.id);
+    const { id } = await params;
+    const stationId = parseInt(id);
     const body = await request.json();
     const { qrz_api_key } = body;
 

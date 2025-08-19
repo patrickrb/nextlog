@@ -42,6 +42,11 @@ export interface ContactData {
   qrz_qsl_rcvd?: string;
   qrz_qsl_sent_date?: Date;
   qrz_qsl_rcvd_date?: Date;
+  // QRZ sync fields
+  qrz_sync_status?: 'not_synced' | 'synced' | 'error' | 'already_exists';
+  qrz_sync_date?: Date;
+  qrz_logbook_id?: number;
+  qrz_sync_error?: string;
   // Additional fields
   qso_date_off?: Date;
   time_off?: string;
@@ -374,5 +379,42 @@ export class Contact {
     const qrzMinutes = parseInt(qrzTime.substring(0, 2)) * 60 + parseInt(qrzTime.substring(2));
     
     return Math.abs(contactMinutes - qrzMinutes) <= 5;
+  }
+
+  // QRZ sync status management
+  static async updateQrzSyncStatus(
+    id: number, 
+    status: 'not_synced' | 'synced' | 'error' | 'already_exists',
+    logbookId?: number,
+    error?: string
+  ): Promise<ContactData | null> {
+    const updates = ['qrz_sync_status = $2', 'qrz_sync_date = NOW()'];
+    const values: (number | string)[] = [id, status];
+    let paramCount = 3;
+
+    if (logbookId !== undefined) {
+      updates.push(`qrz_logbook_id = $${paramCount}`);
+      values.push(logbookId);
+      paramCount++;
+    }
+
+    if (error !== undefined) {
+      updates.push(`qrz_sync_error = $${paramCount}`);
+      values.push(error);
+      paramCount++;
+    } else if (status === 'synced' || status === 'already_exists') {
+      // Clear error on successful sync
+      updates.push('qrz_sync_error = NULL');
+    }
+
+    const sql = `
+      UPDATE contacts 
+      SET ${updates.join(', ')}
+      WHERE id = $1
+      RETURNING *
+    `;
+
+    const result = await query(sql, values);
+    return result.rows[0] || null;
   }
 }

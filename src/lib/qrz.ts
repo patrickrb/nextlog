@@ -620,9 +620,21 @@ function parseADIFForQRZ(adifData: string): QRZQSORecord[] {
       const match = record.match(regex);
       if (match) {
         if (key === 'logbook_id') {
-          qso[key as keyof QRZQSORecord] = parseInt(match[1]) as QRZQSORecord[keyof QRZQSORecord];
-        } else {
-          qso[key as keyof QRZQSORecord] = match[1].trim() as QRZQSORecord[keyof QRZQSORecord];
+          qso.logbook_id = parseInt(match[1]);
+        } else if (key === 'call') {
+          qso.call = match[1].trim();
+        } else if (key === 'qso_date') {
+          qso.qso_date = match[1].trim();
+        } else if (key === 'time_on') {
+          qso.time_on = match[1].trim();
+        } else if (key === 'band') {
+          qso.band = match[1].trim();
+        } else if (key === 'mode') {
+          qso.mode = match[1].trim();
+        } else if (key === 'qsl_rcvd') {
+          qso.qsl_rcvd = match[1].trim();
+        } else if (key === 'qsl_sent') {
+          qso.qsl_sent = match[1].trim();
         }
       }
     }
