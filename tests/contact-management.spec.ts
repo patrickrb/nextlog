@@ -1,6 +1,42 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Contact Management Pages', () => {
+  test('new contact page should not show station warning during loading', async ({ page }) => {
+    // Track if the warning appears during page load
+    let warningAppeared = false;
+    
+    // Monitor for the "No Station Configured" warning
+    page.on('domcontentloaded', async () => {
+      try {
+        // Check if warning is visible immediately after DOM content loaded
+        const warning = page.locator('text=No Station Configured');
+        if (await warning.isVisible({ timeout: 100 })) {
+          warningAppeared = true;
+        }
+      } catch {
+        // Warning not found, which is good
+      }
+    });
+    
+    // Navigate to the new contact page
+    const response = await page.goto('/new-contact');
+    
+    // Check that the response is valid
+    if (response?.status()) {
+      expect(response.status()).toBeLessThan(500);
+    }
+    
+    // Wait a moment for any initial rendering and API calls
+    await page.waitForTimeout(1000);
+    
+    // The warning should not have appeared during the initial loading phase
+    expect(warningAppeared).toBe(false);
+    
+    // Check that we're on the new contact page or redirected appropriately
+    const url = page.url();
+    expect(url).toMatch(/(new-contact|install|login)/);
+  });
+
   test('new contact page should load correctly', async ({ page }) => {
     // The page should load without server errors
     const response = await page.goto('/new-contact');
