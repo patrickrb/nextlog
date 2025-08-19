@@ -14,6 +14,7 @@ import DXpeditionWidget from '@/components/DXpeditionWidget';
 import Pagination from '@/components/Pagination';
 import Navbar from '@/components/Navbar';
 import LotwSyncIndicator from '@/components/LotwSyncIndicator';
+import QRZSyncIndicator from '@/components/QRZSyncIndicator';
 import { useUser } from '@/contexts/UserContext';
 
 interface Contact {
@@ -38,6 +39,11 @@ interface Contact {
   qsl_lotw?: boolean;
   qsl_lotw_date?: string;
   lotw_match_status?: 'confirmed' | 'partial' | 'mismatch' | null;
+  // QRZ QSL fields
+  qrz_qsl_sent?: string; // Y, N, R, Q or null
+  qrz_qsl_rcvd?: string; // Y, N, R, Q or null
+  qrz_qsl_sent_date?: string;
+  qrz_qsl_rcvd_date?: string;
 }
 
 interface PaginationInfo {
@@ -280,6 +286,7 @@ export default function DashboardPage() {
                           <TableHead>RST</TableHead>
                           <TableHead>Name</TableHead>
                           <TableHead>LoTW</TableHead>
+                          <TableHead>QRZ</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -327,6 +334,15 @@ export default function DashboardPage() {
                                   qslLotw={contact.qsl_lotw}
                                   qslLotwDate={contact.qsl_lotw_date}
                                   lotwMatchStatus={contact.lotw_match_status}
+                                  size="sm"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <QRZSyncIndicator
+                                  qrzQslSent={contact.qrz_qsl_sent}
+                                  qrzQslSentDate={contact.qrz_qsl_sent_date}
+                                  qrzQslRcvd={contact.qrz_qsl_rcvd}
+                                  qrzQslRcvdDate={contact.qrz_qsl_rcvd_date}
                                   size="sm"
                                 />
                               </TableCell>

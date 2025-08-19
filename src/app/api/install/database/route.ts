@@ -25,9 +25,11 @@ export async function POST() {
     } catch (error) {
       console.warn('Docker execution failed, using fallback approach:', error);
       
-      // Fallback: try with Node.js but just execute core tables
+      // Fallback: try with Node.js but execute complete schema
       const coreSQL = `
-        -- Core tables only
+        -- No enum needed for QRZ sync - we use qrz_qsl_sent/qrz_qsl_rcvd fields like LoTW
+        
+        -- Core tables with all fields
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
             email VARCHAR(255) UNIQUE NOT NULL,
@@ -37,11 +39,15 @@ export async function POST() {
             grid_locator VARCHAR(10),
             qrz_username VARCHAR(255),
             qrz_password VARCHAR(255),
+            qrz_auto_sync BOOLEAN DEFAULT FALSE,
             role VARCHAR(50) DEFAULT 'user' NOT NULL,
             status VARCHAR(50) DEFAULT 'active' NOT NULL,
             last_login TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            
+            CONSTRAINT valid_role CHECK (role IN ('user', 'admin', 'moderator')),
+            CONSTRAINT valid_status CHECK (status IN ('active', 'inactive', 'suspended'))
         );
         
         CREATE TABLE IF NOT EXISTS dxcc_entities (
@@ -95,6 +101,7 @@ export async function POST() {
             qrz_username VARCHAR(255),
             qrz_password VARCHAR(255),
             qrz_api_key VARCHAR(255),
+            qrz_auto_sync BOOLEAN DEFAULT FALSE,
             lotw_username VARCHAR(255),
             club_callsign VARCHAR(50),
             lotw_password VARCHAR(255),
@@ -103,7 +110,9 @@ export async function POST() {
             is_active BOOLEAN DEFAULT TRUE,
             is_default BOOLEAN DEFAULT FALSE,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            
+            CONSTRAINT unique_default_station_per_user UNIQUE (user_id, is_default) DEFERRABLE INITIALLY DEFERRED
         );
         
         CREATE TABLE IF NOT EXISTS contacts (
@@ -136,6 +145,14 @@ export async function POST() {
             eqsl_qsl_sent VARCHAR(10),
             lotw_qsl_rcvd VARCHAR(10),
             lotw_qsl_sent VARCHAR(10),
+            
+            -- QRZ QSL tracking (matches LoTW pattern)
+            qrz_qsl_sent VARCHAR(10),
+            qrz_qsl_rcvd VARCHAR(10),
+            qrz_qsl_sent_date DATE,
+            qrz_qsl_rcvd_date DATE,
+            
+            -- Additional QSO data
             qso_date_off DATE,
             time_off TIME,
             operator VARCHAR(50),
@@ -223,6 +240,46 @@ export async function POST() {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE (contact_id, image_type)
         );
+        
+        -- Create indexes for QRZ QSL fields
+        CREATE INDEX IF NOT EXISTS idx_contacts_qrz_qsl_sent ON contacts(qrz_qsl_sent);
+        CREATE INDEX IF NOT EXISTS idx_contacts_qrz_qsl_rcvd ON contacts(qrz_qsl_rcvd);
+        CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+        CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
+        CREATE INDEX IF NOT EXISTS idx_users_callsign ON users(callsign);
+        CREATE INDEX IF NOT EXISTS idx_stations_user_id ON stations(user_id);
+        CREATE INDEX IF NOT EXISTS idx_stations_callsign ON stations(callsign);
+        CREATE INDEX IF NOT EXISTS idx_contacts_user_id ON contacts(user_id);
+        CREATE INDEX IF NOT EXISTS idx_contacts_station_id ON contacts(station_id);
+        CREATE INDEX IF NOT EXISTS idx_contacts_callsign ON contacts(callsign);
+        CREATE INDEX IF NOT EXISTS idx_contacts_datetime ON contacts(datetime DESC);
+        CREATE INDEX IF NOT EXISTS idx_contacts_band ON contacts(band);
+        CREATE INDEX IF NOT EXISTS idx_contacts_mode ON contacts(mode);
+        CREATE INDEX IF NOT EXISTS idx_contacts_dxcc ON contacts(dxcc);
+        CREATE INDEX IF NOT EXISTS idx_storage_config_type ON storage_config(config_type);
+        CREATE INDEX IF NOT EXISTS idx_storage_config_enabled ON storage_config(is_enabled);
+        CREATE INDEX IF NOT EXISTS idx_audit_log_admin_user ON admin_audit_log(admin_user_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_log_action ON admin_audit_log(action);
+        CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON admin_audit_log(created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_audit_log_target ON admin_audit_log(target_type, target_id);
+        
+        -- Create trigger function for updated_at
+        CREATE OR REPLACE FUNCTION update_updated_at_column()
+        RETURNS TRIGGER AS $$
+        BEGIN
+            NEW.updated_at = CURRENT_TIMESTAMP;
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+        
+        -- Create triggers for updated_at
+        CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+        CREATE TRIGGER update_stations_updated_at BEFORE UPDATE ON stations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+        CREATE TRIGGER update_contacts_updated_at BEFORE UPDATE ON contacts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+        CREATE TRIGGER update_storage_config_updated_at BEFORE UPDATE ON storage_config FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+        CREATE TRIGGER update_api_keys_updated_at BEFORE UPDATE ON api_keys FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+        CREATE TRIGGER update_system_settings_updated_at BEFORE UPDATE ON system_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+        CREATE TRIGGER update_qsl_images_updated_at BEFORE UPDATE ON qsl_images FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
       `;
       
       await db.query(coreSQL);

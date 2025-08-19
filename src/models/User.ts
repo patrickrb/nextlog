@@ -10,6 +10,7 @@ export interface UserData {
   grid_locator?: string;
   qrz_username?: string;
   qrz_password?: string;
+  qrz_auto_sync?: boolean;
   role?: string;
   status?: string;
   last_login?: Date;

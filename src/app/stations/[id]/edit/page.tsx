@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Combobox } from '@/components/ui/combobox';
-import { ArrowLeft, Save, Radio, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Radio, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import ApiKeyManager from '@/components/stations/ApiKeyManager';
 
@@ -123,6 +123,8 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [validatingQrz, setValidatingQrz] = useState(false);
+  const [qrzValidation, setQrzValidation] = useState<{ valid: boolean; message: string } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -229,6 +231,44 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
 
   const handleInputChange = (field: keyof StationFormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear QRZ validation when API key changes
+    if (field === 'qrz_api_key') {
+      setQrzValidation(null);
+    }
+  };
+
+  const handleValidateQrzApiKey = async () => {
+    if (!formData.qrz_api_key.trim()) {
+      setQrzValidation({ valid: false, message: 'Please enter a QRZ API key first' });
+      return;
+    }
+
+    setValidatingQrz(true);
+    setQrzValidation(null);
+
+    try {
+      const response = await fetch(`/api/stations/${stationId}/qrz-api-key/validate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          qrz_api_key: formData.qrz_api_key.trim()
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setQrzValidation({ valid: true, message: data.message || 'QRZ API key is valid' });
+      } else {
+        setQrzValidation({ valid: false, message: data.error || 'QRZ API key validation failed' });
+      }
+    } catch {
+      setQrzValidation({ valid: false, message: 'Network error during validation' });
+    } finally {
+      setValidatingQrz(false);
+    }
   };
 
   const handleDxccChange = (dxccCode: string) => {
@@ -689,13 +729,44 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="qrz_api_key">QRZ.com API Key</Label>
-                  <Input
-                    id="qrz_api_key"
-                    type="password"
-                    value={formData.qrz_api_key}
-                    onChange={(e) => handleInputChange('qrz_api_key', e.target.value)}
-                    placeholder="Your QRZ.com API key"
-                  />
+                  <div className="flex space-x-2">
+                    <Input
+                      id="qrz_api_key"
+                      type="password"
+                      value={formData.qrz_api_key}
+                      onChange={(e) => handleInputChange('qrz_api_key', e.target.value)}
+                      placeholder="Your QRZ.com API key"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleValidateQrzApiKey}
+                      disabled={validatingQrz || !formData.qrz_api_key.trim()}
+                    >
+                      {validatingQrz ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        'Validate'
+                      )}
+                    </Button>
+                  </div>
+                  
+                  {qrzValidation && (
+                    <div className={`flex items-center space-x-2 text-sm ${
+                      qrzValidation.valid 
+                        ? 'text-green-600' 
+                        : 'text-red-600'
+                    }`}>
+                      {qrzValidation.valid ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4" />
+                      )}
+                      <span>{qrzValidation.message}</span>
+                    </div>
+                  )}
+                  
                   <p className="text-sm text-muted-foreground">
                     Get your API key from{' '}
                     <a 
@@ -706,6 +777,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                     >
                       QRZ.com API documentation
                     </a>
+                    . This API key is used for logbook sync operations.
                   </p>
                 </div>
 
