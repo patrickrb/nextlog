@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ export default function NewContactPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [lookupResult, setLookupResult] = useState<{
     found: boolean;
     name?: string;
@@ -92,41 +93,7 @@ export default function NewContactPage() {
     }
   }, [isLiveLogging]);
 
-  const fetchStations = async () => {
-    try {
-      setStationsLoading(true);
-      const response = await fetch('/api/stations');
-      if (response.ok) {
-        const data = await response.json();
-        setStations(data.stations || []);
-        
-        // Auto-select default station
-        const defaultStation = data.stations?.find((station: Station) => station.is_default);
-        if (defaultStation) {
-          setSelectedStationId(defaultStation.id.toString());
-        }
-      }
-    } catch {
-      // Silent error handling for stations fetch
-    } finally {
-      setStationsLoading(false);
-    }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear lookup result when callsign changes
-    if (name === 'callsign') {
-      setLookupResult(null);
-    }
-  };
-
-  const handleCallsignLookup = async () => {
+  const handleCallsignLookup = useCallback(async () => {
     if (!formData.callsign.trim()) return;
 
     setLookupLoading(true);
@@ -172,14 +139,173 @@ export default function NewContactPage() {
     } finally {
       setLookupLoading(false);
     }
+  }, [formData.callsign]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+Enter to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        const form = document.querySelector('form');
+        if (form) {
+          form.requestSubmit();
+        }
+      }
+      
+      // Ctrl+L to focus callsign field
+      if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+        e.preventDefault();
+        document.getElementById('callsign')?.focus();
+      }
+      
+      // Ctrl+Q to lookup callsign
+      if ((e.ctrlKey || e.metaKey) && e.key === 'q') {
+        e.preventDefault();
+        if (formData.callsign.trim()) {
+          handleCallsignLookup();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [formData.callsign, handleCallsignLookup]);
+
+  const fetchStations = async () => {
+    try {
+      setStationsLoading(true);
+      const response = await fetch('/api/stations');
+      if (response.ok) {
+        const data = await response.json();
+        setStations(data.stations || []);
+        
+        // Auto-select default station
+        const defaultStation = data.stations?.find((station: Station) => station.is_default);
+        if (defaultStation) {
+          setSelectedStationId(defaultStation.id.toString());
+        }
+      }
+    } catch {
+      // Silent error handling for stations fetch
+    } finally {
+      setStationsLoading(false);
+    }
   };
 
-  const handleSelectChange = (name: string, value: string) => {
+  // Validation functions
+  const validateCallsign = (callsign: string): string | null => {
+    if (!callsign.trim()) return null;
+    // Basic amateur radio callsign format validation
+    const callsignRegex = /^[A-Z0-9]{1,3}[0-9][A-Z0-9]{0,3}[A-Z]$/i;
+    if (!callsignRegex.test(callsign)) {
+      return 'Invalid callsign format';
+    }
+    return null;
+  };
+
+  const validateGridLocator = (grid: string): string | null => {
+    if (!grid.trim()) return null;
+    // Maidenhead grid locator validation (4 or 6 character format)
+    const gridRegex = /^[A-R]{2}[0-9]{2}([A-X]{2})?$/i;
+    if (!gridRegex.test(grid)) {
+      return 'Invalid grid locator format (e.g., FN31pr)';
+    }
+    return null;
+  };
+
+  const validateFrequency = (frequency: string): string | null => {
+    if (!frequency.trim()) return null;
+    const freq = parseFloat(frequency);
+    if (isNaN(freq) || freq < 0.1 || freq > 300000) {
+      return 'Frequency must be between 0.1 and 300000 MHz';
+    }
+    // Check if frequency is in amateur bands
+    const isInBand = (
+      (freq >= 1.8 && freq <= 2.0) ||
+      (freq >= 3.5 && freq <= 4.0) ||
+      (freq >= 5.330 && freq <= 5.408) ||
+      (freq >= 7.0 && freq <= 7.3) ||
+      (freq >= 10.1 && freq <= 10.15) ||
+      (freq >= 14.0 && freq <= 14.35) ||
+      (freq >= 18.068 && freq <= 18.168) ||
+      (freq >= 21.0 && freq <= 21.45) ||
+      (freq >= 24.89 && freq <= 24.99) ||
+      (freq >= 28.0 && freq <= 29.7) ||
+      (freq >= 50.0 && freq <= 54.0) ||
+      (freq >= 144.0 && freq <= 148.0) ||
+      (freq >= 219.0 && freq <= 225.0) ||
+      (freq >= 420.0 && freq <= 450.0) ||
+      (freq >= 902.0 && freq <= 928.0) ||
+      (freq >= 1240.0 && freq <= 1300.0)
+    );
+    if (!isInBand) {
+      return 'Frequency is outside amateur radio bands';
+    }
+    return null;
+  };
+
+  // Real-time validation
+  const validateField = (name: string, value: string) => {
+    let error: string | null = null;
+    
+    switch (name) {
+      case 'callsign':
+        error = validateCallsign(value);
+        break;
+      case 'gridLocator':
+        error = validateGridLocator(value);
+        break;
+      case 'frequency':
+        error = validateFrequency(value);
+        break;
+    }
+
+    setValidationErrors(prev => ({
+      ...prev,
+      [name]: error || ''
+    }));
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+    
+    // Real-time validation
+    validateField(name, value);
+    
+    // Clear lookup result when callsign changes
+    if (name === 'callsign') {
+      setLookupResult(null);
+    }
+  };
 
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: value
+      };
+
+      // Auto-adjust RST values based on mode
+      if (name === 'mode') {
+        if (value === 'CW') {
+          newData.rst_sent = '599';
+          newData.rst_received = '599';
+        } else if (['SSB', 'FM', 'AM'].includes(value)) {
+          newData.rst_sent = '59';
+          newData.rst_received = '59';
+        } else if (['FT8', 'FT4', 'PSK31', 'RTTY', 'MFSK', 'OLIVIA', 'CONTESTIA'].includes(value)) {
+          newData.rst_sent = '-10';
+          newData.rst_received = '-10';
+        }
+      }
+
+      return newData;
+    });
   };
 
   const handleFrequencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,6 +314,9 @@ export default function NewContactPage() {
       ...prev,
       [name]: value
     }));
+
+    // Real-time validation for frequency
+    validateField(name, value);
 
     if (name === 'frequency') {
       const freq = parseFloat(value);
@@ -219,6 +348,25 @@ export default function NewContactPage() {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+
+    // Validate all fields before submission
+    const errors: {[key: string]: string} = {};
+    
+    const callsignError = validateCallsign(formData.callsign);
+    if (callsignError) errors.callsign = callsignError;
+    
+    const frequencyError = validateFrequency(formData.frequency);
+    if (frequencyError) errors.frequency = frequencyError;
+    
+    const gridError = validateGridLocator(formData.gridLocator);
+    if (gridError) errors.gridLocator = gridError;
+
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setError('Please fix the validation errors before submitting.');
+      setIsLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/contacts', {
@@ -350,6 +498,13 @@ export default function NewContactPage() {
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Basic Contact Information */}
+                  <div className="md:col-span-2">
+                    <h3 className="text-lg font-medium text-foreground mb-4 pb-2 border-b border-border">
+                      Contact Information
+                    </h3>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="callsign">Callsign *</Label>
                     <div className="flex space-x-2">
@@ -361,7 +516,7 @@ export default function NewContactPage() {
                         value={formData.callsign}
                         onChange={handleChange}
                         placeholder="e.g., W1AW"
-                        className="flex-1"
+                        className={`flex-1 ${validationErrors.callsign ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                       />
                       <Button
                         type="button"
@@ -378,6 +533,14 @@ export default function NewContactPage() {
                         )}
                       </Button>
                     </div>
+                    
+                    {/* Validation error */}
+                    {validationErrors.callsign && (
+                      <p className="text-sm text-destructive flex items-center">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {validationErrors.callsign}
+                      </p>
+                    )}
                     
                     {/* Lookup result indicator */}
                     {lookupResult && (
@@ -412,7 +575,14 @@ export default function NewContactPage() {
                       value={formData.frequency}
                       onChange={handleFrequencyChange}
                       placeholder="e.g., 14.205"
+                      className={validationErrors.frequency ? 'border-destructive focus-visible:ring-destructive' : ''}
                     />
+                    {validationErrors.frequency && (
+                      <p className="text-sm text-destructive flex items-center">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {validationErrors.frequency}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -443,7 +613,14 @@ export default function NewContactPage() {
                     </Select>
                   </div>
 
-                  <div className="space-y-2">
+                  {/* Date and Time Section */}
+                  <div className="md:col-span-2 mt-6">
+                    <h3 className="text-lg font-medium text-foreground mb-4 pb-2 border-b border-border">
+                      Date & Time
+                    </h3>
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="datetime">Date & Time *</Label>
                       <div className="flex items-center space-x-2">
@@ -476,6 +653,40 @@ export default function NewContactPage() {
                     )}
                   </div>
 
+                  {/* Signal Report Section */}
+                  <div className="md:col-span-2 mt-6">
+                    <h3 className="text-lg font-medium text-foreground mb-4 pb-2 border-b border-border">
+                      Signal Reports
+                    </h3>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="rst_sent">RST Sent</Label>
+                    <Input
+                      type="text"
+                      name="rst_sent"
+                      id="rst_sent"
+                      value={formData.rst_sent}
+                      onChange={handleChange}
+                      placeholder="e.g., 59"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Auto-adjusts based on mode: CW=599, Voice=59, Digital=-10
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="rst_received">RST Received</Label>
+                    <Input
+                      type="text"
+                      name="rst_received"
+                      id="rst_received"
+                      value={formData.rst_received}
+                      onChange={handleChange}
+                      placeholder="e.g., 59"
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="power">Power (Watts)</Label>
                     <Input
@@ -489,28 +700,11 @@ export default function NewContactPage() {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="rst_sent">RST Sent</Label>
-                    <Input
-                      type="text"
-                      name="rst_sent"
-                      id="rst_sent"
-                      value={formData.rst_sent}
-                      onChange={handleChange}
-                      placeholder="e.g., 59"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="rst_received">RST Received</Label>
-                    <Input
-                      type="text"
-                      name="rst_received"
-                      id="rst_received"
-                      value={formData.rst_received}
-                      onChange={handleChange}
-                      placeholder="e.g., 59"
-                    />
+                  {/* Station Information Section */}
+                  <div className="md:col-span-2 mt-6">
+                    <h3 className="text-lg font-medium text-foreground mb-4 pb-2 border-b border-border">
+                      Station Information
+                    </h3>
                   </div>
 
                   <div className="space-y-2">
@@ -546,7 +740,14 @@ export default function NewContactPage() {
                       value={formData.gridLocator}
                       onChange={handleChange}
                       placeholder="e.g., FN31pr"
+                      className={validationErrors.gridLocator ? 'border-destructive focus-visible:ring-destructive' : ''}
                     />
+                    {validationErrors.gridLocator && (
+                      <p className="text-sm text-destructive flex items-center">
+                        <AlertCircle className="h-4 w-4 mr-1" />
+                        {validationErrors.gridLocator}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -560,6 +761,16 @@ export default function NewContactPage() {
                     onChange={handleChange}
                     placeholder="Additional notes about this contact"
                   />
+                </div>
+
+                {/* Keyboard shortcuts help */}
+                <div className="bg-muted/30 border border-border rounded-md p-3">
+                  <p className="text-sm text-muted-foreground font-medium mb-2">⌨️ Keyboard Shortcuts:</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-muted-foreground">
+                    <div><kbd className="px-1 py-0.5 bg-muted border rounded text-xs">Ctrl+Enter</kbd> Save contact</div>
+                    <div><kbd className="px-1 py-0.5 bg-muted border rounded text-xs">Ctrl+L</kbd> Focus callsign</div>
+                    <div><kbd className="px-1 py-0.5 bg-muted border rounded text-xs">Ctrl+Q</kbd> QRZ lookup</div>
+                  </div>
                 </div>
 
                 {error && (
