@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { User } from '@/models/User';
-import { validateQRZCredentials } from '@/lib/qrz';
+import { lookupCallsign } from '@/lib/qrz';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,6 +20,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (!user.qrz_username || !user.qrz_password) {
+      console.error('QRZ credentials missing:', {
+        userId: decoded.userId,
+        qrz_username: user.qrz_username ? 'present' : 'missing',
+        qrz_password: user.qrz_password ? 'present' : 'missing'
+      });
       return NextResponse.json({ 
         error: 'QRZ credentials not configured. Please add your QRZ username and password in your profile settings.' 
       }, { status: 400 });
@@ -33,19 +38,19 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Validate credentials with QRZ logbook API
-    const validation = await validateQRZCredentials(user.qrz_username, decryptedPassword);
+    // Validate credentials by doing a test lookup with QRZ XML API (for callsign lookups)
+    const testResult = await lookupCallsign('W1AW', user.qrz_username, decryptedPassword);
     
-    if (!validation.valid) {
+    if (!testResult.found && testResult.error) {
       return NextResponse.json({ 
         valid: false,
-        error: validation.error || 'QRZ logbook validation failed'
+        error: testResult.error
       }, { status: 400 });
     }
 
     return NextResponse.json({ 
       valid: true,
-      message: 'QRZ logbook credentials validated successfully'
+      message: 'QRZ XML API credentials validated successfully (for callsign lookups)'
     });
 
   } catch (error) {

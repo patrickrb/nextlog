@@ -37,16 +37,16 @@ export interface ContactData {
   qsl_lotw?: boolean;
   qsl_lotw_date?: Date;
   lotw_match_status?: 'confirmed' | 'partial' | 'mismatch' | null;
+  // QRZ QSL fields
+  qrz_qsl_sent?: string;
+  qrz_qsl_rcvd?: string;
+  qrz_qsl_sent_date?: Date;
+  qrz_qsl_rcvd_date?: Date;
   // Additional fields
   qso_date_off?: Date;
   time_off?: string;
   operator?: string;
   distance?: number;
-  // QRZ sync fields
-  qrz_sync_status?: 'not_synced' | 'synced' | 'error' | 'already_exists';
-  qrz_sync_date?: Date;
-  qrz_logbook_id?: number;
-  qrz_sync_error?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -270,27 +270,55 @@ export class Contact {
     }));
   }
 
-  static async updateQrzSyncStatus(
+  static async updateQrzQsl(
     id: number, 
-    status: 'not_synced' | 'synced' | 'error' | 'already_exists',
-    qrz_logbook_id?: number,
-    error?: string
+    qslSent?: 'Y' | 'N' | 'R' | 'Q',
+    qslRcvd?: 'Y' | 'N' | 'R' | 'Q'
   ): Promise<ContactData | null> {
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+    
+    if (qslSent !== undefined) {
+      updates.push(`qrz_qsl_sent = $${paramCount}`);
+      values.push(qslSent);
+      paramCount++;
+      
+      if (qslSent === 'Y') {
+        updates.push(`qrz_qsl_sent_date = CURRENT_DATE`);
+      }
+    }
+    
+    if (qslRcvd !== undefined) {
+      updates.push(`qrz_qsl_rcvd = $${paramCount}`);
+      values.push(qslRcvd);
+      paramCount++;
+      
+      if (qslRcvd === 'Y') {
+        updates.push(`qrz_qsl_rcvd_date = CURRENT_DATE`);
+      }
+    }
+    
+    if (updates.length === 0) {
+      return null;
+    }
+    
+    values.push(id);
     const sql = `
       UPDATE contacts 
-      SET qrz_sync_status = $1, qrz_sync_date = CURRENT_TIMESTAMP, qrz_logbook_id = $2, qrz_sync_error = $3
-      WHERE id = $4
+      SET ${updates.join(', ')}
+      WHERE id = $${paramCount}
       RETURNING *
     `;
     
-    const result = await query(sql, [status, qrz_logbook_id || null, error || null, id]);
+    const result = await query(sql, values);
     return result.rows[0] || null;
   }
 
-  static async findNotSynced(userId: number, limit?: number): Promise<ContactData[]> {
+  static async findQrzNotSent(userId: number, limit?: number): Promise<ContactData[]> {
     let sql = `
       SELECT * FROM contacts 
-      WHERE user_id = $1 AND (qrz_sync_status = 'not_synced' OR qrz_sync_status = 'error')
+      WHERE user_id = $1 AND (qrz_qsl_sent IS NULL OR qrz_qsl_sent != 'Y')
       ORDER BY datetime DESC
     `;
     const params = [userId];
@@ -302,5 +330,49 @@ export class Contact {
     
     const result = await query(sql, params);
     return result.rows;
+  }
+
+  static async findQrzSentNotConfirmed(userId: number, limit?: number): Promise<ContactData[]> {
+    let sql = `
+      SELECT * FROM contacts 
+      WHERE user_id = $1 AND qrz_qsl_sent = 'Y' AND (qrz_qsl_rcvd IS NULL OR qrz_qsl_rcvd != 'Y')
+      ORDER BY datetime DESC
+    `;
+    const params = [userId];
+    
+    if (limit) {
+      sql += ` LIMIT $${params.length + 1}`;
+      params.push(limit);
+    }
+    
+    const result = await query(sql, params);
+    return result.rows;
+  }
+
+  // Helper function to match QSO records by callsign, date, and time
+  static matchQSO(contact: ContactData, qrzQSO: { call: string; qso_date: string; time_on: string }): boolean {
+    if (!contact.callsign || !qrzQSO.call) return false;
+    
+    // Normalize callsigns for comparison
+    const contactCall = contact.callsign.toUpperCase().trim();
+    const qrzCall = qrzQSO.call.toUpperCase().trim();
+    
+    if (contactCall !== qrzCall) return false;
+    
+    // Compare dates
+    const contactDate = new Date(contact.datetime).toISOString().split('T')[0].replace(/-/g, '');
+    const qrzDate = qrzQSO.qso_date.replace(/-/g, '');
+    
+    if (contactDate !== qrzDate) return false;
+    
+    // Compare times (within a few minutes tolerance)
+    const contactTime = new Date(contact.datetime).toISOString().split('T')[1].substring(0, 5).replace(':', '');
+    const qrzTime = qrzQSO.time_on.replace(':', '');
+    
+    // Allow 5 minute tolerance
+    const contactMinutes = parseInt(contactTime.substring(0, 2)) * 60 + parseInt(contactTime.substring(2));
+    const qrzMinutes = parseInt(qrzTime.substring(0, 2)) * 60 + parseInt(qrzTime.substring(2));
+    
+    return Math.abs(contactMinutes - qrzMinutes) <= 5;
   }
 }

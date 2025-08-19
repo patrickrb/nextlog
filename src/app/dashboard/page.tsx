@@ -39,11 +39,11 @@ interface Contact {
   qsl_lotw?: boolean;
   qsl_lotw_date?: string;
   lotw_match_status?: 'confirmed' | 'partial' | 'mismatch' | null;
-  // QRZ sync fields
-  qrz_sync_status?: 'not_synced' | 'synced' | 'error' | 'already_exists';
-  qrz_sync_date?: string;
-  qrz_logbook_id?: number;
-  qrz_sync_error?: string;
+  // QRZ QSL fields
+  qrz_qsl_sent?: string; // Y, N, R, Q or null
+  qrz_qsl_rcvd?: string; // Y, N, R, Q or null
+  qrz_qsl_sent_date?: string;
+  qrz_qsl_rcvd_date?: string;
 }
 
 interface PaginationInfo {
@@ -339,8 +339,11 @@ export default function DashboardPage() {
                               </TableCell>
                               <TableCell>
                                 <QRZSyncIndicator
-                                  contact={contact}
-                                  compact={true}
+                                  qrzQslSent={contact.qrz_qsl_sent}
+                                  qrzQslSentDate={contact.qrz_qsl_sent_date}
+                                  qrzQslRcvd={contact.qrz_qsl_rcvd}
+                                  qrzQslRcvdDate={contact.qrz_qsl_rcvd_date}
+                                  size="sm"
                                 />
                               </TableCell>
                             </TableRow>

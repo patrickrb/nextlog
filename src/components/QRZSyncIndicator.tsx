@@ -1,141 +1,146 @@
 'use client';
 
+import { Upload, Download, AlertCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { CheckCircle, XCircle, Clock, AlertCircle, Upload, Loader2 } from 'lucide-react';
 
 interface QRZSyncIndicatorProps {
-  contact: {
-    id: number;
-    qrz_sync_status?: 'not_synced' | 'synced' | 'error' | 'already_exists';
-    qrz_sync_date?: string;
-    qrz_logbook_id?: number;
-    qrz_sync_error?: string;
-  };
-  onSync?: (contactId: number) => void;
-  syncing?: boolean;
-  compact?: boolean;
+  // Upload status
+  qrzQslSent?: string; // 'Y', 'N', 'R' (Yes, No, Request failed)
+  qrzQslSentDate?: Date | string; // Date when sent to QRZ
+  
+  // Download/confirmation status  
+  qrzQslRcvd?: string; // 'Y', 'N' (Yes, No)
+  qrzQslRcvdDate?: Date | string; // Date when confirmed by QRZ
+  
+  // Display options
+  size?: 'sm' | 'md';
+  showLabels?: boolean;
+  orientation?: 'horizontal' | 'vertical';
 }
 
-export default function QRZSyncIndicator({ contact, onSync, syncing = false, compact = false }: QRZSyncIndicatorProps) {
-  const getStatusConfig = () => {
-    switch (contact.qrz_sync_status) {
-      case 'synced':
-        return {
-          color: 'bg-green-100 text-green-800 border-green-200',
-          icon: CheckCircle,
-          text: 'Synced',
-          description: `Synced to QRZ on ${contact.qrz_sync_date ? new Date(contact.qrz_sync_date).toLocaleDateString() : 'unknown date'}${contact.qrz_logbook_id ? ` (ID: ${contact.qrz_logbook_id})` : ''}`
-        };
-      case 'already_exists':
-        return {
-          color: 'bg-blue-100 text-blue-800 border-blue-200',
-          icon: CheckCircle,
-          text: 'Exists',
-          description: 'QSO already exists in QRZ logbook'
-        };
-      case 'error':
-        return {
-          color: 'bg-red-100 text-red-800 border-red-200',
-          icon: XCircle,
-          text: 'Error',
-          description: contact.qrz_sync_error || 'Sync failed'
-        };
-      case 'not_synced':
-      default:
-        return {
-          color: 'bg-gray-100 text-gray-800 border-gray-200',
-          icon: Clock,
-          text: 'Not synced',
-          description: 'QSO not synced to QRZ logbook'
-        };
+export default function QRZSyncIndicator({ 
+  qrzQslSent, 
+  qrzQslSentDate,
+  qrzQslRcvd, 
+  qrzQslRcvdDate,
+  size = 'sm',
+  showLabels = false,
+  orientation = 'horizontal'
+}: QRZSyncIndicatorProps) {
+  
+  // Determine upload status
+  const getUploadStatus = () => {
+    if (qrzQslSent === 'Y') {
+      const dateText = qrzQslSentDate ? 
+        ` on ${new Date(qrzQslSentDate).toLocaleDateString()}` : '';
+      return { 
+        status: 'uploaded', 
+        color: 'text-green-600', 
+        icon: Upload, 
+        tooltip: `Uploaded to QRZ${dateText}` 
+      };
+    } else if (qrzQslSent === 'R') {
+      return { 
+        status: 'error', 
+        color: 'text-red-500', 
+        icon: AlertCircle, 
+        tooltip: 'QRZ upload failed' 
+      };
+    } else {
+      return { 
+        status: 'not-uploaded', 
+        color: 'text-red-500', 
+        icon: Upload, 
+        tooltip: 'Not uploaded to QRZ' 
+      };
     }
   };
 
-  const config = getStatusConfig();
-  const Icon = config.icon;
+  // Determine download/confirmation status
+  const getDownloadStatus = () => {
+    if (qrzQslRcvd === 'Y') {
+      const dateText = qrzQslRcvdDate ? 
+        ` on ${new Date(qrzQslRcvdDate).toLocaleDateString()}` : '';
+      
+      return { 
+        status: 'confirmed', 
+        color: 'text-green-600', 
+        icon: Download,
+        tooltip: `Confirmed via QRZ${dateText}` 
+      };
+    } else {
+      return { 
+        status: 'not-confirmed', 
+        color: 'text-red-500', 
+        icon: Download, 
+        tooltip: 'No QRZ confirmation' 
+      };
+    }
+  };
 
-  if (compact) {
+  const uploadStatus = getUploadStatus();
+  const downloadStatus = getDownloadStatus();
+
+  const iconSize = size === 'sm' ? 'h-3 w-3' : 'h-4 w-4';
+  const containerClasses = orientation === 'vertical' ? 'flex flex-col space-y-1' : 'flex items-center space-x-2';
+
+  if (showLabels) {
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex items-center space-x-1">
-              {syncing ? (
-                <Loader2 className="h-3 w-3 animate-spin text-blue-500" />
-              ) : (
-                <Icon className="h-3 w-3" style={{ color: config.color.includes('green') ? '#22c55e' : config.color.includes('red') ? '#ef4444' : config.color.includes('blue') ? '#3b82f6' : '#6b7280' }} />
-              )}
-              {!compact && (
-                <span className="text-xs text-muted-foreground">
-                  {syncing ? 'Syncing...' : config.text}
-                </span>
-              )}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="text-sm">
-              <div className="font-medium">QRZ Sync Status</div>
-              <div className="text-muted-foreground">{config.description}</div>
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div className={`${containerClasses} text-xs`}>
+        <div className="flex items-center space-x-1" title={uploadStatus.tooltip}>
+          <uploadStatus.icon 
+            className={`${iconSize} ${uploadStatus.color}`}
+          />
+          {showLabels && <span className="text-muted-foreground">Up</span>}
+        </div>
+        
+        <div className="flex items-center space-x-1" title={downloadStatus.tooltip}>
+          <downloadStatus.icon 
+            className={`${iconSize} ${downloadStatus.color}`}
+          />
+          {showLabels && <span className="text-muted-foreground">Down</span>}
+        </div>
+      </div>
     );
   }
 
+  // Compact view - just icons
   return (
-    <div className="flex items-center space-x-2">
-      <Badge variant="secondary" className={`${config.color} flex items-center space-x-1`}>
-        {syncing ? (
-          <Loader2 className="h-3 w-3 animate-spin" />
-        ) : (
-          <Icon className="h-3 w-3" />
-        )}
-        <span className="text-xs">{syncing ? 'Syncing...' : config.text}</span>
-      </Badge>
-      
-      {onSync && contact.qrz_sync_status !== 'synced' && contact.qrz_sync_status !== 'already_exists' && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onSync(contact.id)}
-                disabled={syncing}
-                className="h-6 w-6 p-0"
-              >
-                {syncing ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Upload className="h-3 w-3" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <span>Sync to QRZ</span>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-      
-      {contact.qrz_sync_status === 'error' && contact.qrz_sync_error && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <AlertCircle className="h-4 w-4 text-red-500" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <div className="max-w-sm">
-                <div className="font-medium">Sync Error</div>
-                <div className="text-sm text-muted-foreground">{contact.qrz_sync_error}</div>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
+    <div className={containerClasses}>
+      <div title={uploadStatus.tooltip}>
+        <uploadStatus.icon 
+          className={`${iconSize} ${uploadStatus.color}`}
+        />
+      </div>
+      <div title={downloadStatus.tooltip}>
+        <downloadStatus.icon 
+          className={`${iconSize} ${downloadStatus.color}`}
+        />
+      </div>
     </div>
   );
+}
+
+// Helper component for status badges
+export function QRZStatusBadge({ 
+  qrzQslSent, 
+  qrzQslRcvd 
+}: Pick<QRZSyncIndicatorProps, 'qrzQslSent' | 'qrzQslRcvd'>) {
+  
+  // Determine overall status
+  const isUploaded = qrzQslSent === 'Y';
+  const isConfirmed = qrzQslRcvd === 'Y';
+  const isError = qrzQslSent === 'R';
+  
+  if (isError) {
+    return <Badge variant="destructive" className="text-xs">QRZ Error</Badge>;
+  } else if (isUploaded && isConfirmed) {
+    return <Badge variant="default" className="text-xs">QRZ Confirmed</Badge>;
+  } else if (isUploaded) {
+    return <Badge variant="secondary" className="text-xs">QRZ Uploaded</Badge>;
+  } else if (isConfirmed) {
+    return <Badge variant="outline" className="text-xs">QRZ Confirmed</Badge>;
+  } else {
+    return <Badge variant="outline" className="text-xs text-muted-foreground">No QRZ</Badge>;
+  }
 }

@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
     const since = searchParams.get('since');
     const countOnly = searchParams.get('countOnly') === 'true';
+    const qrzSyncStatus = searchParams.get('qrz_sync_status');
 
     const userId = typeof user.userId === 'string' ? parseInt(user.userId, 10) : user.userId;
     
@@ -23,6 +24,15 @@ export async function GET(request: NextRequest) {
     if (countOnly && since) {
       const count = await Contact.countByUserIdSince(userId, since);
       return NextResponse.json({ count });
+    }
+
+    // Handle QRZ sync status filtering (for admin bulk sync - get ALL contacts, no limit)
+    if (qrzSyncStatus === 'not_synced') {
+      const contacts = await Contact.findQrzNotSent(userId); // No limit - get all not sent to QRZ
+      return NextResponse.json({
+        contacts,
+        total: contacts.length
+      });
     }
 
     const contacts = await Contact.findByUserId(userId, limit, offset);

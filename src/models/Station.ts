@@ -27,6 +27,7 @@ export interface StationData {
   is_default: boolean;
   qrz_username?: string;
   qrz_password?: string;
+  qrz_api_key?: string;
   club_callsign?: string;
   created_at: string;
   updated_at: string;

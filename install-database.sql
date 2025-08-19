@@ -1,6 +1,8 @@
 -- Nextlog Database Installation Script
--- Complete schema with all tables including LOTW integration and reference data
+-- Complete schema with all tables including LOTW integration, QRZ sync, and reference data
 -- This script creates all tables, indexes, functions, triggers, and loads reference data
+
+-- No enum needed for QRZ sync - we use qrz_qsl_sent/qrz_qsl_rcvd fields like LoTW
 
 -- Create users table
 CREATE TABLE users (
@@ -12,6 +14,7 @@ CREATE TABLE users (
     grid_locator VARCHAR(10),
     qrz_username VARCHAR(255),
     qrz_password VARCHAR(255),
+    qrz_auto_sync BOOLEAN DEFAULT FALSE,
     role VARCHAR(50) DEFAULT 'user' NOT NULL,
     status VARCHAR(50) DEFAULT 'active' NOT NULL,
     last_login TIMESTAMP,
@@ -63,6 +66,7 @@ CREATE TABLE stations (
     qrz_username VARCHAR(255),
     qrz_password VARCHAR(255),
     qrz_api_key VARCHAR(255),
+    qrz_auto_sync BOOLEAN DEFAULT FALSE,
     lotw_username VARCHAR(255),
     club_callsign VARCHAR(50),
     
@@ -111,6 +115,12 @@ CREATE TABLE contacts (
     eqsl_qsl_sent VARCHAR(10),
     lotw_qsl_rcvd VARCHAR(10),
     lotw_qsl_sent VARCHAR(10),
+    
+    -- QRZ QSL tracking (matches LoTW pattern)
+    qrz_qsl_sent VARCHAR(10),
+    qrz_qsl_rcvd VARCHAR(10),
+    qrz_qsl_sent_date DATE,
+    qrz_qsl_rcvd_date DATE,
     
     -- Additional QSO data
     qso_date_off DATE,
@@ -230,6 +240,8 @@ CREATE INDEX idx_contacts_datetime ON contacts(datetime DESC);
 CREATE INDEX idx_contacts_frequency ON contacts(frequency);
 CREATE INDEX idx_contacts_mode ON contacts(mode);
 CREATE INDEX idx_contacts_band ON contacts(band);
+CREATE INDEX idx_contacts_qrz_qsl_sent ON contacts(qrz_qsl_sent);
+CREATE INDEX idx_contacts_qrz_qsl_rcvd ON contacts(qrz_qsl_rcvd);
 
 CREATE INDEX idx_storage_config_type ON storage_config(config_type);
 CREATE INDEX idx_storage_config_enabled ON storage_config(is_enabled);
