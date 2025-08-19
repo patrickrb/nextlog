@@ -380,7 +380,7 @@ CREATE TABLE qsl_images (
     -- Storage information
     storage_path VARCHAR(500) NOT NULL,
     storage_url VARCHAR(500),
-    storage_type VARCHAR(20) DEFAULT 'azure_blob' CHECK (storage_type IN ('azure_blob', 'aws_s3')),
+    storage_type VARCHAR(20) DEFAULT 'azure_blob' CHECK (storage_type IN ('azure_blob', 'aws_s3', 'local_storage')),
     
     -- Image dimensions (optional, for display optimization)
     width INTEGER,
