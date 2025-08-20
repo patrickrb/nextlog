@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Save, Radio, TestTube, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Save, Radio, TestTube, AlertCircle, CheckCircle, Usb, Mic, RefreshCw } from 'lucide-react';
 
 interface SupportedRadio {
   model: string;
@@ -45,11 +45,29 @@ interface Station {
   is_default: boolean;
 }
 
+interface USBDevice {
+  vendorId: number;
+  productId: number;
+  productName?: string;
+  manufacturerName?: string;
+  serialNumber?: string;
+}
+
+interface AudioDevice {
+  deviceId: string;
+  label: string;
+  kind: MediaDeviceKind;
+  groupId: string;
+}
+
 export default function RadioConfigPage() {
   const { user, loading } = useUser();
   const router = useRouter();
   const [supportedRadios, setSupportedRadios] = useState<SupportedRadio[]>([]);
   const [stations, setStations] = useState<Station[]>([]);
+  const [usbDevices, setUsbDevices] = useState<USBDevice[]>([]);
+  const [audioDevices, setAudioDevices] = useState<AudioDevice[]>([]);
+  const [enumeratingDevices, setEnumeratingDevices] = useState(false);
   const [config, setConfig] = useState<RadioConfig>({
     radio_model: '',
     cat_interface: '',
@@ -86,6 +104,7 @@ export default function RadioConfigPage() {
       fetchSupportedRadios();
       fetchStations();
       fetchExistingConfig();
+      enumerateDevices();
     }
   }, [user]);
 
@@ -128,6 +147,96 @@ export default function RadioConfigPage() {
       }
     } catch (err) {
       console.error('Error fetching existing config:', err);
+    }
+  };
+
+  const enumerateDevices = async () => {
+    try {
+      setEnumeratingDevices(true);
+      
+      // Enumerate USB devices (requires user gesture for WebUSB)
+      if ('usb' in navigator && navigator.usb) {
+        try {
+          const devices = await navigator.usb.getDevices();
+          const mappedDevices: USBDevice[] = devices.map(device => ({
+            vendorId: device.vendorId,
+            productId: device.productId,
+            productName: device.productName,
+            manufacturerName: device.manufacturerName,
+            serialNumber: device.serialNumber
+          }));
+          setUsbDevices(mappedDevices);
+        } catch (usbError) {
+          console.log('USB enumeration failed (may require user gesture):', usbError);
+        }
+      }
+
+      // Enumerate audio devices
+      if ('mediaDevices' in navigator && navigator.mediaDevices) {
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const audioInputs = devices
+            .filter(device => device.kind === 'audioinput')
+            .map(device => ({
+              deviceId: device.deviceId,
+              label: device.label || `Audio Input ${device.deviceId.slice(0, 8)}`,
+              kind: device.kind,
+              groupId: device.groupId
+            }));
+          setAudioDevices(audioInputs);
+        } catch (audioError) {
+          console.error('Audio enumeration failed:', audioError);
+        }
+      }
+    } catch (err) {
+      console.error('Error enumerating devices:', err);
+    } finally {
+      setEnumeratingDevices(false);
+    }
+  };
+
+  const requestUSBAccess = async () => {
+    try {
+      if ('usb' in navigator && navigator.usb) {
+        // Request access to USB devices - this requires user gesture
+        const device = await navigator.usb.requestDevice({
+          filters: [
+            { vendorId: 0x0451 }, // Texas Instruments (common for radio interfaces)
+            { vendorId: 0x0403 }, // FTDI
+            { vendorId: 0x10C4 }, // Silicon Labs (CP210x)
+            { vendorId: 0x067B }, // Prolific
+            { vendorId: 0x1A86 }, // QinHeng Electronics (CH340)
+            { vendorId: 0x0483 }, // STMicroelectronics
+            { vendorId: 0x16C0 }, // Van Ooijen Technische Informatica (VOTI)
+            { vendorId: 0x1B1C }, // Corsair
+            // Add more vendor IDs for common radio manufacturers
+            { vendorId: 0x0C26 }, // Icom
+            { vendorId: 0x04D8 }, // Microchip (used by some Kenwood)
+          ]
+        });
+        
+        if (device) {
+          // Re-enumerate devices to include the newly granted device
+          await enumerateDevices();
+        }
+      }
+    } catch (err) {
+      console.log('USB access request cancelled or failed:', err);
+    }
+  };
+
+  const requestAudioAccess = async () => {
+    try {
+      if ('mediaDevices' in navigator && navigator.mediaDevices) {
+        // Request audio access to get device labels
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Stop the stream immediately - we just needed permission
+        stream.getTracks().forEach(track => track.stop());
+        // Re-enumerate to get proper labels
+        await enumerateDevices();
+      }
+    } catch (err) {
+      console.log('Audio access request failed:', err);
     }
   };
 
@@ -337,7 +446,31 @@ export default function RadioConfigPage() {
               {/* CAT Interface */}
               {selectedRadio && (
                 <div className="space-y-2">
-                  <Label htmlFor="cat_interface">CAT Interface *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="cat_interface">CAT Interface *</Label>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={requestUSBAccess}
+                        disabled={enumeratingDevices}
+                      >
+                        <Usb className="h-3 w-3 mr-1" />
+                        USB Access
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={enumerateDevices}
+                        disabled={enumeratingDevices}
+                      >
+                        <RefreshCw className={`h-3 w-3 mr-1 ${enumeratingDevices ? 'animate-spin' : ''}`} />
+                        Refresh
+                      </Button>
+                    </div>
+                  </div>
                   <Select
                     value={config.cat_interface}
                     onValueChange={(value) => setConfig(prev => ({ ...prev, cat_interface: value }))}
@@ -346,13 +479,36 @@ export default function RadioConfigPage() {
                       <SelectValue placeholder="Select CAT interface" />
                     </SelectTrigger>
                     <SelectContent>
+                      {/* Static interface options */}
                       {selectedRadio.cat_interfaces.map((catInterface) => (
                         <SelectItem key={catInterface} value={catInterface}>
                           {catInterface}
                         </SelectItem>
                       ))}
+                      
+                      {/* Enumerated USB devices */}
+                      {usbDevices.length > 0 && (
+                        <>
+                          <SelectItem value="" disabled>
+                            ─── USB Devices ───
+                          </SelectItem>
+                          {usbDevices.map((device, index) => (
+                            <SelectItem 
+                              key={`usb-${index}`} 
+                              value={`USB:${device.vendorId.toString(16)}:${device.productId.toString(16)}`}
+                            >
+                              {device.productName || device.manufacturerName || `USB Device ${device.vendorId.toString(16)}:${device.productId.toString(16)}`}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
+                  {usbDevices.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Click &quot;USB Access&quot; to enumerate connected USB devices
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -410,7 +566,19 @@ export default function RadioConfigPage() {
               {/* Audio Source */}
               {selectedRadio && (
                 <div className="space-y-2">
-                  <Label htmlFor="audio_source">Audio Source *</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="audio_source">Audio Source *</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={requestAudioAccess}
+                      disabled={enumeratingDevices}
+                    >
+                      <Mic className="h-3 w-3 mr-1" />
+                      Audio Access
+                    </Button>
+                  </div>
                   <Select
                     value={config.audio_source}
                     onValueChange={(value) => setConfig(prev => ({ ...prev, audio_source: value }))}
@@ -419,13 +587,36 @@ export default function RadioConfigPage() {
                       <SelectValue placeholder="Select audio source" />
                     </SelectTrigger>
                     <SelectContent>
+                      {/* Static audio source options */}
                       {selectedRadio.audio_sources.map((source) => (
                         <SelectItem key={source} value={source}>
                           {source}
                         </SelectItem>
                       ))}
+                      
+                      {/* Enumerated audio devices */}
+                      {audioDevices.length > 0 && (
+                        <>
+                          <SelectItem value="" disabled>
+                            ─── Audio Input Devices ───
+                          </SelectItem>
+                          {audioDevices.map((device) => (
+                            <SelectItem 
+                              key={device.deviceId} 
+                              value={`AudioInput:${device.deviceId}`}
+                            >
+                              {device.label}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
+                  {audioDevices.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Click &quot;Audio Access&quot; to enumerate available audio input devices
+                    </p>
+                  )}
                 </div>
               )}
 

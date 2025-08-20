@@ -46,6 +46,16 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const stationId = searchParams.get('station_id');
+    const action = searchParams.get('action');
+
+    // Handle device enumeration requests
+    if (action === 'enumerate_devices') {
+      return NextResponse.json({
+        success: true,
+        message: 'Device enumeration must be done client-side due to browser security restrictions',
+        enumerate_client_side: true
+      });
+    }
 
     // Get radio configuration for the user/station
     let configQuery = 'SELECT * FROM sstv_radio_config WHERE user_id = $1';
