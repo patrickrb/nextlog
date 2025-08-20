@@ -28,7 +28,7 @@ interface PreviousContact {
   datetime: string;
   band: string;
   mode: string;
-  frequency: number;
+  frequency: number | string;
   rst_sent?: string;
   rst_received?: string;
   name?: string;

@@ -8,7 +8,7 @@ interface PreviousContact {
   datetime: string;
   band: string;
   mode: string;
-  frequency: number;
+  frequency: number | string;
   rst_sent?: string;
   rst_received?: string;
   name?: string;
@@ -64,13 +64,21 @@ export default function PreviousContacts({ contacts, loading, error }: PreviousC
     };
   };
 
-  const formatFrequency = (freq: number) => {
-    if (freq >= 1000) {
-      return `${(freq / 1000).toFixed(3)} GHz`;
-    } else if (freq >= 1) {
-      return `${freq.toFixed(3)} MHz`;
+  const formatFrequency = (freq: number | string) => {
+    // Convert to number if it's a string
+    const frequency = typeof freq === 'string' ? parseFloat(freq) : freq;
+    
+    // Handle invalid numbers
+    if (isNaN(frequency) || frequency <= 0) {
+      return 'Unknown';
+    }
+    
+    if (frequency >= 1000) {
+      return `${(frequency / 1000).toFixed(3)} GHz`;
+    } else if (frequency >= 1) {
+      return `${frequency.toFixed(3)} MHz`;
     } else {
-      return `${(freq * 1000).toFixed(0)} kHz`;
+      return `${(frequency * 1000).toFixed(0)} kHz`;
     }
   };
 

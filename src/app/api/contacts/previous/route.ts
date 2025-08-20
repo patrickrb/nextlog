@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       datetime: contact.datetime,
       band: contact.band,
       mode: contact.mode,
-      frequency: contact.frequency,
+      frequency: typeof contact.frequency === 'string' ? parseFloat(contact.frequency) : contact.frequency,
       rst_sent: contact.rst_sent,
       rst_received: contact.rst_received,
       name: contact.name,
