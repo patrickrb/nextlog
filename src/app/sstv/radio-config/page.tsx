@@ -198,30 +198,48 @@ export default function RadioConfigPage() {
   const requestUSBAccess = async () => {
     try {
       if ('usb' in navigator && navigator.usb) {
+        // Show FlexRadio-specific message if FlexRadio is selected
+        if (config.radio_model === 'Flex 6400') {
+          setError('FlexRadio devices typically use Ethernet/WiFi for CAT control via SmartSDR, not USB. Try selecting "Ethernet" as the CAT interface instead. USB enumeration is only for USB serial adapters and direct USB-connected radios.');
+          return;
+        }
+
         // Request access to USB devices - this requires user gesture
         const device = await navigator.usb.requestDevice({
           filters: [
             { vendorId: 0x0451 }, // Texas Instruments (common for radio interfaces)
-            { vendorId: 0x0403 }, // FTDI
-            { vendorId: 0x10C4 }, // Silicon Labs (CP210x)
-            { vendorId: 0x067B }, // Prolific
-            { vendorId: 0x1A86 }, // QinHeng Electronics (CH340)
+            { vendorId: 0x0403 }, // FTDI (very common for USB-serial adapters)
+            { vendorId: 0x10C4 }, // Silicon Labs (CP210x - very common)
+            { vendorId: 0x067B }, // Prolific (PL2303)
+            { vendorId: 0x1A86 }, // QinHeng Electronics (CH340/CH341)
             { vendorId: 0x0483 }, // STMicroelectronics
             { vendorId: 0x16C0 }, // Van Ooijen Technische Informatica (VOTI)
             { vendorId: 0x1B1C }, // Corsair
-            // Add more vendor IDs for common radio manufacturers
-            { vendorId: 0x0C26 }, // Icom
-            { vendorId: 0x04D8 }, // Microchip (used by some Kenwood)
+            // Radio manufacturer vendor IDs
+            { vendorId: 0x0C26 }, // Icom (IC-7300, IC-7610 direct USB)
+            { vendorId: 0x04D8 }, // Microchip (used by some Kenwood radios)
+            { vendorId: 0x0B05 }, // ASUSTeK (used by some Kenwood models)
+            { vendorId: 0x2341 }, // Arduino (used in some homebrew interfaces)
+            { vendorId: 0x1FC9 }, // NXP (used by some radio interfaces)
+            { vendorId: 0x239A }, // Adafruit (used in some homebrew interfaces)
+            // FlexRadio (though they typically use Ethernet, not USB)
+            { vendorId: 0x3016 }, // FlexRadio Systems
           ]
         });
         
         if (device) {
           // Re-enumerate devices to include the newly granted device
           await enumerateDevices();
+          setError(''); // Clear any previous errors
         }
       }
-    } catch (err) {
-      console.log('USB access request cancelled or failed:', err);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'NotFoundError') {
+        setError('No compatible USB devices found. This is normal for FlexRadio (uses Ethernet) or if no USB CAT interfaces are connected. For serial port CAT control (COM5), select "RS232" or "USB" as the CAT interface and enter the port name manually.');
+      } else {
+        console.log('USB access request cancelled or failed:', err);
+        setError('USB access was cancelled or failed. For COM port access, use "RS232" or "USB" interface and enter port manually.');
+      }
     }
   };
 
@@ -454,7 +472,7 @@ export default function RadioConfigPage() {
                         variant="outline"
                         size="sm"
                         onClick={requestUSBAccess}
-                        disabled={enumeratingDevices}
+                        disabled={enumeratingDevices || config.radio_model === 'Flex 6400'}
                       >
                         <Usb className="h-3 w-3 mr-1" />
                         USB Access
@@ -487,7 +505,7 @@ export default function RadioConfigPage() {
                       ))}
                       
                       {/* Enumerated USB devices */}
-                      {usbDevices.length > 0 && (
+                      {usbDevices.length > 0 && config.radio_model !== 'Flex 6400' && (
                         <>
                           <SelectItem value="separator-usb" disabled>
                             ─── USB Devices ───
@@ -504,7 +522,16 @@ export default function RadioConfigPage() {
                       )}
                     </SelectContent>
                   </Select>
-                  {usbDevices.length === 0 && (
+                  {config.radio_model === 'Flex 6400' && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-md dark:bg-blue-950 dark:border-blue-800">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <strong>FlexRadio Setup:</strong> FlexRadio 6400 uses SmartSDR via Ethernet/WiFi.
+                        Select &quot;Ethernet&quot; for CAT interface and ensure SmartSDR is running.
+                        For COM5 access, use a virtual CAT port program like OmniRig.
+                      </p>
+                    </div>
+                  )}
+                  {usbDevices.length === 0 && config.radio_model !== 'Flex 6400' && (
                     <p className="text-xs text-muted-foreground">
                       Click &quot;USB Access&quot; to enumerate connected USB devices
                     </p>
@@ -522,6 +549,22 @@ export default function RadioConfigPage() {
                     onChange={(e) => setConfig(prev => ({ ...prev, cat_port: e.target.value }))}
                     placeholder="e.g., COM3, /dev/ttyUSB0"
                   />
+                </div>
+              )}
+
+              {/* CAT Host/IP (for Ethernet interfaces) */}
+              {config.cat_interface === 'Ethernet' && (
+                <div className="space-y-2">
+                  <Label htmlFor="cat_port">Radio IP Address / Hostname</Label>
+                  <Input
+                    id="cat_port"
+                    value={config.cat_port || ''}
+                    onChange={(e) => setConfig(prev => ({ ...prev, cat_port: e.target.value }))}
+                    placeholder="e.g., 192.168.1.100, flex-6400.local"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter the IP address or hostname of your FlexRadio. Default port is usually 4532.
+                  </p>
                 </div>
               )}
 

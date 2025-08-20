@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
         },
         {
           model: 'Flex 6400',
-          cat_interfaces: ['CAT', 'FlexControl'],
+          cat_interfaces: ['Ethernet', 'FlexControl', 'CAT'],
           audio_sources: ['DAX Audio', 'LINE OUT'],
           dax_supported: true
         },
