@@ -489,7 +489,7 @@ export default function RadioConfigPage() {
                       {/* Enumerated USB devices */}
                       {usbDevices.length > 0 && (
                         <>
-                          <SelectItem value="" disabled>
+                          <SelectItem value="separator-usb" disabled>
                             ─── USB Devices ───
                           </SelectItem>
                           {usbDevices.map((device, index) => (
@@ -597,7 +597,7 @@ export default function RadioConfigPage() {
                       {/* Enumerated audio devices */}
                       {audioDevices.length > 0 && (
                         <>
-                          <SelectItem value="" disabled>
+                          <SelectItem value="separator-audio" disabled>
                             ─── Audio Input Devices ───
                           </SelectItem>
                           {audioDevices.map((device) => (
