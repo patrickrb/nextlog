@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { useUser } from '@/contexts/UserContext';
 import Navbar from '@/components/Navbar';
@@ -525,10 +526,12 @@ export default function SSTVPage() {
                     <p className="text-muted-foreground mb-4">
                       No radio configuration found. Configure your radio to start monitoring.
                     </p>
-                    <Button>
-                      <Settings className="h-4 w-4 mr-2" />
-                      Configure Radio
-                    </Button>
+                    <Link href="/sstv/radio-config">
+                      <Button>
+                        <Settings className="h-4 w-4 mr-2" />
+                        Configure Radio
+                      </Button>
+                    </Link>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -572,10 +575,12 @@ export default function SSTVPage() {
                       </div>
                     </div>
                     
-                    <Button variant="outline" size="sm">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Edit Configuration
-                    </Button>
+                    <Link href="/sstv/radio-config">
+                      <Button variant="outline" size="sm">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Edit Configuration
+                      </Button>
+                    </Link>
                   </div>
                 )}
               </CardContent>
