@@ -230,13 +230,17 @@ export default function RadioConfigPage() {
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'NotFoundError') {
         if (config.radio_model === 'Flex 6400') {
-          setError('No USB devices found. For FlexRadio COM5 setup, you may need USB-to-serial adapters or virtual COM port drivers. Select "RS232" as CAT interface and enter "COM5" as the port, or use "Ethernet" with your FlexRadio IP address.');
+          setError('No physical USB devices found. For SmartCAT/COM5 setup, select "RS232" as CAT interface and enter "COM5" as the port. USB Access only detects physical USB devices, not virtual COM ports created by SmartCAT or similar software.');
         } else {
-          setError('No compatible USB devices found. This is normal if no USB CAT interfaces are connected. For serial port CAT control (COM5), select "RS232" or "USB" as the CAT interface and enter the port name manually.');
+          setError('No compatible USB devices found. This is normal if no USB CAT interfaces are connected. For serial port CAT control (COM5), select "RS232" as the CAT interface and enter the port name manually.');
         }
       } else {
         console.log('USB access request cancelled or failed:', err);
-        setError('USB access was cancelled or failed. For COM port access, use "RS232" or "USB" interface and enter port manually.');
+        if (config.radio_model === 'Flex 6400') {
+          setError('USB access was cancelled or failed. For SmartCAT/COM5 setup, use "RS232" interface and enter "COM5" as the port.');
+        } else {
+          setError('USB access was cancelled or failed. For COM port access, use "RS232" interface and enter port manually.');
+        }
       }
     }
   };
@@ -525,15 +529,22 @@ export default function RadioConfigPage() {
                       <p className="text-sm text-blue-800 dark:text-blue-200">
                         <strong>FlexRadio Setup:</strong> FlexRadio 6400 supports multiple CAT methods:
                         <br />• <strong>Ethernet</strong> (recommended): Enter your radio&apos;s IP address
-                        <br />• <strong>RS232/USB</strong>: For COM5 or virtual COM ports from SmartSDR CAT
-                        <br />• <strong>USB Access</strong>: For USB-to-serial adapters or virtual drivers
+                        <br />• <strong>RS232</strong>: For SmartCAT COM5 setup - select &quot;RS232&quot; and enter &quot;COM5&quot; as port
+                        <br />• <strong>USB Access</strong>: Only for physical USB-to-serial adapters (not virtual COM ports)
+                        <br /><br />
+                        <strong>Note:</strong> If you&apos;re using SmartCAT with COM5, select &quot;RS232&quot; interface and enter &quot;COM5&quot; in the port field. USB Access will not detect virtual COM ports.
                       </p>
                     </div>
                   )}
                   {usbDevices.length === 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      Click &quot;USB Access&quot; to enumerate connected USB devices
-                    </p>
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p>Click &quot;USB Access&quot; to enumerate connected USB devices</p>
+                      {config.radio_model === 'Flex 6400' && (
+                        <p className="text-amber-600 dark:text-amber-400">
+                          <strong>SmartCAT users:</strong> Virtual COM ports won&apos;t appear here. Use &quot;RS232&quot; interface with &quot;COM5&quot; port instead.
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
