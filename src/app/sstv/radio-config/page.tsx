@@ -198,12 +198,6 @@ export default function RadioConfigPage() {
   const requestUSBAccess = async () => {
     try {
       if ('usb' in navigator && navigator.usb) {
-        // Show FlexRadio-specific message if FlexRadio is selected
-        if (config.radio_model === 'Flex 6400') {
-          setError('FlexRadio devices typically use Ethernet/WiFi for CAT control via SmartSDR, not USB. Try selecting "Ethernet" as the CAT interface instead. USB enumeration is only for USB serial adapters and direct USB-connected radios.');
-          return;
-        }
-
         // Request access to USB devices - this requires user gesture
         const device = await navigator.usb.requestDevice({
           filters: [
@@ -235,7 +229,11 @@ export default function RadioConfigPage() {
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'NotFoundError') {
-        setError('No compatible USB devices found. This is normal for FlexRadio (uses Ethernet) or if no USB CAT interfaces are connected. For serial port CAT control (COM5), select "RS232" or "USB" as the CAT interface and enter the port name manually.');
+        if (config.radio_model === 'Flex 6400') {
+          setError('No USB devices found. For FlexRadio COM5 setup, you may need USB-to-serial adapters or virtual COM port drivers. Select "RS232" as CAT interface and enter "COM5" as the port, or use "Ethernet" with your FlexRadio IP address.');
+        } else {
+          setError('No compatible USB devices found. This is normal if no USB CAT interfaces are connected. For serial port CAT control (COM5), select "RS232" or "USB" as the CAT interface and enter the port name manually.');
+        }
       } else {
         console.log('USB access request cancelled or failed:', err);
         setError('USB access was cancelled or failed. For COM port access, use "RS232" or "USB" interface and enter port manually.');
@@ -472,7 +470,7 @@ export default function RadioConfigPage() {
                         variant="outline"
                         size="sm"
                         onClick={requestUSBAccess}
-                        disabled={enumeratingDevices || config.radio_model === 'Flex 6400'}
+                        disabled={enumeratingDevices}
                       >
                         <Usb className="h-3 w-3 mr-1" />
                         USB Access
@@ -505,7 +503,7 @@ export default function RadioConfigPage() {
                       ))}
                       
                       {/* Enumerated USB devices */}
-                      {usbDevices.length > 0 && config.radio_model !== 'Flex 6400' && (
+                      {usbDevices.length > 0 && (
                         <>
                           <SelectItem value="separator-usb" disabled>
                             ─── USB Devices ───
@@ -525,13 +523,14 @@ export default function RadioConfigPage() {
                   {config.radio_model === 'Flex 6400' && (
                     <div className="p-3 bg-blue-50 border border-blue-200 rounded-md dark:bg-blue-950 dark:border-blue-800">
                       <p className="text-sm text-blue-800 dark:text-blue-200">
-                        <strong>FlexRadio Setup:</strong> FlexRadio 6400 uses SmartSDR via Ethernet/WiFi.
-                        Select &quot;Ethernet&quot; for CAT interface and ensure SmartSDR is running.
-                        For COM5 access, use a virtual CAT port program like OmniRig.
+                        <strong>FlexRadio Setup:</strong> FlexRadio 6400 supports multiple CAT methods:
+                        <br />• <strong>Ethernet</strong> (recommended): Enter your radio&apos;s IP address
+                        <br />• <strong>RS232/USB</strong>: For COM5 or virtual COM ports from SmartSDR CAT
+                        <br />• <strong>USB Access</strong>: For USB-to-serial adapters or virtual drivers
                       </p>
                     </div>
                   )}
-                  {usbDevices.length === 0 && config.radio_model !== 'Flex 6400' && (
+                  {usbDevices.length === 0 && (
                     <p className="text-xs text-muted-foreground">
                       Click &quot;USB Access&quot; to enumerate connected USB devices
                     </p>
