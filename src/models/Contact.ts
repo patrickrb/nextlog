@@ -240,6 +240,23 @@ export class Contact {
     return parseInt(result.rows[0].count);
   }
 
+  static async findByCallsignAndUserId(userId: number, callsign: string, limit?: number): Promise<ContactData[]> {
+    let sql = `
+      SELECT * FROM contacts 
+      WHERE user_id = $1 AND UPPER(callsign) = UPPER($2) 
+      ORDER BY datetime DESC
+    `;
+    const params = [userId, callsign];
+    
+    if (limit) {
+      sql += ` LIMIT $${params.length + 1}`;
+      params.push(limit);
+    }
+    
+    const result = await query(sql, params);
+    return result.rows;
+  }
+
   static async findWithStation(userId: number, limit?: number, offset?: number): Promise<(ContactData & { station?: { id: number; callsign: string; station_name: string } })[]> {
     let sql = `
       SELECT 
