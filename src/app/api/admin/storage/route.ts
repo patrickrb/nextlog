@@ -36,6 +36,29 @@ async function validateAzureBlobCredentials(config: StorageConfig): Promise<bool
 }
 
 /**
+ * Validate local storage configuration
+ */
+async function validateLocalStorageConfig(config: StorageConfig): Promise<boolean> {
+  try {
+    // For local storage, we only need a valid directory name
+    if (!config.container_name) {
+      return false;
+    }
+
+    // Validate the directory name doesn't contain dangerous characters
+    const containerName = config.container_name;
+    if (containerName.includes('..') || containerName.includes('/') || containerName.includes('\\')) {
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Local storage validation error:', error);
+    return false;
+  }
+}
+
+/**
  * GET /api/admin/storage - Get storage configurations
  */
 export const GET = requirePermission(Permission.VIEW_STORAGE_CONFIG)(
@@ -108,21 +131,39 @@ export const POST = requirePermission(Permission.EDIT_STORAGE_CONFIG)(
       }
 
       // Validate credentials if enabling
-      if (is_enabled && config_type === 'azure_blob') {
-        const isValid = await validateAzureBlobCredentials({
-          config_type,
-          account_name,
-          account_key,
-          container_name,
-          endpoint_url,
-          is_enabled
-        });
+      if (is_enabled) {
+        if (config_type === 'azure_blob') {
+          const isValid = await validateAzureBlobCredentials({
+            config_type,
+            account_name,
+            account_key,
+            container_name,
+            endpoint_url,
+            is_enabled
+          });
 
-        if (!isValid) {
-          return NextResponse.json(
-            { error: 'Invalid Azure Blob Storage credentials' },
-            { status: 400 }
-          );
+          if (!isValid) {
+            return NextResponse.json(
+              { error: 'Invalid Azure Blob Storage credentials' },
+              { status: 400 }
+            );
+          }
+        } else if (config_type === 'local_storage') {
+          const isValid = await validateLocalStorageConfig({
+            config_type,
+            account_name,
+            account_key,
+            container_name,
+            endpoint_url,
+            is_enabled
+          });
+
+          if (!isValid) {
+            return NextResponse.json(
+              { error: 'Invalid local storage configuration. Directory name must be provided and cannot contain path separators.' },
+              { status: 400 }
+            );
+          }
         }
       }
 
