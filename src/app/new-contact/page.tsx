@@ -13,6 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Loader2, Search, Check, AlertCircle, Radio, Clock } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import PreviousContacts from '@/components/PreviousContacts';
+import ContactLocationMap from '@/components/ContactLocationMap';
+
 
 interface Station {
   id: number;
@@ -66,11 +68,22 @@ export default function NewContactPage() {
     grid_locator?: string;
     latitude?: number;
     longitude?: number;
+    country?: string;
     error?: string;
   } | null>(null);
+
   const [previousContacts, setPreviousContacts] = useState<PreviousContact[]>([]);
   const [previousContactsLoading, setPreviousContactsLoading] = useState(false);
   const [previousContactsError, setPreviousContactsError] = useState('');
+
+  const [currentUser, setCurrentUser] = useState<{
+    id: number;
+    email: string;
+    name: string;
+    callsign?: string;
+    grid_locator?: string;
+  } | null>(null);
+
   const router = useRouter();
 
   const modes = ['SSB', 'CW', 'FM', 'AM', 'RTTY', 'PSK31', 'FT8', 'FT4', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'CONTESTIA'];
@@ -78,6 +91,7 @@ export default function NewContactPage() {
 
   useEffect(() => {
     fetchStations();
+    fetchCurrentUser();
   }, []);
 
   // Live logging effect - update datetime every second when enabled
@@ -250,6 +264,18 @@ export default function NewContactPage() {
       // Silent error handling for stations fetch
     } finally {
       setStationsLoading(false);
+    }
+  };
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch('/api/user');
+      if (response.ok) {
+        const userData = await response.json();
+        setCurrentUser(userData);
+      }
+    } catch {
+      // Silent error handling for user fetch
     }
   };
 
@@ -822,6 +848,30 @@ export default function NewContactPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Contact Location Map Section */}
+                {lookupResult && lookupResult.found && (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-medium text-foreground mb-4 pb-2 border-b border-border">
+                        Contact Location
+                      </h3>
+                    </div>
+                    <ContactLocationMap
+                      contact={{
+                        callsign: formData.callsign,
+                        name: formData.name,
+                        qth: formData.qth,
+                        grid_locator: formData.gridLocator,
+                        latitude: formData.latitude,
+                        longitude: formData.longitude,
+                        country: lookupResult.country
+                      }}
+                      user={currentUser}
+                      height="300px"
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="notes">Notes</Label>
