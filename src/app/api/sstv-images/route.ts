@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
         si.quality_score, si.radio_model, si.cat_interface, si.audio_source,
         si.callsign_detected, si.location_detected, si.description, si.tags,
         si.auto_linked, si.manual_review, si.created_at, si.updated_at,
-        c.callsign, c.datetime, c.frequency_mhz as contact_frequency, c.mode as contact_mode, c.qth
+        c.callsign, c.datetime, c.frequency as contact_frequency, c.mode as contact_mode, c.qth
        FROM sstv_images si
        LEFT JOIN contacts c ON si.contact_id = c.id
        ${whereClause}
