@@ -193,13 +193,30 @@ export default function SSTVPage() {
         }),
       });
 
+      const data = await response.json();
+      
       if (response.ok) {
-        const data = await response.json();
         setMonitorStatus(data.status);
         await fetchImages(); // Refresh images in case new ones were decoded
+      } else {
+        // Handle error response
+        setMonitorStatus({
+          ...monitorStatus,
+          active: false,
+          radio_connected: false,
+          audio_connected: false,
+          error_message: data.error_message || data.message || 'Failed to control monitor'
+        });
       }
     } catch (err) {
       console.error('Error toggling monitor:', err);
+      setMonitorStatus({
+        ...monitorStatus,
+        active: false,
+        radio_connected: false,
+        audio_connected: false,
+        error_message: 'Network error: Unable to communicate with monitoring service'
+      });
     }
   };
 
@@ -454,6 +471,16 @@ export default function SSTVPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  {/* Browser Limitation Warning */}
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Browser Limitation:</strong> Direct CAT control from web browsers is not supported due to security restrictions. 
+                      Web browsers cannot access COM ports or virtual devices like FlexRadio SmartCAT COM5. 
+                      For automatic SSTV monitoring, use external desktop software with API integration.
+                    </AlertDescription>
+                  </Alert>
+
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -507,6 +534,19 @@ export default function SSTVPage() {
                         {monitorStatus.audio_connected ? 'Connected' : 'Disconnected'}
                       </Badge>
                     </div>
+                  </div>
+
+                  {/* Alternative Solutions */}
+                  <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                    <h4 className="font-medium text-blue-700 dark:text-blue-300 mb-2">
+                      Alternative Solutions for SSTV Monitoring:
+                    </h4>
+                    <ul className="text-sm text-blue-600 dark:text-blue-400 space-y-1">
+                      <li>• Use MMSSTV with CAT control for automatic logging</li>
+                      <li>• Configure SmartSDR with external SSTV software</li>
+                      <li>• Import SSTV images manually via file upload</li>
+                      <li>• Use OmniRig to bridge CAT control with logging software</li>
+                    </ul>
                   </div>
                 </div>
               </CardContent>

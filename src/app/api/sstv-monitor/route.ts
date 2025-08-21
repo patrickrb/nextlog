@@ -210,14 +210,17 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // In a real implementation, this would start the monitoring service
+      // CAT control from a web browser has fundamental limitations due to security restrictions
+      // Virtual COM ports (like FlexRadio SmartCAT COM5) cannot be accessed via WebUSB
       return NextResponse.json({
-        success: true,
-        message: 'SSTV monitoring started',
+        success: false,
+        message: 'CAT control from web browser is not supported. Web browsers cannot access COM ports or virtual devices due to security restrictions.',
+        error_message: 'Browser Security Limitation: Direct CAT control requires desktop software. Consider using external logging applications that can connect to your radio.',
         status: {
-          active: true,
-          radio_connected: false, // Would be determined by actual connection attempt
-          audio_connected: false, // Would be determined by actual audio setup
+          active: false,
+          radio_connected: false,
+          audio_connected: false,
+          error_message: `CAT control via ${config.cat_interface} is not supported from web browsers. Virtual COM ports like ${config.cat_port || 'COM5'} cannot be accessed due to security restrictions. Use external CAT software with API integration instead.`
         }
       });
 
