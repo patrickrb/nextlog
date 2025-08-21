@@ -506,9 +506,12 @@ export default function NewContactPage() {
         }
       />
 
-      <main className="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left side - Contact Form */}
+            <div className="lg:col-span-2">
+              <Card>
             <CardHeader>
               <CardTitle>Log New Contact</CardTitle>
               <CardDescription>
@@ -650,17 +653,6 @@ export default function NewContactPage() {
                       </div>
                     )}
                   </div>
-
-                  {/* Previous Contacts Section */}
-                  {formData.callsign.trim() && (
-                    <div className="md:col-span-2">
-                      <PreviousContacts 
-                        contacts={previousContacts}
-                        loading={previousContactsLoading}
-                        error={previousContactsError}
-                      />
-                    </div>
-                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="frequency">Frequency (MHz) *</Label>
@@ -849,30 +841,6 @@ export default function NewContactPage() {
                   </div>
                 </div>
 
-                {/* Contact Location Map Section */}
-                {lookupResult && lookupResult.found && (
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-medium text-foreground mb-4 pb-2 border-b border-border">
-                        Contact Location
-                      </h3>
-                    </div>
-                    <ContactLocationMap
-                      contact={{
-                        callsign: formData.callsign,
-                        name: formData.name,
-                        qth: formData.qth,
-                        grid_locator: formData.gridLocator,
-                        latitude: formData.latitude,
-                        longitude: formData.longitude,
-                        country: lookupResult.country
-                      }}
-                      user={currentUser}
-                      height="300px"
-                    />
-                  </div>
-                )}
-
                 <div className="space-y-2">
                   <Label htmlFor="notes">Notes</Label>
                   <Textarea
@@ -921,6 +889,57 @@ export default function NewContactPage() {
               </form>
             </CardContent>
           </Card>
+            </div>
+
+            {/* Right side - Recent Contacts and Map */}
+            <div className="space-y-6">
+              {/* Recent Contacts Section */}
+              {formData.callsign.trim() && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Contacts</CardTitle>
+                    <CardDescription>
+                      Previous contacts with {formData.callsign}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <PreviousContacts 
+                      contacts={previousContacts}
+                      loading={previousContactsLoading}
+                      error={previousContactsError}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Contact Location Map Section */}
+              {(lookupResult?.found || formData.gridLocator || (formData.latitude && formData.longitude)) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Contact Location</CardTitle>
+                    <CardDescription>
+                      Geographic location of {formData.callsign || 'the contact'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ContactLocationMap
+                      contact={{
+                        callsign: formData.callsign,
+                        name: formData.name,
+                        qth: formData.qth,
+                        grid_locator: formData.gridLocator,
+                        latitude: formData.latitude,
+                        longitude: formData.longitude,
+                        country: lookupResult?.country
+                      }}
+                      user={currentUser}
+                      height="300px"
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
         </div>
       </main>
     </div>
