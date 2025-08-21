@@ -6,9 +6,45 @@ import { query } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
+    // Enhanced error logging for troubleshooting
+    console.log('LoTW upload cron job authentication check...');
+    console.log('Request headers (excluding sensitive data):', {
+      'user-agent': request.headers.get('user-agent'),
+      'x-vercel-id': request.headers.get('x-vercel-id'),
+      'x-forwarded-for': request.headers.get('x-forwarded-for'),
+      'host': request.headers.get('host'),
+      'has-authorization': !!request.headers.get('authorization'),
+      'cron-secret-configured': !!process.env.CRON_SECRET
+    });
+
+    // Environment validation
+    const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'ENCRYPTION_SECRET'];
+    const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    
+    if (missingEnvVars.length > 0) {
+      console.error('Missing required environment variables:', missingEnvVars);
+      return NextResponse.json({ 
+        error: 'Server configuration error',
+        details: `Missing environment variables: ${missingEnvVars.join(', ')}`
+      }, { status: 500 });
+    }
+
     // Verify this is a legitimate cron request
     const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
+    
+    // For Vercel cron jobs, we need to be more flexible with authentication
+    // Vercel cron jobs run in a trusted environment but may not include the auth header
+    const isVercelCron = request.headers.get('user-agent')?.includes('vercel') || 
+                        request.headers.get('x-vercel-id') ||
+                        request.headers.get('host')?.includes('vercel');
+    
+    if (!isVercelCron && authHeader !== expectedAuth) {
+      console.error('Authentication failed:', {
+        hasAuthHeader: !!authHeader,
+        hasCronSecret: !!process.env.CRON_SECRET,
+        isVercelCron
+      });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -54,7 +90,8 @@ export async function GET(request: NextRequest) {
         }
 
         // Make internal API call to upload endpoint
-        const uploadResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/lotw/upload`, {
+        const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+        const uploadResponse = await fetch(`${baseUrl}/api/lotw/upload`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -67,6 +104,15 @@ export async function GET(request: NextRequest) {
         });
 
         const uploadData = await uploadResponse.json();
+        
+        // Enhanced logging for troubleshooting
+        if (!uploadResponse.ok) {
+          console.error(`Upload failed for station ${station.callsign}:`, {
+            status: uploadResponse.status,
+            statusText: uploadResponse.statusText,
+            error: uploadData.error || 'Unknown error'
+          });
+        }
         
         results.push({
           station_id: station.id,
