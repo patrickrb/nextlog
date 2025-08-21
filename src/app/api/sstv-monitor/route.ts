@@ -87,19 +87,19 @@ export async function GET(request: NextRequest) {
       supported_radios: [
         {
           model: 'IC-7300',
-          cat_interfaces: ['USB', 'CI-V'],
+          cat_interfaces: ['USB', 'RS232', 'CI-V'],
           audio_sources: ['USB Audio', 'LINE OUT'],
           dax_supported: false
         },
         {
           model: 'Flex 6400',
-          cat_interfaces: ['Ethernet', 'FlexControl', 'CAT'],
+          cat_interfaces: ['Ethernet', 'RS232', 'FlexControl', 'CAT'],
           audio_sources: ['DAX Audio', 'LINE OUT'],
           dax_supported: true
         },
         {
           model: 'IC-7610',
-          cat_interfaces: ['USB', 'CI-V', 'Ethernet'],
+          cat_interfaces: ['USB', 'RS232', 'CI-V', 'Ethernet'],
           audio_sources: ['USB Audio', 'LINE OUT'],
           dax_supported: false
         },
