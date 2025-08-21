@@ -50,6 +50,23 @@ export async function GET(request: NextRequest) {
 
     console.log('Starting LoTW upload cron job...');
     
+    // Check if lotw_credentials table exists before proceeding
+    const tableCheckResult = await query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' AND table_name = 'lotw_credentials'
+    `);
+    
+    if (tableCheckResult.rows.length === 0) {
+      console.log('lotw_credentials table does not exist, skipping LoTW upload cron job');
+      return NextResponse.json({
+        success: true,
+        message: 'LoTW upload skipped - lotw_credentials table not found',
+        processed_stations: 0,
+        results: []
+      });
+    }
+    
     // Get all active stations that have LoTW credentials configured
     const stationsResult = await query(`
       SELECT DISTINCT s.id, s.callsign, s.user_id
@@ -64,29 +81,40 @@ export async function GET(request: NextRequest) {
         AND lc.id IS NOT NULL
     `);
 
+    // Check if lotw_upload_logs table exists before proceeding with duplicate checks
+    const uploadLogsTableCheckResult = await query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' AND table_name = 'lotw_upload_logs'
+    `);
+    
+    const hasUploadLogsTable = uploadLogsTableCheckResult.rows.length > 0;
+
     const results = [];
     
     for (const station of stationsResult.rows) {
       try {
         // Check if we've uploaded recently (within last hour) to avoid duplicate uploads
-        const recentUploadResult = await query(
-          `SELECT id FROM lotw_upload_logs 
-           WHERE station_id = $1 
-             AND started_at > NOW() - INTERVAL '1 hour'
-             AND status IN ('processing', 'completed')
-           LIMIT 1`,
-          [station.id]
-        );
+        if (hasUploadLogsTable) {
+          const recentUploadResult = await query(
+            `SELECT id FROM lotw_upload_logs 
+             WHERE station_id = $1 
+               AND started_at > NOW() - INTERVAL '1 hour'
+               AND status IN ('processing', 'completed')
+             LIMIT 1`,
+            [station.id]
+          );
 
-        if (recentUploadResult.rows.length > 0) {
-          console.log(`Skipping station ${station.callsign} - uploaded recently`);
-          results.push({
-            station_id: station.id,
-            callsign: station.callsign,
-            status: 'skipped',
-            reason: 'uploaded_recently'
-          });
-          continue;
+          if (recentUploadResult.rows.length > 0) {
+            console.log(`Skipping station ${station.callsign} - uploaded recently`);
+            results.push({
+              station_id: station.id,
+              callsign: station.callsign,
+              status: 'skipped',
+              reason: 'uploaded_recently'
+            });
+            continue;
+          }
         }
 
         // Make internal API call to upload endpoint
