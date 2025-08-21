@@ -156,12 +156,18 @@ export default function ContactLocationMap({ contact, user, height = '300px' }: 
                             (contact.grid_locator && contact.grid_locator.length >= 4);
 
   if (!hasContactLocation) {
+    const isCallsignEmpty = !contact.callsign?.trim();
     return (
       <div className="w-full bg-muted/50 rounded-lg border border-dashed border-muted-foreground/50 flex items-center justify-center text-center p-6" style={{ height }}>
         <div>
-          <p className="text-muted-foreground font-medium">📍 No Location Data</p>
+          <p className="text-muted-foreground font-medium">
+            📍 {isCallsignEmpty ? 'No Contact Selected' : 'No Location Data'}
+          </p>
           <p className="text-sm text-muted-foreground mt-1">
-            Location information not available for this callsign
+            {isCallsignEmpty 
+              ? 'Enter a callsign or location data to see the contact on the map'
+              : 'Location information not available for this callsign'
+            }
           </p>
         </div>
       </div>

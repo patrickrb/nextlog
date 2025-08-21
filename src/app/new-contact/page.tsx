@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Loader2, Search, Check, AlertCircle, Radio, Clock } from 'lucide-react';
+import { ArrowLeft, Loader2, Check, AlertCircle, Radio, Clock } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import PreviousContacts from '@/components/PreviousContacts';
 import ContactLocationMap from '@/components/ContactLocationMap';
@@ -189,19 +189,11 @@ export default function NewContactPage() {
         e.preventDefault();
         document.getElementById('callsign')?.focus();
       }
-      
-      // Ctrl+Q to lookup callsign
-      if ((e.ctrlKey || e.metaKey) && e.key === 'q') {
-        e.preventDefault();
-        if (formData.callsign.trim()) {
-          handleCallsignLookup();
-        }
-      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [formData.callsign, handleCallsignLookup]);
+  }, []);
 
   const fetchPreviousContacts = useCallback(async (callsign: string) => {
     if (!callsign.trim()) {
@@ -237,14 +229,27 @@ export default function NewContactPage() {
     }
   }, []);
 
-  // Fetch previous contacts when callsign changes
+  // Fetch previous contacts when callsign changes - real-time updates
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       fetchPreviousContacts(formData.callsign);
-    }, 500); // Debounce for 500ms to avoid too many API calls
+    }, 300); // Reduced debounce for more responsive updates
 
     return () => clearTimeout(timeoutId);
   }, [formData.callsign, fetchPreviousContacts]);
+
+  // Auto-trigger QRZ lookup when callsign changes - real-time updates  
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (formData.callsign.trim()) {
+        handleCallsignLookup();
+      } else {
+        setLookupResult(null);
+      }
+    }, 300); // Same debounce as previous contacts for consistency
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.callsign, handleCallsignLookup]);
 
   const fetchStations = async () => {
     try {
@@ -363,10 +368,9 @@ export default function NewContactPage() {
     // Real-time validation
     validateField(name, value);
     
-    // Clear lookup result when callsign changes
+    // Clear lookup result when callsign changes - auto-lookup will be triggered by useEffect
     if (name === 'callsign') {
       setLookupResult(null);
-      // Previous contacts will be fetched via useEffect with debounce
     }
   };
 
@@ -506,9 +510,12 @@ export default function NewContactPage() {
         }
       />
 
-      <main className="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left side - Contact Form */}
+            <div className="lg:col-span-2">
+              <Card>
             <CardHeader>
               <CardTitle>Log New Contact</CardTitle>
               <CardDescription>
@@ -594,7 +601,7 @@ export default function NewContactPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="callsign">Callsign *</Label>
-                    <div className="flex space-x-2">
+                    <div className="relative">
                       <Input
                         type="text"
                         name="callsign"
@@ -603,22 +610,13 @@ export default function NewContactPage() {
                         value={formData.callsign}
                         onChange={handleChange}
                         placeholder="e.g., W1AW"
-                        className={`flex-1 ${validationErrors.callsign ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                        className={`${validationErrors.callsign ? 'border-destructive focus-visible:ring-destructive' : ''} ${lookupLoading ? 'pr-10' : ''}`}
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={handleCallsignLookup}
-                        disabled={!formData.callsign.trim() || lookupLoading}
-                        title="Lookup callsign on QRZ.com"
-                      >
-                        {lookupLoading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Search className="h-4 w-4" />
-                        )}
-                      </Button>
+                      {lookupLoading && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        </div>
+                      )}
                     </div>
                     
                     {/* Validation error */}
@@ -650,17 +648,6 @@ export default function NewContactPage() {
                       </div>
                     )}
                   </div>
-
-                  {/* Previous Contacts Section */}
-                  {formData.callsign.trim() && (
-                    <div className="md:col-span-2">
-                      <PreviousContacts 
-                        contacts={previousContacts}
-                        loading={previousContactsLoading}
-                        error={previousContactsError}
-                      />
-                    </div>
-                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="frequency">Frequency (MHz) *</Label>
@@ -849,30 +836,6 @@ export default function NewContactPage() {
                   </div>
                 </div>
 
-                {/* Contact Location Map Section */}
-                {lookupResult && lookupResult.found && (
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-medium text-foreground mb-4 pb-2 border-b border-border">
-                        Contact Location
-                      </h3>
-                    </div>
-                    <ContactLocationMap
-                      contact={{
-                        callsign: formData.callsign,
-                        name: formData.name,
-                        qth: formData.qth,
-                        grid_locator: formData.gridLocator,
-                        latitude: formData.latitude,
-                        longitude: formData.longitude,
-                        country: lookupResult.country
-                      }}
-                      user={currentUser}
-                      height="300px"
-                    />
-                  </div>
-                )}
-
                 <div className="space-y-2">
                   <Label htmlFor="notes">Notes</Label>
                   <Textarea
@@ -888,10 +851,9 @@ export default function NewContactPage() {
                 {/* Keyboard shortcuts help */}
                 <div className="bg-muted/30 border border-border rounded-md p-3">
                   <p className="text-sm text-muted-foreground font-medium mb-2">⌨️ Keyboard Shortcuts:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs text-muted-foreground">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-muted-foreground">
                     <div><kbd className="px-1 py-0.5 bg-muted border rounded text-xs">Ctrl+Enter</kbd> Save contact</div>
                     <div><kbd className="px-1 py-0.5 bg-muted border rounded text-xs">Ctrl+L</kbd> Focus callsign</div>
-                    <div><kbd className="px-1 py-0.5 bg-muted border rounded text-xs">Ctrl+Q</kbd> QRZ lookup</div>
                   </div>
                 </div>
 
@@ -921,6 +883,60 @@ export default function NewContactPage() {
               </form>
             </CardContent>
           </Card>
+            </div>
+
+            {/* Right side - Map and Recent Contacts */}
+            <div className="space-y-6">
+              {/* Contact Location Map Section - now on top */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contact Location</CardTitle>
+                  <CardDescription>
+                    {formData.callsign.trim()
+                      ? `Geographic location of ${formData.callsign}`
+                      : 'Contact location will be shown here when location data is available'
+                    }
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ContactLocationMap
+                    contact={{
+                      callsign: formData.callsign,
+                      name: formData.name,
+                      qth: formData.qth,
+                      grid_locator: formData.gridLocator,
+                      latitude: formData.latitude,
+                      longitude: formData.longitude,
+                      country: lookupResult?.country
+                    }}
+                    user={currentUser}
+                    height="300px"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Recent Contacts Section - now below map */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Contacts</CardTitle>
+                  <CardDescription>
+                    {formData.callsign.trim() 
+                      ? `Previous contacts with ${formData.callsign}`
+                      : 'Previous contacts will appear here when you enter a callsign'
+                    }
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PreviousContacts 
+                    contacts={previousContacts}
+                    loading={previousContactsLoading}
+                    error={previousContactsError}
+                    callsign={formData.callsign}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </main>
     </div>
