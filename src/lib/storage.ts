@@ -1,10 +1,12 @@
 // Cloud storage service for handling file uploads
 import { query } from './db';
 import { decrypt } from './crypto';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 interface StorageConfig {
   id: number;
-  config_type: 'azure_blob' | 'aws_s3';
+  config_type: 'azure_blob' | 'aws_s3' | 'local_storage';
   account_name: string;
   account_key: string;
   container_name: string;
@@ -161,6 +163,51 @@ async function uploadToS3(
 }
 
 /**
+ * Upload file to local storage
+ */
+async function uploadToLocalStorage(
+  config: StorageConfig,
+  filename: string,
+  buffer: Buffer,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _mimeType: string
+): Promise<UploadResult> {
+  try {
+    // Use container_name as the base directory for local storage
+    const baseDir = config.container_name || 'uploads';
+    const uploadsDir = path.join(process.cwd(), 'public', baseDir);
+    const filePath = path.join(uploadsDir, filename);
+    const fileDir = path.dirname(filePath);
+    
+    // Ensure the directory exists
+    await fs.mkdir(fileDir, { recursive: true });
+    
+    // Write the file
+    await fs.writeFile(filePath, buffer);
+    
+    const storage_path = filename;
+    const storage_url = `/${baseDir}/${filename}`;
+    
+    console.log(`Successfully uploaded to local storage: ${storage_url}`);
+    
+    return {
+      success: true,
+      storage_path,
+      storage_url,
+      storage_type: 'local_storage'
+    };
+  } catch (error) {
+    console.error('Local storage upload error:', error);
+    return {
+      success: false,
+      storage_path: '',
+      storage_type: 'local_storage',
+      error: `Failed to upload to local storage: ${error instanceof Error ? error.message : String(error)}`
+    };
+  }
+}
+
+/**
  * Upload file to configured cloud storage
  */
 export async function uploadFile(
@@ -188,6 +235,8 @@ export async function uploadFile(
       return uploadToAzureBlob(config, filename, buffer, mimeType);
     case 'aws_s3':
       return uploadToS3(config, filename, buffer, mimeType);
+    case 'local_storage':
+      return uploadToLocalStorage(config, filename, buffer, mimeType);
     default:
       return {
         success: false,
@@ -233,6 +282,34 @@ async function deleteFromAzureBlob(config: StorageConfig, storagePath: string): 
 }
 
 /**
+ * Delete file from local storage
+ */
+async function deleteFromLocalStorage(config: StorageConfig, storagePath: string): Promise<boolean> {
+  try {
+    const baseDir = config.container_name || 'uploads';
+    const filePath = path.join(process.cwd(), 'public', baseDir, storagePath);
+    
+    // Check if file exists before trying to delete
+    try {
+      await fs.access(filePath);
+      await fs.unlink(filePath);
+      console.log(`Successfully deleted from local storage: ${storagePath}`);
+      return true;
+    } catch (error) {
+      // File doesn't exist, consider it successfully deleted
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        console.log(`File not found, considering it deleted: ${storagePath}`);
+        return true;
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error('Local storage delete error:', error);
+    return false;
+  }
+}
+
+/**
  * Delete file from cloud storage
  */
 export async function deleteFile(storagePath: string, storageType: string): Promise<boolean> {
@@ -250,6 +327,8 @@ export async function deleteFile(storagePath: string, storageType: string): Prom
         // TODO: Implement AWS S3 deletion
         console.log(`AWS S3 deletion not implemented: ${storagePath}`);
         return true;
+      case 'local_storage':
+        return await deleteFromLocalStorage(config, storagePath);
       default:
         console.log(`Unknown storage type: ${storageType}`);
         return false;

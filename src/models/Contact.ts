@@ -37,6 +37,16 @@ export interface ContactData {
   qsl_lotw?: boolean;
   qsl_lotw_date?: Date;
   lotw_match_status?: 'confirmed' | 'partial' | 'mismatch' | null;
+  // QRZ QSL fields
+  qrz_qsl_sent?: string;
+  qrz_qsl_rcvd?: string;
+  qrz_qsl_sent_date?: Date;
+  qrz_qsl_rcvd_date?: Date;
+  // QRZ sync fields
+  qrz_sync_status?: 'not_synced' | 'synced' | 'error' | 'already_exists';
+  qrz_sync_date?: Date;
+  qrz_logbook_id?: number;
+  qrz_sync_error?: string;
   // Additional fields
   qso_date_off?: Date;
   time_off?: string;
@@ -230,6 +240,23 @@ export class Contact {
     return parseInt(result.rows[0].count);
   }
 
+  static async findByCallsignAndUserId(userId: number, callsign: string, limit?: number): Promise<ContactData[]> {
+    let sql = `
+      SELECT * FROM contacts 
+      WHERE user_id = $1 AND UPPER(callsign) = UPPER($2) 
+      ORDER BY datetime DESC
+    `;
+    const params = [userId, callsign];
+    
+    if (limit) {
+      sql += ` LIMIT $${params.length + 1}`;
+      params.push(limit);
+    }
+    
+    const result = await query(sql, params);
+    return result.rows;
+  }
+
   static async findWithStation(userId: number, limit?: number, offset?: number): Promise<(ContactData & { station?: { id: number; callsign: string; station_name: string } })[]> {
     let sql = `
       SELECT 
@@ -263,5 +290,148 @@ export class Contact {
         station_name: row.station_name
       } : undefined
     }));
+  }
+
+  static async updateQrzQsl(
+    id: number, 
+    qslSent?: 'Y' | 'N' | 'R' | 'Q',
+    qslRcvd?: 'Y' | 'N' | 'R' | 'Q'
+  ): Promise<ContactData | null> {
+    const updates = [];
+    const values = [];
+    let paramCount = 1;
+    
+    if (qslSent !== undefined) {
+      updates.push(`qrz_qsl_sent = $${paramCount}`);
+      values.push(qslSent);
+      paramCount++;
+      
+      if (qslSent === 'Y') {
+        updates.push(`qrz_qsl_sent_date = CURRENT_DATE`);
+      }
+    }
+    
+    if (qslRcvd !== undefined) {
+      updates.push(`qrz_qsl_rcvd = $${paramCount}`);
+      values.push(qslRcvd);
+      paramCount++;
+      
+      if (qslRcvd === 'Y') {
+        updates.push(`qrz_qsl_rcvd_date = CURRENT_DATE`);
+      }
+    }
+    
+    if (updates.length === 0) {
+      return null;
+    }
+    
+    values.push(id);
+    const sql = `
+      UPDATE contacts 
+      SET ${updates.join(', ')}
+      WHERE id = $${paramCount}
+      RETURNING *
+    `;
+    
+    const result = await query(sql, values);
+    return result.rows[0] || null;
+  }
+
+  static async findQrzNotSent(userId: number, limit?: number): Promise<ContactData[]> {
+    let sql = `
+      SELECT * FROM contacts 
+      WHERE user_id = $1 AND (qrz_qsl_sent IS NULL OR qrz_qsl_sent != 'Y')
+      ORDER BY datetime DESC
+    `;
+    const params = [userId];
+    
+    if (limit) {
+      sql += ` LIMIT $${params.length + 1}`;
+      params.push(limit);
+    }
+    
+    const result = await query(sql, params);
+    return result.rows;
+  }
+
+  static async findQrzSentNotConfirmed(userId: number, limit?: number): Promise<ContactData[]> {
+    let sql = `
+      SELECT * FROM contacts 
+      WHERE user_id = $1 AND qrz_qsl_sent = 'Y' AND (qrz_qsl_rcvd IS NULL OR qrz_qsl_rcvd != 'Y')
+      ORDER BY datetime DESC
+    `;
+    const params = [userId];
+    
+    if (limit) {
+      sql += ` LIMIT $${params.length + 1}`;
+      params.push(limit);
+    }
+    
+    const result = await query(sql, params);
+    return result.rows;
+  }
+
+  // Helper function to match QSO records by callsign, date, and time
+  static matchQSO(contact: ContactData, qrzQSO: { call: string; qso_date: string; time_on: string }): boolean {
+    if (!contact.callsign || !qrzQSO.call) return false;
+    
+    // Normalize callsigns for comparison
+    const contactCall = contact.callsign.toUpperCase().trim();
+    const qrzCall = qrzQSO.call.toUpperCase().trim();
+    
+    if (contactCall !== qrzCall) return false;
+    
+    // Compare dates
+    const contactDate = new Date(contact.datetime).toISOString().split('T')[0].replace(/-/g, '');
+    const qrzDate = qrzQSO.qso_date.replace(/-/g, '');
+    
+    if (contactDate !== qrzDate) return false;
+    
+    // Compare times (within a few minutes tolerance)
+    const contactTime = new Date(contact.datetime).toISOString().split('T')[1].substring(0, 5).replace(':', '');
+    const qrzTime = qrzQSO.time_on.replace(':', '');
+    
+    // Allow 5 minute tolerance
+    const contactMinutes = parseInt(contactTime.substring(0, 2)) * 60 + parseInt(contactTime.substring(2));
+    const qrzMinutes = parseInt(qrzTime.substring(0, 2)) * 60 + parseInt(qrzTime.substring(2));
+    
+    return Math.abs(contactMinutes - qrzMinutes) <= 5;
+  }
+
+  // QRZ sync status management
+  static async updateQrzSyncStatus(
+    id: number, 
+    status: 'not_synced' | 'synced' | 'error' | 'already_exists',
+    logbookId?: number,
+    error?: string
+  ): Promise<ContactData | null> {
+    const updates = ['qrz_sync_status = $2', 'qrz_sync_date = NOW()'];
+    const values: (number | string)[] = [id, status];
+    let paramCount = 3;
+
+    if (logbookId !== undefined) {
+      updates.push(`qrz_logbook_id = $${paramCount}`);
+      values.push(logbookId);
+      paramCount++;
+    }
+
+    if (error !== undefined) {
+      updates.push(`qrz_sync_error = $${paramCount}`);
+      values.push(error);
+      paramCount++;
+    } else if (status === 'synced' || status === 'already_exists') {
+      // Clear error on successful sync
+      updates.push('qrz_sync_error = NULL');
+    }
+
+    const sql = `
+      UPDATE contacts 
+      SET ${updates.join(', ')}
+      WHERE id = $1
+      RETURNING *
+    `;
+
+    const result = await query(sql, values);
+    return result.rows[0] || null;
   }
 }

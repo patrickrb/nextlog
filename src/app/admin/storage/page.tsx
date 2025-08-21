@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertCircle, CheckCircle, Database, Eye, EyeOff, Trash2, Edit } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -40,7 +41,7 @@ export default function StorageConfigPage() {
   
   // Form state for new/edit config
   const [formData, setFormData] = useState({
-    config_type: 'azure_blob',
+    config_type: 'local_storage',
     account_name: '',
     account_key: '',
     container_name: '',
@@ -235,71 +236,112 @@ export default function StorageConfigPage() {
             <CardHeader>
               <CardTitle>{editingConfig ? 'Edit Storage Configuration' : 'Add Storage Configuration'}</CardTitle>
               <CardDescription>
-                Configure Azure Blob Storage for file uploads and backups
+                Configure storage for file uploads and backups
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="account_name">Storage Account Name *</Label>
-                    <Input
-                      id="account_name"
-                      value={formData.account_name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, account_name: e.target.value }))}
-                      placeholder="mystorageaccount"
-                      required
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="config_type">Storage Type *</Label>
+                  <Select
+                    value={formData.config_type}
+                    onValueChange={(value) => setFormData(prev => ({ ...prev, config_type: value }))}
+                    disabled={!!editingConfig}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select storage type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="local_storage">Local File Storage</SelectItem>
+                      <SelectItem value="azure_blob">Azure Blob Storage</SelectItem>
+                      <SelectItem value="aws_s3">AWS S3 (Coming Soon)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {editingConfig && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Storage type cannot be changed after creation
+                    </p>
+                  )}
+                </div>
 
+                {formData.config_type === 'local_storage' ? (
                   <div>
-                    <Label htmlFor="container_name">Container Name *</Label>
+                    <Label htmlFor="container_name">Directory Name *</Label>
                     <Input
                       id="container_name"
                       value={formData.container_name}
                       onChange={(e) => setFormData(prev => ({ ...prev, container_name: e.target.value }))}
-                      placeholder="nextlog-files"
+                      placeholder="uploads"
                       required
                     />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Files will be stored in public/{formData.container_name || 'uploads'}/
+                    </p>
                   </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="account_name">Storage Account Name *</Label>
+                        <Input
+                          id="account_name"
+                          value={formData.account_name}
+                          onChange={(e) => setFormData(prev => ({ ...prev, account_name: e.target.value }))}
+                          placeholder="mystorageaccount"
+                          required={formData.config_type === 'azure_blob'}
+                        />
+                      </div>
 
-                <div>
-                  <Label htmlFor="account_key">Account Key {editingConfig ? '(leave empty to keep current)' : '*'}</Label>
-                  <div className="relative">
-                    <Input
-                      id="account_key"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.account_key}
-                      onChange={(e) => setFormData(prev => ({ ...prev, account_key: e.target.value }))}
-                      placeholder={editingConfig ? "Leave empty to keep current key" : "Enter your Azure storage account key"}
-                      required={!editingConfig}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
+                      <div>
+                        <Label htmlFor="container_name">Container Name *</Label>
+                        <Input
+                          id="container_name"
+                          value={formData.container_name}
+                          onChange={(e) => setFormData(prev => ({ ...prev, container_name: e.target.value }))}
+                          placeholder="nextlog-files"
+                          required
+                        />
+                      </div>
+                    </div>
 
-                <div>
-                  <Label htmlFor="endpoint_url">Custom Endpoint (Optional)</Label>
-                  <Input
-                    id="endpoint_url"
-                    value={formData.endpoint_url}
-                    onChange={(e) => setFormData(prev => ({ ...prev, endpoint_url: e.target.value }))}
-                    placeholder="https://mystorageaccount.blob.core.windows.net"
-                  />
-                </div>
+                    <div>
+                      <Label htmlFor="account_key">Account Key {editingConfig ? '(leave empty to keep current)' : '*'}</Label>
+                      <div className="relative">
+                        <Input
+                          id="account_key"
+                          type={showPassword ? "text" : "password"}
+                          value={formData.account_key}
+                          onChange={(e) => setFormData(prev => ({ ...prev, account_key: e.target.value }))}
+                          placeholder={editingConfig ? "Leave empty to keep current key" : "Enter your storage account key"}
+                          required={!editingConfig && formData.config_type === 'azure_blob'}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="endpoint_url">Custom Endpoint (Optional)</Label>
+                      <Input
+                        id="endpoint_url"
+                        value={formData.endpoint_url}
+                        onChange={(e) => setFormData(prev => ({ ...prev, endpoint_url: e.target.value }))}
+                        placeholder="https://mystorageaccount.blob.core.windows.net"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="flex items-center space-x-2">
                   <Switch

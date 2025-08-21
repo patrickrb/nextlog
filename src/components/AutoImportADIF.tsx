@@ -4,7 +4,8 @@ import React, { useState } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import EnhancedProgressBar from '@/components/EnhancedProgressBar';
 
 interface ADIFRecord {
   fields: { [key: string]: string };
@@ -19,6 +20,17 @@ interface ImportResult {
   details?: string[];
 }
 
+interface ProgressData {
+  processed: number;
+  total: number;
+  imported: number;
+  skipped: number;
+  errors: number;
+  rate?: number;
+  estimatedTimeRemaining?: number;
+  message?: string;
+}
+
 interface ChunkResult extends ImportResult {
   chunkIndex: number;
   totalChunks: number;
@@ -27,8 +39,7 @@ interface ChunkResult extends ImportResult {
 export default function AutoImportADIF({ stationId }: { stationId: number }) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [currentChunk, setCurrentChunk] = useState(0);
-  const [totalChunks, setTotalChunks] = useState(0);
+  const [progressData, setProgressData] = useState<ProgressData | null>(null);
   const [results, setResults] = useState<ChunkResult[]>([]);
   const [finalSummary, setFinalSummary] = useState<string>('');
   const [error, setError] = useState<string>('');
@@ -112,8 +123,6 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
 
     setIsProcessing(true);
     setProgress(0);
-    setCurrentChunk(0);
-    setTotalChunks(0);
     setResults([]);
     setFinalSummary('');
     setError('');
@@ -133,9 +142,19 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
       // Determine chunk size (200 records per chunk for reliable Vercel processing)
       const chunkSize = 200;
       const chunks = Math.ceil(allRecords.length / chunkSize);
-      setTotalChunks(chunks);
 
       console.log(`Splitting into ${chunks} chunks of ${chunkSize} records each`);
+
+      // Set initial progress data immediately to ensure progress bar shows
+      const startTime = Date.now();
+      setProgressData({
+        processed: 0,
+        total: allRecords.length,
+        imported: 0,
+        skipped: 0,
+        errors: 0,
+        message: 'Starting ADIF auto-import...'
+      });
 
       // Process each chunk
       const allResults: ChunkResult[] = [];
@@ -144,14 +163,31 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
       let totalErrors = 0;
 
       for (let i = 0; i < chunks; i++) {
-        setCurrentChunk(i + 1);
-        setProgress(((i) / chunks) * 100);
+        setProgress(Math.round(((i) / chunks) * 100));
 
         const startIdx = i * chunkSize;
         const endIdx = Math.min(startIdx + chunkSize, allRecords.length);
         const chunkRecords = allRecords.slice(startIdx, endIdx);
 
         console.log(`Processing chunk ${i + 1}/${chunks} (${chunkRecords.length} records)`);
+
+        // Update progress data for current chunk
+        const currentProgress = Math.round(((i) / chunks) * 100);
+        const processed = startIdx;
+        const rate = i > 0 ? Math.round(processed / ((Date.now() - startTime) / 1000)) : 0;
+        const remaining = allRecords.length - processed;
+        const estimatedTime = rate > 0 ? Math.round(remaining / rate) : 0;
+
+        setProgressData({
+          processed,
+          total: allRecords.length,
+          imported: totalImported,
+          skipped: totalSkipped,
+          errors: totalErrors,
+          rate: rate > 0 ? rate : undefined,
+          estimatedTimeRemaining: estimatedTime > 0 ? estimatedTime : undefined,
+          message: `Processing chunk ${i + 1} of ${chunks}... (${currentProgress}%)`
+        });
 
         try {
           // Create ADIF content for this chunk
@@ -209,9 +245,24 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
       }
 
       setProgress(100);
+      
+      // Update with final results
+      setProgressData({
+        processed: allRecords.length,
+        total: allRecords.length,
+        imported: totalImported,
+        skipped: totalSkipped,
+        errors: totalErrors,
+        message: `Auto-import completed: ${totalImported} imported, ${totalSkipped} skipped, ${totalErrors} errors across ${chunks} chunks`
+      });
+      
       setFinalSummary(
         `Import completed! ${totalImported} imported, ${totalSkipped} skipped, ${totalErrors} errors across ${chunks} chunks.`
       );
+
+      // Ensure minimum display time for progress bar (at least 1 second)
+      const minDisplayTime = new Promise(resolve => setTimeout(resolve, 1000));
+      await minDisplayTime;
 
     } catch (err) {
       console.error('Auto-import failed:', err);
@@ -260,13 +311,22 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
 
         {isProcessing && (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Processing chunk {currentChunk} of {totalChunks}</span>
-                <span>{Math.round(progress)}%</span>
+            {progressData ? (
+              <EnhancedProgressBar 
+                progress={progressData}
+                percentage={progress}
+                isComplete={finalSummary !== ''}
+                hasError={!!error}
+              />
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Starting auto-import...</span>
+                </div>
+                <Progress value={0} className="w-full" />
               </div>
-              <Progress value={progress} className="w-full" />
-            </div>
+            )}
           </div>
         )}
 
