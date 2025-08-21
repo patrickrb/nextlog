@@ -894,50 +894,53 @@ export default function NewContactPage() {
             {/* Right side - Recent Contacts and Map */}
             <div className="space-y-6">
               {/* Recent Contacts Section */}
-              {formData.callsign.trim() && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Recent Contacts</CardTitle>
-                    <CardDescription>
-                      Previous contacts with {formData.callsign}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <PreviousContacts 
-                      contacts={previousContacts}
-                      loading={previousContactsLoading}
-                      error={previousContactsError}
-                    />
-                  </CardContent>
-                </Card>
-              )}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Contacts</CardTitle>
+                  <CardDescription>
+                    {formData.callsign.trim() 
+                      ? `Previous contacts with ${formData.callsign}`
+                      : 'Previous contacts will appear here when you enter a callsign'
+                    }
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PreviousContacts 
+                    contacts={previousContacts}
+                    loading={previousContactsLoading}
+                    error={previousContactsError}
+                    callsign={formData.callsign}
+                  />
+                </CardContent>
+              </Card>
 
               {/* Contact Location Map Section */}
-              {(lookupResult?.found || formData.gridLocator || (formData.latitude && formData.longitude)) && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Contact Location</CardTitle>
-                    <CardDescription>
-                      Geographic location of {formData.callsign || 'the contact'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ContactLocationMap
-                      contact={{
-                        callsign: formData.callsign,
-                        name: formData.name,
-                        qth: formData.qth,
-                        grid_locator: formData.gridLocator,
-                        latitude: formData.latitude,
-                        longitude: formData.longitude,
-                        country: lookupResult?.country
-                      }}
-                      user={currentUser}
-                      height="300px"
-                    />
-                  </CardContent>
-                </Card>
-              )}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Contact Location</CardTitle>
+                  <CardDescription>
+                    {formData.callsign.trim()
+                      ? `Geographic location of ${formData.callsign}`
+                      : 'Contact location will be shown here when location data is available'
+                    }
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ContactLocationMap
+                    contact={{
+                      callsign: formData.callsign,
+                      name: formData.name,
+                      qth: formData.qth,
+                      grid_locator: formData.gridLocator,
+                      latitude: formData.latitude,
+                      longitude: formData.longitude,
+                      country: lookupResult?.country
+                    }}
+                    user={currentUser}
+                    height="300px"
+                  />
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>

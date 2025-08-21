@@ -20,9 +20,10 @@ interface PreviousContactsProps {
   contacts: PreviousContact[];
   loading: boolean;
   error?: string;
+  callsign?: string;
 }
 
-export default function PreviousContacts({ contacts, loading, error }: PreviousContactsProps) {
+export default function PreviousContacts({ contacts, loading, error, callsign }: PreviousContactsProps) {
   if (loading) {
     return (
       <div className="space-y-3 animate-pulse">
@@ -47,6 +48,16 @@ export default function PreviousContacts({ contacts, loading, error }: PreviousC
   }
 
   if (contacts.length === 0) {
+    if (!callsign?.trim()) {
+      return (
+        <div className="text-sm text-muted-foreground bg-muted/30 border border-border rounded-md p-4 text-center">
+          <Radio className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <p className="font-medium">Enter a callsign to see previous contacts</p>
+          <p className="text-xs mt-1">Your contact history with that station will appear here</p>
+        </div>
+      );
+    }
+    
     return (
       <div className="text-sm text-muted-foreground bg-muted/30 border border-border rounded-md p-4 text-center">
         <Radio className="h-8 w-8 mx-auto mb-2 opacity-50" />
