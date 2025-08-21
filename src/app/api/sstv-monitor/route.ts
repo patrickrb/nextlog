@@ -290,7 +290,7 @@ export async function POST(request: NextRequest) {
           if (ipPattern.test(config.cat_port.trim())) {
             // Validate IP address ranges
             const parts = config.cat_port.trim().split('.').map(Number);
-            if (parts.every(part => part >= 0 && part <= 255)) {
+            if (parts.every((part: number) => part >= 0 && part <= 255)) {
               radioConnected = true;
               infoMessages.push(`✓ IP address ${config.cat_port} format is valid. Ensure radio is accessible on network.`);
             } else {
