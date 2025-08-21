@@ -137,13 +137,20 @@ export default function RadioConfigPage() {
       const response = await fetch('/api/sstv-monitor');
       if (response.ok) {
         const data = await response.json();
+        console.log('Frontend: Fetched data from API:', data);
         if (data.config) {
-          setConfig({
+          const loadedConfig = {
             ...data.config,
             frequency_mhz: data.config.frequency_mhz || 14.230,
             cat_baud_rate: data.config.cat_baud_rate || 9600
-          });
+          };
+          console.log('Frontend: Setting config state with:', loadedConfig);
+          setConfig(loadedConfig);
+        } else {
+          console.log('Frontend: No config found in API response');
         }
+      } else {
+        console.error('Frontend: Failed to fetch config, response not ok:', response.status);
       }
     } catch (err) {
       console.error('Error fetching existing config:', err);
@@ -287,6 +294,22 @@ export default function RadioConfigPage() {
         return;
       }
 
+      console.log('Frontend: Saving configuration:', {
+        radio_model: config.radio_model,
+        cat_interface: config.cat_interface,
+        audio_source: config.audio_source,
+        audio_device: config.audio_device,
+        full_config: config
+      });
+
+      const configToSave = {
+        ...config,
+        frequency_mhz: config.frequency_mhz ? parseFloat(config.frequency_mhz.toString()) : null,
+        cat_baud_rate: config.cat_baud_rate ? parseInt(config.cat_baud_rate.toString()) : 9600
+      };
+
+      console.log('Frontend: Final config being sent to API:', configToSave);
+
       const response = await fetch('/api/sstv-monitor', {
         method: 'POST',
         headers: {
@@ -294,21 +317,20 @@ export default function RadioConfigPage() {
         },
         body: JSON.stringify({
           action: 'start',
-          config: {
-            ...config,
-            frequency_mhz: config.frequency_mhz ? parseFloat(config.frequency_mhz.toString()) : null,
-            cat_baud_rate: config.cat_baud_rate ? parseInt(config.cat_baud_rate.toString()) : 9600
-          }
+          config: configToSave
         }),
       });
 
       if (response.ok) {
+        const responseData = await response.json();
+        console.log('Frontend: Save response:', responseData);
         setSuccess('Radio configuration saved successfully!');
         setTimeout(() => {
           router.push('/sstv');
         }, 2000);
       } else {
         const data = await response.json();
+        console.error('Frontend: Save failed with response:', data);
         setError(data.error || 'Failed to save configuration');
       }
     } catch (err) {
@@ -640,7 +662,10 @@ export default function RadioConfigPage() {
                   </div>
                   <Select
                     value={config.audio_source}
-                    onValueChange={(value) => setConfig(prev => ({ ...prev, audio_source: value }))}
+                    onValueChange={(value) => {
+                      console.log('Frontend: Audio source changed to:', value);
+                      setConfig(prev => ({ ...prev, audio_source: value }));
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select audio source" />
@@ -669,8 +694,27 @@ export default function RadioConfigPage() {
                           ))}
                         </>
                       )}
+                      
+                      {/* Show currently selected enumerated device even if not in current list */}
+                      {config.audio_source && 
+                       config.audio_source.startsWith('AudioInput:') && 
+                       !audioDevices.some(device => `AudioInput:${device.deviceId}` === config.audio_source) && (
+                        <SelectItem value={config.audio_source}>
+                          {config.audio_source.replace('AudioInput:', 'Previously Selected Device: ')}
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
+                  {config.audio_source && config.audio_source.startsWith('AudioInput:') && (
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p>✓ Enumerated audio device selected</p>
+                      {!audioDevices.some(device => `AudioInput:${device.deviceId}` === config.audio_source) && (
+                        <p className="text-amber-600">
+                          ⚠ Previously selected device not currently available. Click &quot;Audio Access&quot; to refresh device list.
+                        </p>
+                      )}
+                    </div>
+                  )}
                   {audioDevices.length === 0 && (
                     <p className="text-xs text-muted-foreground">
                       Click &quot;Audio Access&quot; to enumerate available audio input devices
