@@ -12,13 +12,28 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Loader2, Search, Check, AlertCircle, Radio, Clock } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import PreviousContacts from '@/components/PreviousContacts';
 import ContactLocationMap from '@/components/ContactLocationMap';
+
 
 interface Station {
   id: number;
   callsign: string;
   station_name: string;
   is_default: boolean;
+}
+
+interface PreviousContact {
+  id: number;
+  datetime: string;
+  band: string;
+  mode: string;
+  frequency: number | string;
+  rst_sent?: string;
+  rst_received?: string;
+  name?: string;
+  qth?: string;
+  notes?: string;
 }
 
 export default function NewContactPage() {
@@ -56,6 +71,11 @@ export default function NewContactPage() {
     country?: string;
     error?: string;
   } | null>(null);
+
+  const [previousContacts, setPreviousContacts] = useState<PreviousContact[]>([]);
+  const [previousContactsLoading, setPreviousContactsLoading] = useState(false);
+  const [previousContactsError, setPreviousContactsError] = useState('');
+
   const [currentUser, setCurrentUser] = useState<{
     id: number;
     email: string;
@@ -63,6 +83,7 @@ export default function NewContactPage() {
     callsign?: string;
     grid_locator?: string;
   } | null>(null);
+
   const router = useRouter();
 
   const modes = ['SSB', 'CW', 'FM', 'AM', 'RTTY', 'PSK31', 'FT8', 'FT4', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'CONTESTIA'];
@@ -181,6 +202,49 @@ export default function NewContactPage() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [formData.callsign, handleCallsignLookup]);
+
+  const fetchPreviousContacts = useCallback(async (callsign: string) => {
+    if (!callsign.trim()) {
+      setPreviousContacts([]);
+      return;
+    }
+
+    setPreviousContactsLoading(true);
+    setPreviousContactsError('');
+
+    try {
+      const response = await fetch(`/api/contacts/previous?callsign=${encodeURIComponent(callsign)}&limit=10`);
+      
+      if (response.status === 401) {
+        // User not authenticated, but don't show error for this
+        setPreviousContacts([]);
+        return;
+      }
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setPreviousContacts(data.contacts || []);
+      } else {
+        setPreviousContactsError(data.error || 'Failed to fetch previous contacts');
+        setPreviousContacts([]);
+      }
+    } catch {
+      setPreviousContactsError('Network error while fetching previous contacts');
+      setPreviousContacts([]);
+    } finally {
+      setPreviousContactsLoading(false);
+    }
+  }, []);
+
+  // Fetch previous contacts when callsign changes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchPreviousContacts(formData.callsign);
+    }, 500); // Debounce for 500ms to avoid too many API calls
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.callsign, fetchPreviousContacts]);
 
   const fetchStations = async () => {
     try {
@@ -302,6 +366,7 @@ export default function NewContactPage() {
     // Clear lookup result when callsign changes
     if (name === 'callsign') {
       setLookupResult(null);
+      // Previous contacts will be fetched via useEffect with debounce
     }
   };
 
@@ -585,6 +650,17 @@ export default function NewContactPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Previous Contacts Section */}
+                  {formData.callsign.trim() && (
+                    <div className="md:col-span-2">
+                      <PreviousContacts 
+                        contacts={previousContacts}
+                        loading={previousContactsLoading}
+                        error={previousContactsError}
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label htmlFor="frequency">Frequency (MHz) *</Label>
