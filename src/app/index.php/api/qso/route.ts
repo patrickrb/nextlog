@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyApiKey, canWrite, canAccessStation } from '@/lib/api-auth';
 import { query } from '@/lib/db';
+import { addCorsHeaders, createCorsPreflightResponse } from '@/lib/cors';
 
 // Simple ADIF parser for SmartSDR format
 function parseAdif(adifString: string): Record<string, string> {
@@ -70,6 +71,11 @@ function formatQsoForCloudlog(row: Record<string, unknown>) {
     created_at: row.created_at,
     updated_at: row.updated_at
   };
+}
+
+// OPTIONS /index.php/api/qso - Handle CORS preflight requests
+export async function OPTIONS() {
+  return createCorsPreflightResponse();
 }
 
 // GET /index.php/api/qso - Retrieve QSOs

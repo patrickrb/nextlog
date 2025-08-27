@@ -3,9 +3,15 @@
 // This endpoint provides basic API information similar to Cloudlog
 
 import { NextResponse } from 'next/server';
+import { addCorsHeaders, createCorsPreflightResponse } from '@/lib/cors';
+
+// OPTIONS /api/cloudlog - Handle CORS preflight requests
+export async function OPTIONS() {
+  return createCorsPreflightResponse();
+}
 
 export async function GET() {
-  return NextResponse.json({
+  const response = NextResponse.json({
     success: true,
     api_name: 'Nextlog Cloudlog-compatible API',
     api_version: '1.0.0',
@@ -40,4 +46,6 @@ export async function GET() {
     created_by: 'Nextlog - Modern Amateur Radio Logging',
     documentation: '/api/cloudlog/docs'
   });
+  
+  return addCorsHeaders(response);
 }
