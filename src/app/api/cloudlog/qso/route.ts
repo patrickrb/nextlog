@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyApiKey, canWrite, canAccessStation } from '@/lib/api-auth';
 import { query } from '@/lib/db';
+import { addCorsHeaders, createCorsPreflightResponse } from '@/lib/cors';
 
 // Helper function to add rate limit headers
 function addRateLimitHeaders(response: NextResponse, remaining: number, limit: number) {
@@ -57,15 +58,21 @@ function formatQsoForCloudlog(row: Record<string, unknown>) {
   };
 }
 
+// OPTIONS /api/cloudlog/qso - Handle CORS preflight requests
+export async function OPTIONS() {
+  return createCorsPreflightResponse();
+}
+
 // GET /api/cloudlog/qso - Retrieve QSOs
 export async function GET(request: NextRequest) {
   const authResult = await verifyApiKey(request);
   
   if (!authResult.success) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: authResult.error
     }, { status: authResult.statusCode || 500 });
+    return addCorsHeaders(response);
   }
 
   const auth = authResult.auth!;
@@ -104,10 +111,11 @@ export async function GET(request: NextRequest) {
         queryParams.push(stationIdNum);
         paramIndex++;
       } else {
-        return NextResponse.json({
+        const response = NextResponse.json({
           success: false,
           error: 'Access denied to specified station'
         }, { status: 403 });
+        return addCorsHeaders(response);
       }
     } else if (auth.stationId) {
       // If API key is tied to specific station, filter by that
@@ -176,14 +184,16 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return addRateLimitHeaders(response, 999, auth.rateLimitPerHour); // TODO: Get actual remaining from rate limiter
+    addRateLimitHeaders(response, 999, auth.rateLimitPerHour); // TODO: Get actual remaining from rate limiter
+    return addCorsHeaders(response);
 
   } catch (error) {
     console.error('QSO retrieval error:', error);
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: 'Internal server error'
     }, { status: 500 });
+    return addCorsHeaders(response);
   }
 }
 
@@ -192,19 +202,21 @@ export async function POST(request: NextRequest) {
   const authResult = await verifyApiKey(request);
   
   if (!authResult.success) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: authResult.error
     }, { status: authResult.statusCode || 500 });
+    return addCorsHeaders(response);
   }
 
   const auth = authResult.auth!;
 
   if (!canWrite(auth)) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: 'API key does not have write permissions'
     }, { status: 403 });
+    return addCorsHeaders(response);
   }
 
   try {
@@ -214,10 +226,11 @@ export async function POST(request: NextRequest) {
     const requiredFields = ['callsign', 'band', 'mode'];
     for (const field of requiredFields) {
       if (!body[field]) {
-        return NextResponse.json({
+        const response = NextResponse.json({
           success: false,
           error: `Missing required field: ${field}`
         }, { status: 400 });
+        return addCorsHeaders(response);
       }
     }
 
@@ -229,10 +242,11 @@ export async function POST(request: NextRequest) {
         if (await canAccessStation(auth, requestedStationId)) {
           stationId = requestedStationId;
         } else {
-          return NextResponse.json({
+          const response = NextResponse.json({
             success: false,
             error: 'Access denied to specified station'
           }, { status: 403 });
+          return addCorsHeaders(response);
         }
       } else {
         // Get user's default station
@@ -247,10 +261,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (!stationId) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'No station specified and no default station found'
       }, { status: 400 });
+      return addCorsHeaders(response);
     }
 
     // Build datetime from qso_date and time_on
@@ -312,14 +327,16 @@ export async function POST(request: NextRequest) {
       created_at: insertResult.rows[0].created_at
     });
 
-    return addRateLimitHeaders(response, 999, auth.rateLimitPerHour);
+    addRateLimitHeaders(response, 999, auth.rateLimitPerHour);
+    return addCorsHeaders(response);
 
   } catch (error) {
     console.error('QSO creation error:', error);
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: 'Internal server error'
     }, { status: 500 });
+    return addCorsHeaders(response);
   }
 }
 
@@ -328,29 +345,32 @@ export async function PUT(request: NextRequest) {
   const authResult = await verifyApiKey(request);
   
   if (!authResult.success) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: authResult.error
     }, { status: authResult.statusCode || 500 });
+    return addCorsHeaders(response);
   }
 
   const auth = authResult.auth!;
 
   if (!canWrite(auth)) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: 'API key does not have write permissions'
     }, { status: 403 });
+    return addCorsHeaders(response);
   }
 
   try {
     const body = await request.json();
 
     if (!body.id) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'QSO ID is required for updates'
       }, { status: 400 });
+      return addCorsHeaders(response);
     }
 
     const qsoId = parseInt(body.id);
@@ -362,25 +382,28 @@ export async function PUT(request: NextRequest) {
     );
 
     if (qsoResult.rows.length === 0) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'QSO not found'
       }, { status: 404 });
+      return addCorsHeaders(response);
     }
 
     const qso = qsoResult.rows[0];
     if (qso.user_id !== auth.userId) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'Access denied'
       }, { status: 403 });
+      return addCorsHeaders(response);
     }
 
     if (auth.stationId && qso.station_id !== auth.stationId) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'Access denied to QSO from different station'
       }, { status: 403 });
+      return addCorsHeaders(response);
     }
 
     // Build update query dynamically
@@ -424,10 +447,11 @@ export async function PUT(request: NextRequest) {
     }
 
     if (updateFields.length === 0) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'No valid fields to update'
       }, { status: 400 });
+      return addCorsHeaders(response);
     }
 
     // Add updated_at
@@ -453,14 +477,16 @@ export async function PUT(request: NextRequest) {
       updated_at: updateResult.rows[0].updated_at
     });
 
-    return addRateLimitHeaders(response, 999, auth.rateLimitPerHour);
+    addRateLimitHeaders(response, 999, auth.rateLimitPerHour);
+    return addCorsHeaders(response);
 
   } catch (error) {
     console.error('QSO update error:', error);
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: 'Internal server error'
     }, { status: 500 });
+    return addCorsHeaders(response);
   }
 }
 
@@ -469,19 +495,21 @@ export async function DELETE(request: NextRequest) {
   const authResult = await verifyApiKey(request);
   
   if (!authResult.success) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: authResult.error
     }, { status: authResult.statusCode || 500 });
+    return addCorsHeaders(response);
   }
 
   const auth = authResult.auth!;
 
   if (!canWrite(auth)) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: 'API key does not have write permissions'
     }, { status: 403 });
+    return addCorsHeaders(response);
   }
 
   try {
@@ -489,10 +517,11 @@ export async function DELETE(request: NextRequest) {
     const qsoIdParam = url.searchParams.get('id');
 
     if (!qsoIdParam) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'QSO ID is required'
       }, { status: 400 });
+      return addCorsHeaders(response);
     }
 
     const qsoId = parseInt(qsoIdParam);
@@ -504,25 +533,28 @@ export async function DELETE(request: NextRequest) {
     );
 
     if (qsoResult.rows.length === 0) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'QSO not found'
       }, { status: 404 });
+      return addCorsHeaders(response);
     }
 
     const qso = qsoResult.rows[0];
     if (qso.user_id !== auth.userId) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'Access denied'
       }, { status: 403 });
+      return addCorsHeaders(response);
     }
 
     if (auth.stationId && qso.station_id !== auth.stationId) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'Access denied to QSO from different station'
       }, { status: 403 });
+      return addCorsHeaders(response);
     }
 
     // Delete the QSO
@@ -533,13 +565,15 @@ export async function DELETE(request: NextRequest) {
       message: `QSO with ${qso.callsign} deleted successfully`
     });
 
-    return addRateLimitHeaders(response, 999, auth.rateLimitPerHour);
+    addRateLimitHeaders(response, 999, auth.rateLimitPerHour);
+    return addCorsHeaders(response);
 
   } catch (error) {
     console.error('QSO deletion error:', error);
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: 'Internal server error'
     }, { status: 500 });
+    return addCorsHeaders(response);
   }
 }

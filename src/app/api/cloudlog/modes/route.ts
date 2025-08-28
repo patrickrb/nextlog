@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyApiKey } from '@/lib/api-auth';
+import { addCorsHeaders, createCorsPreflightResponse } from '@/lib/cors';
 
 // Standard amateur radio modes organized by category
 const AMATEUR_MODES = {
@@ -55,14 +56,20 @@ const AMATEUR_MODES = {
   ]
 };
 
+// OPTIONS /api/cloudlog/modes - Handle CORS preflight requests
+export async function OPTIONS() {
+  return createCorsPreflightResponse();
+}
+
 export async function GET(request: NextRequest) {
   const authResult = await verifyApiKey(request);
   
   if (!authResult.success) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: authResult.error
     }, { status: authResult.statusCode || 500 });
+    return addCorsHeaders(response);
   }
 
   const auth = authResult.auth!;
@@ -129,13 +136,14 @@ export async function GET(request: NextRequest) {
     response.headers.set('X-RateLimit-Limit', auth.rateLimitPerHour.toString());
     response.headers.set('X-RateLimit-Remaining', '999'); // TODO: Get actual remaining
     
-    return response;
+    return addCorsHeaders(response);
 
   } catch (error) {
     console.error('Modes retrieval error:', error);
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: 'Internal server error'
     }, { status: 500 });
+    return addCorsHeaders(response);
   }
 }
