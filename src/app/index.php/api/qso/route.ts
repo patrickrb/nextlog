@@ -83,10 +83,11 @@ export async function GET(request: NextRequest) {
   const authResult = await verifyApiKey(request);
   
   if (!authResult.success) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: authResult.error
     }, { status: authResult.statusCode || 500 });
+    return addCorsHeaders(response);
   }
 
   const auth = authResult.auth!;
@@ -125,10 +126,11 @@ export async function GET(request: NextRequest) {
         queryParams.push(stationIdNum);
         paramIndex++;
       } else {
-        return NextResponse.json({
+        const response = NextResponse.json({
           success: false,
           error: 'Access denied to specified station'
         }, { status: 403 });
+        return addCorsHeaders(response);
       }
     } else if (auth.stationId) {
       // If API key is tied to specific station, filter by that
@@ -197,14 +199,15 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return addRateLimitHeaders(response, 999, auth.rateLimitPerHour);
+    return addCorsHeaders(addRateLimitHeaders(response, 999, auth.rateLimitPerHour));
 
   } catch (error) {
     console.error('QSO retrieval error:', error);
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: 'Internal server error'
     }, { status: 500 });
+    return addCorsHeaders(response);
   }
 }
 
@@ -213,19 +216,21 @@ export async function POST(request: NextRequest) {
   const authResult = await verifyApiKey(request);
   
   if (!authResult.success) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: authResult.error
     }, { status: authResult.statusCode || 500 });
+    return addCorsHeaders(response);
   }
 
   const auth = authResult.auth!;
 
   if (!canWrite(auth)) {
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: 'API key does not have write permissions'
     }, { status: 403 });
+    return addCorsHeaders(response);
   }
 
   try {
@@ -264,10 +269,11 @@ export async function POST(request: NextRequest) {
     const requiredFields = ['callsign', 'band', 'mode'];
     for (const field of requiredFields) {
       if (!body[field]) {
-        return NextResponse.json({
+        const response = NextResponse.json({
           success: false,
           error: `Missing required field: ${field}`
         }, { status: 400 });
+        return addCorsHeaders(response);
       }
     }
 
@@ -279,10 +285,11 @@ export async function POST(request: NextRequest) {
         if (await canAccessStation(auth, requestedStationId)) {
           stationId = requestedStationId;
         } else {
-          return NextResponse.json({
+          const response = NextResponse.json({
             success: false,
             error: 'Access denied to specified station'
           }, { status: 403 });
+          return addCorsHeaders(response);
         }
       } else {
         // Get user's default station
@@ -297,10 +304,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (!stationId) {
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: false,
         error: 'No station specified and no default station found'
       }, { status: 400 });
+      return addCorsHeaders(response);
     }
 
     // Build datetime from qso_date and time_on
@@ -370,14 +378,15 @@ export async function POST(request: NextRequest) {
       created_at: insertResult.rows[0].created_at
     });
 
-    return addRateLimitHeaders(response, 999, auth.rateLimitPerHour);
+    return addCorsHeaders(addRateLimitHeaders(response, 999, auth.rateLimitPerHour));
 
   } catch (error) {
     console.error('QSO creation error:', error);
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: false,
       error: 'Internal server error'
     }, { status: 500 });
+    return addCorsHeaders(response);
   }
 }
 

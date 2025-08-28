@@ -53,7 +53,7 @@ export function createCorsPreflightResponse(): Response {
  * Wrap a JSON response with CORS headers
  * Convenience function for API endpoints
  */
-export function corsJsonResponse(data: any, init?: ResponseInit): NextResponse {
+export function corsJsonResponse(data: unknown, init?: ResponseInit): NextResponse {
   const response = NextResponse.json(data, init);
   return addCorsHeaders(response);
 }
