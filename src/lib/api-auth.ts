@@ -86,7 +86,7 @@ export async function verifyApiKey(request: NextRequest): Promise<ApiAuthResult>
         ak.user_id,
         ak.station_id,
         ak.key_name,
-        ak.is_enabled,
+        ak.is_active,
         ak.read_only,
         ak.rate_limit_per_hour,
         ak.expires_at,
@@ -107,7 +107,7 @@ export async function verifyApiKey(request: NextRequest): Promise<ApiAuthResult>
     const keyRecord = keyResult.rows[0];
 
     // Check if API key is enabled
-    if (!keyRecord.is_enabled) {
+    if (!keyRecord.is_active) {
       return {
         success: false,
         error: 'API key is disabled',

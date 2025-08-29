@@ -59,7 +59,7 @@ interface ApiKey {
   id: number;
   key_name: string;
   api_key: string;
-  is_enabled: boolean;
+  is_active: boolean;
   read_only: boolean;
   rate_limit_per_hour: number;
   last_used_at?: string;
@@ -167,7 +167,7 @@ export default function ApiKeyManager({ stationId }: { stationId: number }) {
       const response = await fetch(`/api/stations/${stationId}/api-keys/${keyId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_enabled: enabled })
+        body: JSON.stringify({ is_active: enabled })
       });
 
       if (response.ok) {
@@ -288,8 +288,8 @@ export default function ApiKeyManager({ stationId }: { stationId: number }) {
                     <div className="flex items-center space-x-3">
                       <h4 className="font-medium">{apiKey.key_name}</h4>
                       <div className="flex items-center space-x-2">
-                        <Badge variant={apiKey.is_enabled ? "default" : "secondary"}>
-                          {apiKey.is_enabled ? "Enabled" : "Disabled"}
+                        <Badge variant={apiKey.is_active ? "default" : "secondary"}>
+                          {apiKey.is_active ? "Enabled" : "Disabled"}
                         </Badge>
                         {apiKey.read_only && (
                           <Badge variant="outline">Read Only</Badge>
@@ -304,7 +304,7 @@ export default function ApiKeyManager({ stationId }: { stationId: number }) {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Switch
-                        checked={apiKey.is_enabled}
+                        checked={apiKey.is_active}
                         onCheckedChange={(checked) => handleToggleEnabled(apiKey.id, checked)}
                       />
                       <Button

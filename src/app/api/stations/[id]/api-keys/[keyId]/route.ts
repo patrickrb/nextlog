@@ -39,7 +39,7 @@ export async function PATCH(
     }
 
     // Build update query dynamically based on provided fields
-    const allowedFields = ['is_enabled', 'read_only', 'rate_limit_per_hour'];
+    const allowedFields = ['is_active', 'read_only', 'rate_limit_per_hour'];
     const updates: string[] = [];
     const values: unknown[] = [];
     let paramIndex = 1;
@@ -70,7 +70,7 @@ export async function PATCH(
       UPDATE api_keys 
       SET ${updates.join(', ')}
       WHERE id = $${whereParam}
-      RETURNING id, key_name, is_enabled, read_only, rate_limit_per_hour, updated_at
+      RETURNING id, key_name, is_active, read_only, rate_limit_per_hour, updated_at
     `;
 
     const updateResult = await query(updateQuery, values);
