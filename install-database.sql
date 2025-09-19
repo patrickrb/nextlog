@@ -191,10 +191,15 @@ CREATE TABLE api_keys (
     -- Permissions and status
     permissions JSONB DEFAULT '{"read": true, "write": false, "delete": false}',
     is_active BOOLEAN DEFAULT TRUE,
+    read_only BOOLEAN DEFAULT FALSE,
     
     -- Usage tracking
     last_used_at TIMESTAMP,
     usage_count INTEGER DEFAULT 0,
+    total_requests INTEGER DEFAULT 0,
+    
+    -- Rate limiting
+    rate_limit_per_hour INTEGER DEFAULT 1000,
     
     -- Expiration
     expires_at TIMESTAMP,

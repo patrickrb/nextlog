@@ -91,6 +91,15 @@ export async function POST() {
     if (!apiKeysColumnNames.includes('description')) {
       migrations.push('ALTER TABLE api_keys ADD COLUMN description TEXT');
     }
+    if (!apiKeysColumnNames.includes('read_only')) {
+      migrations.push('ALTER TABLE api_keys ADD COLUMN read_only BOOLEAN DEFAULT FALSE');
+    }
+    if (!apiKeysColumnNames.includes('total_requests')) {
+      migrations.push('ALTER TABLE api_keys ADD COLUMN total_requests INTEGER DEFAULT 0');
+    }
+    if (!apiKeysColumnNames.includes('rate_limit_per_hour')) {
+      migrations.push('ALTER TABLE api_keys ADD COLUMN rate_limit_per_hour INTEGER DEFAULT 1000');
+    }
     
     // Stations table migrations
     const stationsNeededColumns = [
