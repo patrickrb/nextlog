@@ -1,6 +1,35 @@
 // API health check endpoint
 // GET: Health check with API key validation
 // This endpoint provides a simple health check that validates API keys for client applications
+//
+// Usage:
+//   GET /api/ping
+//   Authorization: Bearer <api_key>
+//   OR X-API-Key: <api_key>
+//   OR ?api_key=<api_key>
+//
+// Response (success):
+//   {
+//     "success": true,
+//     "message": "API is healthy and API key is valid",
+//     "api_name": "Nextlog API",
+//     "api_version": "1.0.0", 
+//     "timestamp": "2025-09-19T22:45:28.588Z",
+//     "authenticated": true,
+//     "api_key_info": {
+//       "key_name": "My API Key",
+//       "is_read_only": false,
+//       "rate_limit_per_hour": 1000,
+//       "station_id": 1
+//     }
+//   }
+//
+// Response (error):
+//   {
+//     "success": false,
+//     "error": "API key is required",
+//     "timestamp": "2025-09-19T22:45:28.588Z"
+//   }
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyApiKey } from '@/lib/api-auth';
