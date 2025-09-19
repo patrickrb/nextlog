@@ -50,9 +50,11 @@ export async function GET(
         key_name,
         api_key,
         is_active,
+        read_only,
         permissions,
         last_used_at,
-        usage_count,
+        total_requests,
+        rate_limit_per_hour,
         created_at,
         expires_at,
         description
