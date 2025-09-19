@@ -43,27 +43,63 @@ export async function OPTIONS() {
 // GET /api/ping - Health check with API key validation
 export async function GET(request: NextRequest) {
   try {
-    // Verify API key authentication
+    // First, extract the API key manually to provide better error messages
+    let apiKey: string | null = null;
+
+    // 1. Check Authorization header (Bearer token format)
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      apiKey = authHeader.substring(7);
+    }
+
+    // 2. Check X-API-Key header (Cloudlog style)
+    if (!apiKey) {
+      apiKey = request.headers.get('x-api-key');
+    }
+
+    // 3. Check query parameters (for simple integrations)
+    if (!apiKey) {
+      const url = new URL(request.url);
+      apiKey = url.searchParams.get('api_key');
+    }
+
+    // Return appropriate error if no API key provided
+    if (!apiKey) {
+      const response = NextResponse.json({
+        success: false,
+        error: 'API key is required',
+        timestamp: new Date().toISOString()
+      }, { 
+        status: 401 
+      });
+      return addCorsHeaders(response);
+    }
+
+    // Check API key format
+    const isValidFormat = /^nextlog_[A-Za-z0-9]{32}$/.test(apiKey);
+    if (!isValidFormat) {
+      const response = NextResponse.json({
+        success: false,
+        error: 'Invalid API key format',
+        timestamp: new Date().toISOString()
+      }, { 
+        status: 401 
+      });
+      return addCorsHeaders(response);
+    }
+
+    // Now verify API key authentication with database
     const authResult = await verifyApiKey(request);
     
     if (!authResult.success) {
-      // Handle database connection errors gracefully for health checks
-      let statusCode = authResult.statusCode || 401;
-      let errorMessage = authResult.error || 'Authentication failed';
-      
-      // If it's a server error but we haven't checked authentication yet,
-      // return a more appropriate authentication error
-      if (statusCode === 500 && errorMessage === 'Internal server error') {
-        statusCode = 401;
-        errorMessage = 'API key is required';
-      }
-      
+      // If we have a valid format key but database validation fails, 
+      // return the actual error from the auth system
       const response = NextResponse.json({
         success: false,
-        error: errorMessage,
+        error: authResult.error || 'Authentication failed',
         timestamp: new Date().toISOString()
       }, { 
-        status: statusCode 
+        status: authResult.statusCode || 401 
       });
       return addCorsHeaders(response);
     }
