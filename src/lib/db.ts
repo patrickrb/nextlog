@@ -1,6 +1,5 @@
-// Database connection utility for Nextlog PostgreSQL
-
 import { Pool, PoolClient, QueryResult } from 'pg';
+import { logger } from './logger';
 
 // Global connection pool
 let pool: Pool;
@@ -10,22 +9,31 @@ let pool: Pool;
  */
 function getPool(): Pool {
   if (!pool) {
+    const sslConfig = process.env.DATABASE_SSL === 'true'
+      ? { rejectUnauthorized: false }
+      : false;
+
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      ssl: sslConfig,
       max: 20, // Maximum number of clients in the pool
-      idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-      connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+      idleTimeoutMillis: 60000, // Close idle clients after 60 seconds
+      connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection could not be established
+      query_timeout: 30000, // Query timeout: 30 seconds
+      statement_timeout: 30000, // Statement timeout: 30 seconds
     });
 
     // Handle pool errors
     pool.on('error', (err) => {
-      console.error('Unexpected error on idle client', err);
+      logger.error('Unexpected error on idle client', err);
     });
+
+    logger.info('Database connection pool initialized');
   }
 
   return pool;
 }
+
 
 /**
  * Execute a query using the connection pool
@@ -33,24 +41,19 @@ function getPool(): Pool {
 export async function query(text: string, params?: unknown[]): Promise<QueryResult> {
   const pool = getPool();
   const start = Date.now();
-  
+
   try {
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
-    
+
     // Log slow queries (> 100ms)
     if (duration > 100) {
-      console.warn('Slow query detected:', {
-        duration: `${duration}ms`,
-        text: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
-        params: params?.length ? `${params.length} params` : 'no params'
-      });
+      logger.slowQuery(duration, text, params);
     }
-    
+
     return result;
   } catch (error) {
-    console.error('Database query error:', {
-      error: error instanceof Error ? error.message : 'Unknown error',
+    logger.error('Database query error', error, {
       query: text.substring(0, 100) + (text.length > 100 ? '...' : ''),
       params: params?.length ? `${params.length} params` : 'no params'
     });
@@ -73,7 +76,7 @@ export async function transaction<T>(
   callback: (client: PoolClient) => Promise<T>
 ): Promise<T> {
   const client = await getClient();
-  
+
   try {
     await client.query('BEGIN');
     const result = await callback(client);
@@ -98,13 +101,13 @@ export async function closePool(): Promise<void> {
 
 // Handle process termination
 process.on('SIGINT', async () => {
-  console.log('Closing database pool...');
+  logger.info('Shutting down: Closing database pool');
   await closePool();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  console.log('Closing database pool...');
+  logger.info('Shutting down: Closing database pool');
   await closePool();
   process.exit(0);
 });

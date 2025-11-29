@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyApiKey } from '@/lib/api-auth';
 import { addCorsHeaders, createCorsPreflightResponse } from '@/lib/cors';
+import { addRateLimitHeaders } from '@/lib/api-utils';
 
 // Standard amateur radio bands with frequencies
 const AMATEUR_BANDS = [
@@ -46,7 +47,7 @@ export async function OPTIONS() {
 
 export async function GET(request: NextRequest) {
   const authResult = await verifyApiKey(request);
-  
+
   if (!authResult.success) {
     const response = NextResponse.json({
       success: false,
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
 
   const auth = authResult.auth!;
   const url = new URL(request.url);
-  
+
   try {
     const bandFilter = url.searchParams.get('band');
     const format = url.searchParams.get('format') || 'detailed';
@@ -66,13 +67,13 @@ export async function GET(request: NextRequest) {
 
     // Filter by specific band if requested
     if (bandFilter) {
-      bands = bands.filter(b => 
+      bands = bands.filter(b =>
         b.band.toUpperCase() === bandFilter.toUpperCase()
       );
     }
 
     let responseData;
-    
+
     if (format === 'simple') {
       // Simple format - just band names
       responseData = bands.map(b => b.band);
@@ -83,8 +84,8 @@ export async function GET(request: NextRequest) {
         frequency_start_mhz: band.freq_start,
         frequency_end_mhz: band.freq_end,
         wavelength: band.wavelength,
-        type: band.band.includes('M') ? 'HF/VHF/UHF' : 
-              band.band.includes('CM') ? 'Microwave' : 'Millimeter'
+        type: band.band.includes('M') ? 'HF/VHF/UHF' :
+          band.band.includes('CM') ? 'Microwave' : 'Millimeter'
       }));
     }
 
@@ -96,9 +97,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Add rate limit headers
-    response.headers.set('X-RateLimit-Limit', auth.rateLimitPerHour.toString());
-    response.headers.set('X-RateLimit-Remaining', '999'); // TODO: Get actual remaining
-    
+    addRateLimitHeaders(response, 999, auth.rateLimitPerHour);
+
     return addCorsHeaders(response);
 
   } catch (error) {

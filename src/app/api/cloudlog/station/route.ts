@@ -4,10 +4,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyApiKey, canAccessStation } from '@/lib/api-auth';
 import { query } from '@/lib/db';
+import { addRateLimitHeaders } from '@/lib/api-utils';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   const authResult = await verifyApiKey(request);
-  
+
   if (!authResult.success) {
     return NextResponse.json({
       success: false,
@@ -17,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   const auth = authResult.auth!;
   const url = new URL(request.url);
-  
+
   try {
     const stationIdParam = url.searchParams.get('station_id');
     let stationId = auth.stationId;
@@ -111,14 +113,13 @@ export async function GET(request: NextRequest) {
       count: stations.length
     });
 
-    // Add rate limit headers
-    response.headers.set('X-RateLimit-Limit', auth.rateLimitPerHour.toString());
-    response.headers.set('X-RateLimit-Remaining', '999'); // TODO: Get actual remaining
-    
+    // Add rate limit headers  
+    addRateLimitHeaders(response, 999, auth.rateLimitPerHour);
+
     return response;
 
   } catch (error) {
-    console.error('Station retrieval error:', error);
+    logger.error('Station retrieval error', error);
     return NextResponse.json({
       success: false,
       error: 'Internal server error'
