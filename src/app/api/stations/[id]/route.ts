@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Station } from '@/models/Station';
 import { verifyToken } from '@/lib/auth';
+import { encryptString } from '@/lib/lotw';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -93,6 +94,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         { error: 'CQ zone must be between 1 and 40' },
         { status: 400 }
       );
+    }
+
+    // Encrypt LoTW password if provided
+    if (data.lotw_password) {
+      data.lotw_password = encryptString(data.lotw_password);
     }
 
     const station = await Station.update(parseInt(id), data);

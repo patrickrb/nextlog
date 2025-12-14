@@ -243,6 +243,19 @@ export async function POST() {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             UNIQUE (contact_id, image_type)
         );
+
+        CREATE TABLE IF NOT EXISTS lotw_credentials (
+            id SERIAL PRIMARY KEY,
+            station_id INTEGER NOT NULL REFERENCES stations(id) ON DELETE CASCADE,
+            name VARCHAR(255) NOT NULL,
+            callsign VARCHAR(50) NOT NULL,
+            p12_cert BYTEA NOT NULL,
+            cert_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            cert_expires_at TIMESTAMP,
+            is_active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
         
         -- Create indexes for QRZ QSL fields
         CREATE INDEX IF NOT EXISTS idx_contacts_qrz_qsl_sent ON contacts(qrz_qsl_sent);
@@ -265,6 +278,7 @@ export async function POST() {
         CREATE INDEX IF NOT EXISTS idx_audit_log_action ON admin_audit_log(action);
         CREATE INDEX IF NOT EXISTS idx_audit_log_created_at ON admin_audit_log(created_at DESC);
         CREATE INDEX IF NOT EXISTS idx_audit_log_target ON admin_audit_log(target_type, target_id);
+        CREATE INDEX IF NOT EXISTS idx_lotw_credentials_station_active ON lotw_credentials(station_id, is_active);
         
         -- Create trigger function for updated_at
         CREATE OR REPLACE FUNCTION update_updated_at_column()

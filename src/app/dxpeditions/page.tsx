@@ -35,7 +35,7 @@ export default function DXpeditionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('all');
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const router = useRouter();
 
   const fetchDXpeditions = useCallback(async () => {
@@ -43,12 +43,12 @@ export default function DXpeditionsPage() {
       setLoading(true);
       setError('');
       const response = await fetch('/api/dxpeditions?limit=0&status=all');
-      
+
       if (response.status === 401) {
         router.push('/login');
         return;
       }
-      
+
       if (response.ok) {
         const fetchedData = await response.json();
         setData(fetchedData);
@@ -63,12 +63,15 @@ export default function DXpeditionsPage() {
   }, [router]);
 
   useEffect(() => {
-    if (!user && !loading) {
+    if (userLoading) return;
+
+    if (!user) {
       router.push('/login');
       return;
     }
+
     fetchDXpeditions();
-  }, [user, router, loading, fetchDXpeditions]);
+  }, [user, userLoading, router, fetchDXpeditions]);
 
   const filterDXpeditions = (status: string) => {
     if (!data) return [];
@@ -273,7 +276,17 @@ export default function DXpeditionsPage() {
             <CardHeader>
               <CardTitle>DXpedition List</CardTitle>
               <CardDescription>
-                Detailed information about current and upcoming DX operations
+                Detailed information about current and upcoming DX operations.
+                Data provided by{' '}
+                <a
+                  href="https://ng3k.com/misc/adxo.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline hover:text-foreground"
+                >
+                  NG3K
+                </a>
+                .
               </CardDescription>
             </CardHeader>
             <CardContent>

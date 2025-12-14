@@ -24,6 +24,7 @@ import { useUser } from '@/contexts/UserContext';
 
 interface Contact {
   id: number;
+  station_id?: number;
   callsign: string;
   frequency: number;
   mode: string;
@@ -1116,13 +1117,16 @@ export default function SearchPage() {
                               <TableCell onClick={() => handleContactClick(contact)} className="cursor-pointer">
                                 {contact.qth || '-'}
                               </TableCell>
-                              <TableCell onClick={() => handleContactClick(contact)} className="cursor-pointer">
+                              <TableCell onClick={(e) => e.stopPropagation()}>
                                 <LotwSyncIndicator
                                   lotwQslSent={contact.lotw_qsl_sent}
                                   lotwQslRcvd={contact.lotw_qsl_rcvd}
                                   qslLotw={contact.qsl_lotw}
                                   qslLotwDate={contact.qsl_lotw_date}
                                   lotwMatchStatus={contact.lotw_match_status}
+                                  contactId={contact.id}
+                                  stationId={contact.station_id}
+                                  onStatusChange={() => performSearch(filters, pagination.page)}
                                   size="sm"
                                 />
                               </TableCell>
