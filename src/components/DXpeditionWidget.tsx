@@ -188,7 +188,15 @@ export default function DXpeditionWidget({ limit = 5 }: DXpeditionWidgetProps) {
         )}
         <div className="mt-4 pt-3 border-t">
           <p className="text-xs text-muted-foreground text-center">
-            Data updated every 6 hours • Source: ng3k.com
+            Data updated every 6 hours • Source:{' '}
+            <a
+              href="https://ng3k.com/misc/adxo.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground"
+            >
+              NG3K
+            </a>
           </p>
         </div>
       </CardContent>

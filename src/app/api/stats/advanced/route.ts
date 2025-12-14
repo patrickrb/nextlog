@@ -132,7 +132,7 @@ async function getGeographicAnalytics(whereClause: string, params: unknown[]) {
       de.continent,
       COUNT(*) as qsos
     FROM contacts c
-    LEFT JOIN dxcc_entities de ON c.dxcc_entity_id = de.id
+    LEFT JOIN dxcc_entities de ON c.dxcc = de.adif
     ${whereClause}
     GROUP BY de.name, de.continent
     ORDER BY qsos DESC
@@ -145,7 +145,7 @@ async function getGeographicAnalytics(whereClause: string, params: unknown[]) {
       COALESCE(de.continent, 'Unknown') as continent,
       COUNT(*) as qsos
     FROM contacts c
-    LEFT JOIN dxcc_entities de ON c.dxcc_entity_id = de.id
+    LEFT JOIN dxcc_entities de ON c.dxcc = de.adif
     ${whereClause}
     GROUP BY de.continent
     ORDER BY qsos DESC
