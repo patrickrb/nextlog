@@ -5,41 +5,15 @@ import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
 import { LotwConfirmation, ContactWithLoTW } from '@/types/lotw';
+import { encrypt, decrypt } from './crypto';
 
-// Encryption utilities for secure credential storage
-const ENCRYPTION_KEY = process.env.ENCRYPTION_SECRET || 'default-key-change-me';
-
+// Use centralized encryption utilities
 export function encryptString(text: string): string {
-  if (!text) return '';
-  
-  const algorithm = 'aes-256-gcm';
-  const cipher = crypto.createCipher(algorithm, ENCRYPTION_KEY);
-  
-  let encrypted = cipher.update(text, 'utf8', 'hex');
-  encrypted += cipher.final('hex');
-  
-  return 'encrypted:' + encrypted;
+  return encrypt(text);
 }
 
 export function decryptString(encryptedText: string): string {
-  if (!encryptedText) return '';
-  
-  try {
-    const algorithm = 'aes-256-gcm';
-    const parts = encryptedText.split(':');
-    if (parts.length !== 2) return '';
-    
-    const encrypted = parts[1];
-    const decipher = crypto.createDecipher(algorithm, ENCRYPTION_KEY);
-    
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    
-    return decrypted;
-  } catch (error) {
-    console.error('Decryption error:', error);
-    return '';
-  }
+  return decrypt(encryptedText);
 }
 
 // ADIF generation for LoTW upload

@@ -16,10 +16,11 @@ export async function POST(request: NextRequest) {
     const file = formData.get('p12_file') as File;
     const stationId = formData.get('station_id') as string;
     const callsign = formData.get('callsign') as string;
+    const certName = formData.get('cert_name') as string;
 
-    if (!file || !stationId || !callsign) {
-      return NextResponse.json({ 
-        error: 'Missing required fields: p12_file, station_id, callsign' 
+    if (!file || !stationId || !callsign || !certName) {
+      return NextResponse.json({
+        error: 'Missing required fields: p12_file, station_id, callsign, cert_name'
       }, { status: 400 });
     }
 
@@ -81,13 +82,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Store new certificate
+    // Store new certificate in lotw_credentials table
     const insertResult = await query(
-      `INSERT INTO lotw_credentials 
-       (station_id, callsign, p12_cert, cert_created_at, is_active) 
-       VALUES ($1, $2, $3, NOW(), true) 
+      `INSERT INTO lotw_credentials
+       (station_id, name, callsign, p12_cert, cert_created_at, is_active)
+       VALUES ($1, $2, $3, $4, NOW(), true)
        RETURNING id, cert_created_at`,
-      [parseInt(stationId), callsign.toUpperCase(), fileBuffer]
+      [parseInt(stationId), certName.trim(), callsign.toUpperCase(), fileBuffer]
     );
 
     const newCredential = insertResult.rows[0];
@@ -142,9 +143,9 @@ export async function GET(request: NextRequest) {
 
     // Get certificate info (without the actual certificate data)
     const certResult = await query(
-      `SELECT id, callsign, cert_created_at, cert_expires_at, is_active, created_at
-       FROM lotw_credentials 
-       WHERE station_id = $1 
+      `SELECT id, name, callsign, cert_created_at, cert_expires_at, is_active, created_at
+       FROM lotw_credentials
+       WHERE station_id = $1
        ORDER BY created_at DESC`,
       [parseInt(stationId)]
     );
@@ -181,7 +182,7 @@ export async function DELETE(request: NextRequest) {
 
     // Verify credential belongs to user's station
     const certResult = await query(
-      `SELECT lc.id, lc.station_id 
+      `SELECT lc.id, lc.station_id
        FROM lotw_credentials lc
        JOIN stations s ON lc.station_id = s.id
        WHERE lc.id = $1 AND s.user_id = $2`,
@@ -189,8 +190,8 @@ export async function DELETE(request: NextRequest) {
     );
 
     if (certResult.rows.length === 0) {
-      return NextResponse.json({ 
-        error: 'Certificate not found or access denied' 
+      return NextResponse.json({
+        error: 'Certificate not found or access denied'
       }, { status: 404 });
     }
 

@@ -29,6 +29,10 @@ export interface StationData {
   qrz_password?: string;
   qrz_api_key?: string;
   club_callsign?: string;
+  lotw_username?: string;
+  lotw_password?: string;
+  lotw_p12_cert?: Buffer;
+  lotw_cert_created_at?: Date;
   created_at: string;
   updated_at: string;
 }
@@ -76,6 +80,7 @@ export interface CreateStationData {
   is_default?: boolean;
   qrz_api_key?: string;
   lotw_username?: string;
+  lotw_password?: string;
   club_callsign?: string;
 }
 

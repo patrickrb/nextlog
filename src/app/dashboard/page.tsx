@@ -19,6 +19,7 @@ import { useUser } from '@/contexts/UserContext';
 
 interface Contact {
   id: number;
+  station_id?: number;
   callsign: string;
   frequency: number;
   mode: string;
@@ -334,6 +335,9 @@ export default function DashboardPage() {
                                   qslLotw={contact.qsl_lotw}
                                   qslLotwDate={contact.qsl_lotw_date}
                                   lotwMatchStatus={contact.lotw_match_status}
+                                  contactId={contact.id}
+                                  stationId={contact.station_id}
+                                  onStatusChange={() => fetchContacts()}
                                   size="sm"
                                 />
                               </TableCell>

@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Combobox } from '@/components/ui/combobox';
-import { ArrowLeft, Save, Radio, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, Radio, Loader2, CheckCircle, AlertCircle, Eye, EyeOff, Upload } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import ApiKeyManager from '@/components/stations/ApiKeyManager';
 
@@ -40,6 +40,8 @@ interface Station {
   is_default: boolean;
   qrz_api_key?: string;
   club_callsign?: string;
+  lotw_username?: string;
+  lotw_password?: string;
 }
 
 interface DxccEntity {
@@ -84,6 +86,8 @@ interface StationFormData {
   is_default: boolean;
   qrz_api_key: string;
   club_callsign: string;
+  lotw_username: string;
+  lotw_password: string;
 }
 
 export default function EditStationPage({ params }: { params: Promise<{ id: string }> }) {
@@ -118,6 +122,8 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
     is_default: false,
     qrz_api_key: '',
     club_callsign: '',
+    lotw_username: '',
+    lotw_password: '',
   });
   
   const [loading, setLoading] = useState(true);
@@ -125,6 +131,21 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
   const [error, setError] = useState('');
   const [validatingQrz, setValidatingQrz] = useState(false);
   const [qrzValidation, setQrzValidation] = useState<{ valid: boolean; message: string } | null>(null);
+  const [showLotwPassword, setShowLotwPassword] = useState(false);
+  // const [testingLotw, setTestingLotw] = useState(false); // Unused - for future LoTW validation
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [certName, setCertName] = useState('');
+  const [uploadingCert, setUploadingCert] = useState(false);
+  const [certificates, setCertificates] = useState<Array<{
+    id: number;
+    name: string;
+    callsign: string;
+    cert_created_at: string;
+    is_active: boolean;
+  }>>([]);
+  const [selectedCertId, setSelectedCertId] = useState<number | null>(null);
+  const [settingActive, setSettingActive] = useState(false);
+  const [success, setSuccess] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -137,6 +158,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
     if (stationId) {
       fetchStation();
       fetchDxccEntities();
+      fetchCertificates();
     }
   }, [stationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -186,6 +208,8 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
           is_default: data.is_default ?? false,
           qrz_api_key: data.qrz_api_key || '',
           club_callsign: data.club_callsign || '',
+          lotw_username: data.lotw_username || '',
+          lotw_password: '',
         });
         
         // Set initial DXCC and state selections
@@ -229,11 +253,59 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  const fetchCertificates = async () => {
+    try {
+      const response = await fetch(`/api/lotw/certificate?station_id=${stationId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCertificates(data.certificates || []);
+
+        // Set the active certificate as selected
+        const activeCert = data.certificates?.find((cert: { is_active: boolean }) => cert.is_active);
+        if (activeCert) {
+          setSelectedCertId(activeCert.id);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching certificates:', error);
+    }
+  };
+
   const handleInputChange = (field: keyof StationFormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear QRZ validation when API key changes
     if (field === 'qrz_api_key') {
       setQrzValidation(null);
+    }
+  };
+
+  const handleSetActiveCertificate = async (certId: number) => {
+    if (certId === selectedCertId) return; // Already active
+
+    try {
+      setSettingActive(true);
+      setError('');
+
+      // Deactivate all certificates for this station
+      await fetch(`/api/lotw/certificate/set-active`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          station_id: parseInt(stationId),
+          certificate_id: certId
+        })
+      });
+
+      // Refresh certificates list
+      await fetchCertificates();
+      setSuccess('Active certificate updated successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+
+    } catch (error) {
+      console.error('Error setting active certificate:', error);
+      setError('Failed to set active certificate');
+    } finally {
+      setSettingActive(false);
     }
   };
 
@@ -322,7 +394,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
         'operator_name', 'qth_name', 'street_address', 'city', 'county',
         'state_province', 'postal_code', 'country', 'grid_locator',
         'rig_info', 'antenna_info', 'station_equipment', 'qrz_api_key',
-        'club_callsign'
+        'club_callsign', 'lotw_username', 'lotw_password'
       ];
 
       optionalFields.forEach(field => {
@@ -437,6 +509,12 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
           {error && (
             <div className="bg-destructive/15 border border-destructive/20 text-destructive px-4 py-3 rounded-md text-sm mb-6">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-50/50 dark:bg-green-950/50 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-3 rounded-md text-sm mb-6">
+              {success}
             </div>
           )}
 
@@ -790,6 +868,187 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                     placeholder="Associated club callsign"
                     className="font-mono"
                   />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* LoTW Integration */}
+            <Card>
+              <CardHeader>
+                <CardTitle>LoTW Integration</CardTitle>
+                <CardDescription>
+                  Logbook of The World credentials and certificate for this station
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="lotw_username">LoTW Username</Label>
+                    <Input
+                      id="lotw_username"
+                      value={formData.lotw_username}
+                      onChange={(e) => handleInputChange('lotw_username', e.target.value)}
+                      placeholder="Your LoTW username"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lotw_password">LoTW Password</Label>
+                    <div className="relative">
+                      <Input
+                        id="lotw_password"
+                        type={showLotwPassword ? 'text' : 'password'}
+                        value={formData.lotw_password}
+                        onChange={(e) => handleInputChange('lotw_password', e.target.value)}
+                        placeholder={station?.lotw_password ? '••••••••' : 'Your LoTW password'}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        onClick={() => setShowLotwPassword(!showLotwPassword)}
+                      >
+                        {showLotwPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Leave blank to keep existing password
+                    </p>
+                  </div>
+                </div>
+
+                {/* Existing Certificates */}
+                {certificates.length > 0 && (
+                  <div className="border-t pt-4 mt-4">
+                    <h4 className="font-medium mb-4">Active Certificate</h4>
+                    <div className="space-y-2">
+                      <Label htmlFor="active-cert">Select Active Certificate</Label>
+                      <select
+                        id="active-cert"
+                        value={selectedCertId || ''}
+                        onChange={(e) => {
+                          const certId = parseInt(e.target.value);
+                          setSelectedCertId(certId);
+                          handleSetActiveCertificate(certId);
+                        }}
+                        disabled={settingActive}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">Select a certificate</option>
+                        {certificates.map((cert) => (
+                          <option key={cert.id} value={cert.id}>
+                            {cert.name} - {cert.callsign} {cert.is_active ? '(Active)' : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-muted-foreground">
+                        {certificates.length} certificate{certificates.length !== 1 ? 's' : ''} uploaded.
+                        The selected certificate will be used for LoTW uploads.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Certificate Upload */}
+                <div className="border-t pt-4 mt-4">
+                  <h4 className="font-medium mb-4">Upload New Certificate</h4>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="cert-name">Certificate Name</Label>
+                      <Input
+                        id="cert-name"
+                        type="text"
+                        value={certName}
+                        onChange={(e) => setCertName(e.target.value)}
+                        placeholder="e.g., Main LoTW Cert, Backup Cert"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Give this certificate a name to identify it later
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="cert-file">Certificate File (.p12)</Label>
+                      <Input
+                        id="cert-file"
+                        type="file"
+                        accept=".p12,.pfx"
+                        onChange={(e) => setCertFile(e.target.files?.[0] || null)}
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={async () => {
+                        if (!certFile || !formData.callsign || !certName.trim()) {
+                          setError('Please enter a certificate name, callsign, and choose a certificate file');
+                          return;
+                        }
+
+                        try {
+                          setUploadingCert(true);
+                          setError('');
+                          setSuccess('');
+
+                          const certFormData = new FormData();
+                          certFormData.append('p12_file', certFile);
+                          certFormData.append('station_id', stationId);
+                          certFormData.append('callsign', formData.callsign);
+                          certFormData.append('cert_name', certName.trim());
+
+                          const response = await fetch('/api/lotw/certificate', {
+                            method: 'POST',
+                            body: certFormData
+                          });
+
+                          const data = await response.json();
+
+                          if (response.ok) {
+                            setSuccess('LoTW certificate uploaded successfully!');
+                            setCertFile(null);
+                            setCertName('');
+                            const fileInput = document.getElementById('cert-file') as HTMLInputElement;
+                            if (fileInput) fileInput.value = '';
+                            // Refresh certificates list
+                            await fetchCertificates();
+                            setTimeout(() => setSuccess(''), 3000);
+                          } else {
+                            setError(data.error || 'Certificate upload failed');
+                          }
+                        } catch (error) {
+                          console.error('Certificate upload error:', error);
+                          setError('Certificate upload failed');
+                        } finally {
+                          setUploadingCert(false);
+                        }
+                      }}
+                      disabled={uploadingCert || !certFile || !formData.callsign || !certName.trim()}
+                    >
+                      {uploadingCert ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="h-4 w-4 mr-2" />
+                      )}
+                      Upload Certificate
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md p-4">
+                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2 text-sm">
+                    LoTW Integration
+                  </h4>
+                  <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 list-disc list-inside">
+                    <li>Enter your ARRL LoTW website username and password</li>
+                    <li>Upload your .p12 certificate file to enable QSO uploads</li>
+                    <li>Credentials are encrypted and stored securely per station</li>
+                    <li>Click individual upload/download icons in the contact list</li>
+                  </ul>
                 </div>
               </CardContent>
             </Card>

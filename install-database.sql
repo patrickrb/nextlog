@@ -412,9 +412,11 @@ CREATE TRIGGER update_qsl_images_updated_at
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Create LoTW credentials table for certificate management
+-- Create LoTW credentials table
 CREATE TABLE lotw_credentials (
     id SERIAL PRIMARY KEY,
     station_id INTEGER NOT NULL REFERENCES stations(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
     callsign VARCHAR(50) NOT NULL,
     p12_cert BYTEA NOT NULL,
     cert_created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -423,6 +425,9 @@ CREATE TABLE lotw_credentials (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create index for active certificates lookup
+CREATE INDEX idx_lotw_credentials_station_active ON lotw_credentials(station_id, is_active);
 
 -- Create LoTW upload logs table
 CREATE TABLE lotw_upload_logs (

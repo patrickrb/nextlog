@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     // Check if this is a cron job request
     const isCronJob = request.headers.get('X-Cron-Job') === 'true';
     let user = null;
-    
+
     if (isCronJob) {
       // For cron jobs, we'll get the user from the station_id
       user = null; // Will be set later
@@ -26,8 +26,8 @@ export async function POST(request: NextRequest) {
     const { station_id, date_from, date_to, download_method = 'manual' } = body;
 
     if (!station_id) {
-      return NextResponse.json({ 
-        error: 'station_id is required' 
+      return NextResponse.json({
+        error: 'station_id is required'
       }, { status: 400 });
     }
 
@@ -59,35 +59,70 @@ export async function POST(request: NextRequest) {
     }
 
     if (stationResult.rows.length === 0) {
-      return NextResponse.json({ 
-        error: 'Station not found or access denied' 
+      return NextResponse.json({
+        error: 'Station not found or access denied'
       }, { status: 404 });
     }
 
     const station = stationResult.rows[0];
     const userId = isCronJob ? station.user_id : parseInt(user!.userId);
-    
+
     // Get LoTW credentials from station or user third_party_services
     let lotwUsername = station.lotw_username;
     let lotwPassword = station.lotw_password;
+    let credentialSource = 'none';
+
+    console.log(`[LoTW Download] Checking credentials for station ${station_id} (${station.callsign})`);
+    console.log(`[LoTW Download] Station credentials present: username=${!!lotwUsername}, password=${!!lotwPassword}`);
 
     // Try user's third_party_services if station doesn't have credentials
     if (!lotwUsername || !lotwPassword) {
       const thirdPartyServices = station.third_party_services;
+      console.log(`[LoTW Download] Checking user-level credentials: third_party_services=${!!thirdPartyServices}, lotw field=${!!thirdPartyServices?.lotw}`);
+
       if (thirdPartyServices?.lotw) {
         lotwUsername = thirdPartyServices.lotw.username;
-        lotwPassword = decryptString(thirdPartyServices.lotw.password);
+        try {
+          lotwPassword = decryptString(thirdPartyServices.lotw.password);
+          credentialSource = 'user';
+          console.log(`[LoTW Download] Using user-level credentials, username present: ${!!lotwUsername}`);
+        } catch (error) {
+          console.error('[LoTW Download] Failed to decrypt user password:', error);
+          lotwPassword = undefined;
+        }
       }
     } else if (lotwPassword) {
       // Decrypt station password if it exists
-      lotwPassword = decryptString(lotwPassword);
+      try {
+        lotwPassword = decryptString(lotwPassword);
+        credentialSource = 'station';
+        console.log(`[LoTW Download] Using station-level credentials for station ${station_id}`);
+      } catch (error) {
+        console.error('[LoTW Download] Failed to decrypt station password:', error);
+        lotwPassword = undefined;
+      }
     }
 
     if (!lotwUsername || !lotwPassword) {
-      return NextResponse.json({ 
-        error: 'LoTW credentials not configured for this station. Please configure username and password in station settings.' 
+      console.error(`[LoTW Download] No valid credentials found. Username: ${!!lotwUsername}, Password: ${!!lotwPassword}, Source attempted: ${credentialSource}`);
+
+      const errorMessage = credentialSource === 'none'
+        ? 'LoTW credentials not configured. Please configure LoTW credentials in Settings > LoTW Integration (either at User level for all stations, or Station level for this specific station).'
+        : 'LoTW credentials are incomplete or invalid. Please reconfigure them in Settings > LoTW Integration.';
+
+      return NextResponse.json({
+        error: errorMessage,
+        debug: {
+          station_id: station_id,
+          station_callsign: station.callsign,
+          credential_source: credentialSource,
+          has_username: !!lotwUsername,
+          has_password: !!lotwPassword
+        }
       }, { status: 400 });
     }
+
+    console.log(`[LoTW Download] Credentials validated from source: ${credentialSource}`);
 
     // Create download log entry
     const downloadLogResult = await query(
@@ -133,7 +168,7 @@ export async function POST(request: NextRequest) {
 
       } catch (downloadError) {
         console.error('LoTW download error:', downloadError);
-        
+
         await query(
           `UPDATE lotw_download_logs 
            SET status = 'failed', completed_at = NOW(), 
@@ -142,7 +177,7 @@ export async function POST(request: NextRequest) {
           [`Download from LoTW failed: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}`, downloadLogId]
         );
 
-        return NextResponse.json({ 
+        return NextResponse.json({
           success: false,
           download_log_id: downloadLogId,
           error_message: `Download from LoTW failed: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}`
@@ -217,7 +252,7 @@ export async function POST(request: NextRequest) {
            WHERE id = $2`,
           [match.matchStatus, match.contact.id]
         );
-        
+
         matchedCount++;
         unmatchedCount--;
       }
@@ -244,7 +279,7 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
       console.error('Download processing error:', error);
-      
+
       // Update log with error
       await query(
         `UPDATE lotw_download_logs 
@@ -254,7 +289,7 @@ export async function POST(request: NextRequest) {
         [error instanceof Error ? error.message : 'Unknown error', downloadLogId]
       );
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         success: false,
         download_log_id: downloadLogId,
         error_message: error instanceof Error ? error.message : 'Unknown error'
