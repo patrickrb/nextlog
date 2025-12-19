@@ -42,7 +42,7 @@
     "next-auth": "^4.24.11",
     "node-html-parser": "^7.0.1",
     "pg": "^8.11.3",
-    "react": "^19.1.1",
+    "react": "^19.2.0",
     "react-dom": "^19.1.1",
     "react-leaflet": "^5.0.0",
     "recharts": "^3.1.2",
