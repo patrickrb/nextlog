@@ -136,11 +136,17 @@ export interface ContactWithLoTW {
   id: number;
   user_id: number;
   station_id?: number;
+  // Joined from stations table when needed (upload/match flows)
+  station_callsign?: string;
   callsign: string;
   name?: string;
   frequency?: number;
   mode?: string;
   band?: string;
+  band_rx?: string;
+  freq_rx?: number;
+  prop_mode?: string;
+  sat_name?: string;
   datetime: Date;
   rst_sent?: string;
   rst_received?: string;
@@ -154,6 +160,7 @@ export interface ContactWithLoTW {
   cont?: string;
   cqz?: number;
   ituz?: number;
+  iota?: string;
   state?: string;
   cnty?: string;
   qsl_rcvd?: string;
@@ -165,7 +172,11 @@ export interface ContactWithLoTW {
   lotw_qsl_sent?: string;
   qsl_lotw?: boolean;
   qsl_lotw_date?: Date;
+  lotw_qslrdate?: Date;
   lotw_match_status?: 'confirmed' | 'partial' | 'mismatch' | null;
+  // QRZ cross-sync fields (set to 'M' when LoTW confirms a QRZ-uploaded QSO)
+  qrz_qsl_sent?: string;
+  qrz_qsl_rcvd?: string;
   qso_date_off?: Date;
   time_off?: string;
   operator?: string;
@@ -228,9 +239,64 @@ export interface LotwConfirmation {
   band: string;
   mode: string;
   freq?: string;
+  // Enriched fields LoTW returns when qso_qsldetail=yes / qso_mydetail=yes
+  state?: string;
+  cnty?: string;
+  cqz?: string;
+  ituz?: string;
+  dxcc?: string;
+  country?: string;
+  gridsquare?: string;
+  iota?: string;
+  prop_mode?: string;
+  sat_name?: string;
+  qsl_rcvd?: string;
   app_lotw_qsl_rcvd?: string;
+  app_lotw_rxqsl?: string;
+  app_lotw_owncall?: string;
   qsl_rcvd_date?: string;
+  station_callsign?: string;
   [key: string]: string | undefined;
+}
+
+// Station-location profile required to build a wavelog-compatible .tq8 file.
+// Mirrors the tSTATION record fields in TQSL output.
+export interface LotwStationProfile {
+  callsign: string;
+  dxcc: number;
+  gridsquare?: string;
+  ituz?: number;
+  cqz?: number;
+  iota?: string;
+  // DXCC-conditional location fields (only the one matching the station's DXCC is emitted/signed):
+  us_state?: string;       us_county?: string;       // DXCC 6/110/291
+  ca_province?: string;                                // DXCC 1
+  ru_oblast?: string;                                  // DXCC 15/54/61/125/151
+  cn_province?: string;                                // DXCC 318
+  au_state?: string;                                   // DXCC 150
+  ja_prefecture?: string;  ja_city_gun_ku?: string;   // DXCC 339
+  fi_kunta?: string;                                   // DXCC 5/224
+}
+
+// Per-QSO inputs to the .tq8 builder.
+export interface LotwQso {
+  call: string;
+  band: string;
+  band_rx?: string;
+  mode: string;
+  freq?: number;       // MHz
+  freq_rx?: number;    // MHz
+  prop_mode?: string;
+  sat_name?: string;
+  datetime: Date;
+}
+
+// Inputs to buildSignedTq8.
+export interface BuildSignedTq8Input {
+  p12: Buffer;
+  p12Password: string;
+  station: LotwStationProfile;
+  qsos: LotwQso[];
 }
 
 // LoTW sync statistics

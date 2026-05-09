@@ -27,8 +27,11 @@ export interface QRZQSORecord {
   time_on: string;
   band: string;
   mode: string;
+  station_callsign?: string;
   qsl_rcvd?: string;
   qsl_sent?: string;
+  // QRZ-specific: 'C' = Confirmed in QRZ logbook
+  app_qrzlog_status?: string;
   logbook_id?: number;
 }
 
@@ -213,8 +216,8 @@ export function contactToQRZFormat(contact: {
 }): QRZQSOData {
   const qsoDate = new Date(contact.datetime);
   const qso_date = qsoDate.toISOString().split('T')[0]; // YYYY-MM-DD
-  const time_on = qsoDate.toISOString().split('T')[1].substring(0, 5).replace(':', ''); // HHMM
-  
+  const time_on = qsoDate.toISOString().split('T')[1].substring(0, 8).replace(/:/g, ''); // HHMMSS
+
   return {
     call: contact.callsign,
     qso_date,
@@ -233,10 +236,13 @@ export function contactToQRZFormat(contact: {
   };
 }
 
-// Function to upload QSO to QRZ Logbook (using API key)
+// Function to upload QSO to QRZ Logbook (using API key).
+// When `replace` is true, sends OPTION=REPLACE so QRZ overwrites an existing record
+// (used when cross-sync confirmation flips qrz_qsl_sent to 'M').
 export async function uploadQSOToQRZWithApiKey(
-  qsoData: QRZQSOData, 
-  apiKey: string
+  qsoData: QRZQSOData,
+  apiKey: string,
+  replace: boolean = false
 ): Promise<QRZLogbookResult> {
   if (!apiKey) {
     return {
@@ -247,12 +253,15 @@ export async function uploadQSOToQRZWithApiKey(
 
   try {
     const sessionUrl = `https://logbook.qrz.com/api`;
-    
+
     // Upload the QSO using API key
     const uploadFormData = new FormData();
     uploadFormData.append('KEY', apiKey);
     uploadFormData.append('ACTION', 'INSERT');
     uploadFormData.append('ADIF', formatQSOAsADIF(qsoData));
+    if (replace) {
+      uploadFormData.append('OPTION', 'REPLACE');
+    }
     
     const uploadResponse = await fetch(sessionUrl, {
       method: 'POST',
@@ -287,22 +296,23 @@ export async function uploadQSOToQRZWithApiKey(
       };
     }
     
-    if (uploadResult.includes('OK')) {
+    // Per wavelog Logbook_model.php:1193, accept either RESULT=OK or RESULT=REPLACE.
+    if (/RESULT=(OK|REPLACE)/i.test(uploadResult) || uploadResult.includes('OK')) {
       // Try to extract logbook ID if provided
       const idMatch = uploadResult.match(/LOGID=(\d+)/);
       const logbook_id = idMatch ? parseInt(idMatch[1]) : undefined;
-      
+
       return {
         success: true,
         logbook_id
       };
     }
-    
+
     return {
       success: false,
       error: `Unexpected response from QRZ: ${uploadResult}`
     };
-    
+
   } catch (error) {
     return {
       success: false,
@@ -535,15 +545,20 @@ export async function downloadQSOsFromQRZ(
   try {
     const sessionUrl = `https://logbook.qrz.com/api`;
     
-    // Download QSOs with FETCH action
+    // Download QSOs with FETCH action.
+    // QRZ expects a single OPTION value with semicolon-separated parts (per wavelog Qrz.php:369).
+    // Appending OPTION twice would let only the last value survive on the server side, dropping
+    // TYPE:ADIF and yielding a non-ADIF response.
+    const optionParts = ['TYPE:ADIF', 'STATUS:CONFIRMED'];
+    if (since) {
+      // Param name is MODSINCE (not MODIFIEDSINCE). Format: YYYY-MM-DD.
+      optionParts.push(`MODSINCE:${since}`);
+    }
+
     const downloadFormData = new FormData();
     downloadFormData.append('KEY', apiKey);
     downloadFormData.append('ACTION', 'FETCH');
-    downloadFormData.append('OPTION', 'TYPE:ADIF');
-    
-    if (since) {
-      downloadFormData.append('OPTION', `MODIFIEDSINCE:${since}`);
-    }
+    downloadFormData.append('OPTION', optionParts.join(';'));
     
     console.log('Making request to QRZ for QSO download...');
     const downloadResponse = await fetch(sessionUrl, {
@@ -591,6 +606,58 @@ export async function downloadQSOsFromQRZ(
   }
 }
 
+// Match a downloaded QRZ QSO against a local contact.
+// Mirrors wavelog import_check (Logbook_model.php:4537-4577): callsign, band,
+// mode, station_callsign must match exactly (case-insensitive); QSO time must
+// be within ±15 minutes of LoTW/QRZ-reported time.
+const QRZ_MATCH_TOLERANCE_MS = 15 * 60 * 1000;
+
+export interface QRZContactForMatch {
+  id: number;
+  callsign: string;
+  band?: string;
+  mode?: string;
+  station_callsign?: string;
+  datetime: Date | string;
+}
+
+export function matchQRZConfirmation(
+  contact: QRZContactForMatch,
+  qrzQSO: QRZQSORecord
+): boolean {
+  if (!contact.callsign || !qrzQSO.call) return false;
+  if (contact.callsign.toUpperCase().trim() !== qrzQSO.call.toUpperCase().trim()) return false;
+
+  if (!contact.band || !qrzQSO.band) return false;
+  if (contact.band.toLowerCase() !== qrzQSO.band.toLowerCase()) return false;
+
+  if (!contact.mode || !qrzQSO.mode) return false;
+  if (contact.mode.toLowerCase() !== qrzQSO.mode.toLowerCase()) return false;
+
+  // Station-callsign match if QRZ provided one. If absent on the QRZ side,
+  // rely on the date/band/mode triple — QRZ doesn't always echo STATION_CALLSIGN.
+  if (qrzQSO.station_callsign && contact.station_callsign) {
+    if (contact.station_callsign.toUpperCase().trim() !== qrzQSO.station_callsign.toUpperCase().trim()) {
+      return false;
+    }
+  }
+
+  // Compare timestamps. QRZ ADIF may emit time as HHMM, HHMMSS, or HH:MM:SS.
+  const qrzDate = qrzQSO.qso_date.replace(/-/g, '');
+  if (qrzDate.length !== 8) return false;
+  const yyyy = parseInt(qrzDate.slice(0, 4));
+  const mm = parseInt(qrzDate.slice(4, 6)) - 1;
+  const dd = parseInt(qrzDate.slice(6, 8));
+  const t = qrzQSO.time_on.replace(/:/g, '');
+  const hh = parseInt(t.slice(0, 2)) || 0;
+  const mi = parseInt(t.slice(2, 4)) || 0;
+  const ss = t.length >= 6 ? parseInt(t.slice(4, 6)) || 0 : 0;
+  const qrzTime = Date.UTC(yyyy, mm, dd, hh, mi, ss);
+
+  const contactTime = new Date(contact.datetime).getTime();
+  return Math.abs(contactTime - qrzTime) <= QRZ_MATCH_TOLERANCE_MS;
+}
+
 // Function to parse ADIF data from QRZ download
 function parseADIFForQRZ(adifData: string): QRZQSORecord[] {
   const qsos: QRZQSORecord[] = [];
@@ -604,38 +671,29 @@ function parseADIFForQRZ(adifData: string): QRZQSORecord[] {
     const qso: Partial<QRZQSORecord> = {};
     
     // Extract fields using regex
-    const fields = [
+    const fields: Array<{ key: keyof QRZQSORecord; field: string }> = [
       { key: 'call', field: 'CALL' },
       { key: 'qso_date', field: 'QSO_DATE' },
       { key: 'time_on', field: 'TIME_ON' },
       { key: 'band', field: 'BAND' },
       { key: 'mode', field: 'MODE' },
+      { key: 'station_callsign', field: 'STATION_CALLSIGN' },
       { key: 'qsl_rcvd', field: 'QSL_RCVD' },
       { key: 'qsl_sent', field: 'QSL_SENT' },
-      { key: 'logbook_id', field: 'APP_QRZ_LOGID' }
+      // QRZ marks confirmed records with app_qrzlog_status=C.
+      { key: 'app_qrzlog_status', field: 'APP_QRZLOG_STATUS' },
+      { key: 'logbook_id', field: 'APP_QRZ_LOGID' },
     ];
-    
+
     for (const { key, field } of fields) {
       const regex = new RegExp(`<${field}:\\d+>([^<]+)`, 'i');
       const match = record.match(regex);
-      if (match) {
-        if (key === 'logbook_id') {
-          qso.logbook_id = parseInt(match[1]);
-        } else if (key === 'call') {
-          qso.call = match[1].trim();
-        } else if (key === 'qso_date') {
-          qso.qso_date = match[1].trim();
-        } else if (key === 'time_on') {
-          qso.time_on = match[1].trim();
-        } else if (key === 'band') {
-          qso.band = match[1].trim();
-        } else if (key === 'mode') {
-          qso.mode = match[1].trim();
-        } else if (key === 'qsl_rcvd') {
-          qso.qsl_rcvd = match[1].trim();
-        } else if (key === 'qsl_sent') {
-          qso.qsl_sent = match[1].trim();
-        }
+      if (!match) continue;
+      const value = match[1].trim();
+      if (key === 'logbook_id') {
+        qso.logbook_id = parseInt(value);
+      } else {
+        (qso as Record<string, unknown>)[key] = value;
       }
     }
     

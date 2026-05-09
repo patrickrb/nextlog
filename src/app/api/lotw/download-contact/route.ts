@@ -123,7 +123,11 @@ export async function POST(request: NextRequest) {
     const dateToStr = dateTo.toISOString().split('T')[0];
 
     // Build LoTW download URL with date range
-    const downloadUrl = buildLoTWDownloadUrl(lotwUsername, lotwPassword, dateFromStr, dateToStr);
+    const downloadUrl = buildLoTWDownloadUrl(lotwUsername, lotwPassword, {
+      dateFrom: dateFromStr,
+      dateTo: dateToStr,
+      ownCallsign: contact.station_callsign,
+    });
 
     // Download confirmations from LoTW
     let adifContent: string;

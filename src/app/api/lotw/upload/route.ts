@@ -3,8 +3,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/db';
-import { generateAdifForLoTW, signAdifWithCertificate, generateAdifHash } from '@/lib/lotw';
-import { LotwUploadRequest, LotwUploadResponse, ContactWithLoTW } from '@/types/lotw';
+import {
+  buildSignedTq8,
+  generateAdifHash,
+  normalizeCallsign,
+  decryptString,
+} from '@/lib/lotw';
+import {
+  LotwUploadRequest,
+  LotwUploadResponse,
+  ContactWithLoTW,
+  LotwQso,
+  LotwStationProfile,
+} from '@/types/lotw';
+
+// LoTW (TQSL ≥ 2.7.3) rejects these prop_modes. Wavelog flags such QSOs as 'I'
+// (ignore) so they are skipped on every future upload pass.
+const LOTW_UNSUPPORTED_PROP_MODES = new Set(['INTERNET', 'RPT']);
+
+const LOTW_UPLOAD_URL = 'https://lotw.arrl.org/lotw/upload';
+const LOTW_UPLOAD_ACCEPTED_REGEX = /<!--\s*\.UPL\.\s*accepted\s*-->/i;
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,20 +50,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify station exists and get user info
+    // Expanded station select — buildSignedTq8 needs the full LotwStationProfile
+    // (DXCC entity, gridsquare, ITU/CQ zones, state/county) to build a valid .tq8.
+    const stationCols = `id, callsign, user_id, dxcc_entity_code, grid_locator,
+                         itu_zone, cq_zone, state_province, county`;
     let stationResult;
     if (isCronJob) {
-      // For cron jobs, just verify station exists and get the user
       stationResult = await query(
-        'SELECT id, callsign, user_id FROM stations WHERE id = $1',
+        `SELECT ${stationCols} FROM stations WHERE id = $1`,
         [station_id]
       );
     } else {
-      // For regular requests, verify station belongs to user
       if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
       stationResult = await query(
-        'SELECT id, callsign, user_id FROM stations WHERE id = $1 AND user_id = $2',
+        `SELECT ${stationCols} FROM stations WHERE id = $1 AND user_id = $2`,
         [station_id, parseInt(user.userId)]
       );
     }
@@ -59,19 +79,35 @@ export async function POST(request: NextRequest) {
     const station = stationResult.rows[0];
     const userId = isCronJob ? station.user_id : parseInt(user!.userId);
 
-    // Get active LoTW certificate for this station
+    // Get active LoTW certificate for this station. p12_password column is optional;
+    // older rows may pre-date the migration, in which case it's null and we sign
+    // assuming an empty password (TQSL's default export when no password is set).
     const certResult = await query(
-      'SELECT id, p12_cert FROM lotw_credentials WHERE station_id = $1 AND is_active = true ORDER BY created_at DESC LIMIT 1',
+      `SELECT id, p12_cert, p12_password
+       FROM lotw_credentials
+       WHERE station_id = $1 AND is_active = true
+       ORDER BY created_at DESC LIMIT 1`,
       [station_id]
     );
 
     if (certResult.rows.length === 0) {
-      return NextResponse.json({ 
-        error: 'No active LoTW certificate found for this station. Please upload a certificate first.' 
+      return NextResponse.json({
+        error: 'No active LoTW certificate found for this station. Please upload a certificate first.'
       }, { status: 400 });
     }
 
     const certificate = certResult.rows[0];
+
+    // Decrypt the stored P12 password (if any). Empty string is a valid input
+    // to node-forge's pkcs12FromAsn1 for unprotected exports.
+    let p12Password = '';
+    if (certificate.p12_password) {
+      try {
+        p12Password = decryptString(certificate.p12_password);
+      } catch (decryptErr) {
+        console.error('[LoTW Upload] Failed to decrypt p12 password:', decryptErr);
+      }
+    }
 
     // Create upload log entry
     const uploadLogResult = await query(
@@ -91,44 +127,64 @@ export async function POST(request: NextRequest) {
         ['processing', uploadLogId]
       );
 
-      // Build query for contacts to upload
+      // Build query for contacts to upload. lotw_qsl_sent='M' means a downstream
+      // service confirmed the QSO and the LoTW record needs re-upload to carry
+      // updated QSL fields. lotw_qsl_sent='I' means the QSO is in an unsupported
+      // prop_mode (e.g., INTERNET) and we never upload it.
       let contactQuery = `
         SELECT c.*, s.callsign as station_callsign
-        FROM contacts c 
+        FROM contacts c
         JOIN stations s ON c.station_id = s.id
         WHERE c.user_id = $1 AND c.station_id = $2
+          AND (c.lotw_qsl_sent IS NULL OR c.lotw_qsl_sent IN ('N', 'M'))
       `;
       const queryParams: (string | number)[] = [userId, station_id];
       let paramIndex = 3;
 
-      // Add date filters if provided
       if (date_from) {
         contactQuery += ` AND c.datetime >= $${paramIndex}`;
         queryParams.push(date_from);
         paramIndex++;
       }
-
       if (date_to) {
         contactQuery += ` AND c.datetime <= $${paramIndex}`;
         queryParams.push(date_to);
         paramIndex++;
       }
-
-      // Only upload contacts that haven't been uploaded to LoTW yet
-      contactQuery += ` AND (c.lotw_qsl_sent IS NULL OR c.lotw_qsl_sent != 'Y')`;
-      
       contactQuery += ` ORDER BY c.datetime ASC`;
 
       const contactsResult = await query(contactQuery, queryParams);
-      const contacts: ContactWithLoTW[] = contactsResult.rows;
+      const allContacts: ContactWithLoTW[] = contactsResult.rows;
+
+      // Filter out QSOs whose prop_mode LoTW doesn't accept; flag them as 'I' so
+      // they don't keep cycling through future upload passes.
+      const skipped: ContactWithLoTW[] = [];
+      const contacts: ContactWithLoTW[] = [];
+      for (const c of allContacts) {
+        const propMode = (c.prop_mode || '').toUpperCase();
+        if (propMode && LOTW_UNSUPPORTED_PROP_MODES.has(propMode)) {
+          skipped.push(c);
+        } else {
+          contacts.push(c);
+        }
+      }
+      if (skipped.length > 0) {
+        await query(
+          `UPDATE contacts SET lotw_qsl_sent = 'I', updated_at = NOW()
+           WHERE id = ANY($1)`,
+          [skipped.map(c => c.id)]
+        );
+      }
 
       if (contacts.length === 0) {
         await query(
-          `UPDATE lotw_upload_logs 
-           SET status = 'completed', completed_at = NOW(), qso_count = 0, 
-               error_message = 'No contacts found for upload' 
-           WHERE id = $1`,
-          [uploadLogId]
+          `UPDATE lotw_upload_logs
+           SET status = 'completed', completed_at = NOW(), qso_count = 0,
+               error_message = $1
+           WHERE id = $2`,
+          [skipped.length > 0
+            ? `No upload-eligible contacts (skipped ${skipped.length} unsupported prop_mode QSOs)`
+            : 'No contacts found for upload', uploadLogId]
         );
 
         const response: LotwUploadResponse = {
@@ -141,63 +197,116 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(response);
       }
 
-      // Generate ADIF content
-      const adifContent = generateAdifForLoTW(contacts, station.callsign);
-      const fileHash = generateAdifHash(adifContent);
-      const fileSizeBytes = Buffer.byteLength(adifContent, 'utf8');
+      // Build LotwStationProfile from the station row + DXCC-conditional location.
+      const stationProfile: LotwStationProfile = {
+        callsign: normalizeCallsign(station.callsign),
+        dxcc: station.dxcc_entity_code,
+        gridsquare: station.grid_locator || undefined,
+        ituz: station.itu_zone || undefined,
+        cqz: station.cq_zone || undefined,
+      };
+      // Map state_province + county into the right DXCC-conditional slot.
+      const dxcc = station.dxcc_entity_code;
+      const stateValue = station.state_province || undefined;
+      const countyValue = station.county || undefined;
+      if (dxcc === 6 || dxcc === 110 || dxcc === 291) {
+        stationProfile.us_state = stateValue;
+        stationProfile.us_county = countyValue;
+      } else if (dxcc === 1) {
+        stationProfile.ca_province = stateValue;
+      } else if ([15, 54, 61, 125, 151].includes(dxcc)) {
+        stationProfile.ru_oblast = stateValue;
+      } else if (dxcc === 318) {
+        stationProfile.cn_province = stateValue;
+      } else if (dxcc === 150) {
+        stationProfile.au_state = stateValue;
+      } else if (dxcc === 339) {
+        stationProfile.ja_prefecture = stateValue;
+        stationProfile.ja_city_gun_ku = countyValue;
+      } else if (dxcc === 5 || dxcc === 224) {
+        stationProfile.fi_kunta = stateValue;
+      }
 
-      // Update log with file details
-      await query(
-        `UPDATE lotw_upload_logs 
-         SET qso_count = $1, file_hash = $2, file_size_bytes = $3 
-         WHERE id = $4`,
-        [contacts.length, fileHash, fileSizeBytes, uploadLogId]
-      );
-
-      // Sign ADIF file with certificate
-      let signedContent: string;
-      try {
-        signedContent = await signAdifWithCertificate(
-          adifContent,
-          certificate.p12_cert,
-          station.callsign
-        );
-      } catch (signError) {
-        console.error('ADIF signing error:', signError);
-        
+      if (!stationProfile.dxcc) {
         await query(
-          `UPDATE lotw_upload_logs 
-           SET status = 'failed', completed_at = NOW(), 
-               error_message = $1 
-           WHERE id = $2`,
-          [`Failed to sign ADIF file: ${signError instanceof Error ? signError.message : 'Unknown error'}`, uploadLogId]
+          `UPDATE lotw_upload_logs SET status = 'failed', completed_at = NOW(),
+                  error_message = 'Station is missing dxcc_entity_code; cannot build LoTW upload'
+           WHERE id = $1`,
+          [uploadLogId]
         );
-
-        return NextResponse.json({ 
+        return NextResponse.json({
           success: false,
           upload_log_id: uploadLogId,
-          error_message: `Failed to sign ADIF file: ${signError instanceof Error ? signError.message : 'Unknown error'}`
+          error_message: 'Station is missing dxcc_entity_code; please set it before uploading to LoTW.'
+        }, { status: 400 });
+      }
+
+      // Convert contacts to LotwQso[]; normalize callsigns (W1AW_P → W1AW/P).
+      const qsos: LotwQso[] = contacts.map(c => ({
+        call: normalizeCallsign(c.callsign),
+        band: c.band || '',
+        band_rx: c.band_rx,
+        mode: c.mode || '',
+        // contacts.frequency is stored in MHz already (DECIMAL(10,6)), but the
+        // LotwQso interface expects MHz frequencies multiplied... re-check:
+        // Looking at QRZ contactToQRZFormat (qrz.ts:225): freq = frequency / 1_000_000
+        // → frequency is stored in Hz. So convert: c.frequency is in Hz here.
+        freq: c.frequency ? Number(c.frequency) : undefined,
+        freq_rx: c.freq_rx ? Number(c.freq_rx) : undefined,
+        prop_mode: c.prop_mode,
+        sat_name: c.sat_name,
+        datetime: new Date(c.datetime),
+      }));
+
+      // Sign + gzip the .tq8.
+      let tq8: Buffer;
+      try {
+        tq8 = await buildSignedTq8({
+          p12: certificate.p12_cert,
+          p12Password,
+          station: stationProfile,
+          qsos,
+        });
+      } catch (signError) {
+        console.error('LoTW .tq8 build error:', signError);
+        await query(
+          `UPDATE lotw_upload_logs
+           SET status = 'failed', completed_at = NOW(), error_message = $1
+           WHERE id = $2`,
+          [`Failed to sign .tq8: ${signError instanceof Error ? signError.message : 'Unknown error'}`, uploadLogId]
+        );
+        return NextResponse.json({
+          success: false,
+          upload_log_id: uploadLogId,
+          error_message: `Failed to sign .tq8: ${signError instanceof Error ? signError.message : 'Unknown error'}`
         }, { status: 500 });
       }
 
-      // Upload to LoTW
+      const fileHash = generateAdifHash(tq8.toString('binary'));
+      await query(
+        `UPDATE lotw_upload_logs
+         SET qso_count = $1, file_hash = $2, file_size_bytes = $3
+         WHERE id = $4`,
+        [contacts.length, fileHash, tq8.length, uploadLogId]
+      );
+
+      // Upload to LoTW as multipart/form-data with field name "upfile" (per
+      // wavelog Lotw.php:312-315). FormData with a Blob handles the boundary.
       let lotwResponse = '';
       try {
-        const uploadResponse = await fetch('https://lotw.arrl.org/lotwuser/upload', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/octet-stream',
-            'Content-Disposition': `attachment; filename="${station.callsign}.tq8"`,
-          },
-          body: signedContent,
-        });
-
+        const fd = new FormData();
+        const blob = new Blob([new Uint8Array(tq8)], { type: 'application/octet-stream' });
+        fd.append('upfile', blob, `${stationProfile.callsign}.tq8`);
+        const uploadResponse = await fetch(LOTW_UPLOAD_URL, { method: 'POST', body: fd });
         lotwResponse = await uploadResponse.text();
-
         if (!uploadResponse.ok) {
-          throw new Error(`LoTW upload failed: ${uploadResponse.status} ${lotwResponse}`);
+          throw new Error(`LoTW upload HTTP ${uploadResponse.status}: ${lotwResponse.slice(0, 500)}`);
         }
-
+        // LoTW returns 200 even for some failures; the body must contain the
+        // success marker or the upload was not actually accepted.
+        if (!LOTW_UPLOAD_ACCEPTED_REGEX.test(lotwResponse)) {
+          throw new Error(`LoTW did not accept upload: ${lotwResponse.slice(0, 500)}`);
+        }
       } catch (uploadError) {
         console.error('LoTW upload error:', uploadError);
         
