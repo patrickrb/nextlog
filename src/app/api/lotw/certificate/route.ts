@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { encryptString, readCertMetadata } from '@/lib/lotw';
 import { LotwCertificateResponse } from '@/types/lotw';
 
 export async function POST(request: NextRequest) {
@@ -17,6 +18,8 @@ export async function POST(request: NextRequest) {
     const stationId = formData.get('station_id') as string;
     const callsign = formData.get('callsign') as string;
     const certName = formData.get('cert_name') as string;
+    // Optional — TQSL exports without a password are common; node-forge accepts ''.
+    const p12Password = (formData.get('p12_password') as string | null) ?? '';
 
     if (!file || !stationId || !callsign || !certName) {
       return NextResponse.json({
@@ -68,6 +71,22 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Validate the P12 by parsing it with the supplied password. This catches
+    // wrong-password / corrupt-file uploads before they sit unusable in the DB.
+    let certMeta: { serial: string; notAfter?: Date; dxcc?: number };
+    try {
+      certMeta = readCertMetadata(fileBuffer, p12Password);
+    } catch (parseError) {
+      const msg = parseError instanceof Error ? parseError.message : 'Unknown error';
+      // node-forge throws "PKCS#12 MAC could not be verified" / similar on bad password
+      const isPasswordError = /mac|password|invalid|decrypt/i.test(msg);
+      return NextResponse.json({
+        error: isPasswordError
+          ? 'Could not parse certificate with the supplied password. Re-export from TQSL and re-enter the password.'
+          : `Certificate parse failed: ${msg}`
+      }, { status: 400 });
+    }
+
     // Check if certificate already exists for this station
     const existingCertResult = await query(
       'SELECT id FROM lotw_credentials WHERE station_id = $1 AND is_active = true',
@@ -82,24 +101,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Store new certificate in lotw_credentials table
+    // Encrypt the P12 password at rest. Empty string is encrypted as well so
+    // the upload route can simply decrypt-or-default; storing NULL would
+    // require a branch in every read path.
+    const encryptedPassword = encryptString(p12Password);
+
+    // Store new certificate + metadata extracted from the P12.
     const insertResult = await query(
       `INSERT INTO lotw_credentials
-       (station_id, name, callsign, p12_cert, cert_created_at, is_active)
-       VALUES ($1, $2, $3, $4, NOW(), true)
-       RETURNING id, cert_created_at`,
-      [parseInt(stationId), certName.trim(), callsign.toUpperCase(), fileBuffer]
+       (station_id, name, callsign, p12_cert, p12_password,
+        cert_serial, cert_created_at, cert_expires_at, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, true)
+       RETURNING id, cert_created_at, cert_expires_at`,
+      [
+        parseInt(stationId),
+        certName.trim(),
+        callsign.toUpperCase(),
+        fileBuffer,
+        encryptedPassword,
+        certMeta.serial,
+        certMeta.notAfter ?? null,
+      ]
     );
 
     const newCredential = insertResult.rows[0];
 
-    // TODO: Extract certificate expiration date from P12 file
-    // This would require additional crypto libraries to parse the certificate
-    
     const response: LotwCertificateResponse = {
       success: true,
       credential_id: newCredential.id,
-      // cert_expires_at: expirationDate?.toISOString()
+      cert_expires_at: newCredential.cert_expires_at
+        ? new Date(newCredential.cert_expires_at).toISOString()
+        : undefined,
     };
 
     return NextResponse.json(response);

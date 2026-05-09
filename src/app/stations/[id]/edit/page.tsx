@@ -135,6 +135,8 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
   // const [testingLotw, setTestingLotw] = useState(false); // Unused - for future LoTW validation
   const [certFile, setCertFile] = useState<File | null>(null);
   const [certName, setCertName] = useState('');
+  const [certPassword, setCertPassword] = useState('');
+  const [showCertPassword, setShowCertPassword] = useState(false);
   const [uploadingCert, setUploadingCert] = useState(false);
   const [certificates, setCertificates] = useState<Array<{
     id: number;
@@ -981,6 +983,37 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                       />
                     </div>
 
+                    <div className="space-y-2">
+                      <Label htmlFor="cert-password">Certificate Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="cert-password"
+                          type={showCertPassword ? 'text' : 'password'}
+                          value={certPassword}
+                          onChange={(e) => setCertPassword(e.target.value)}
+                          placeholder="Password set during TQSL export (leave blank if none)"
+                          autoComplete="new-password"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowCertPassword(!showCertPassword)}
+                        >
+                          {showCertPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Required to sign uploads. Stored encrypted; never sent back to the browser.
+                        TQSL exports without a password are accepted (leave this empty).
+                      </p>
+                    </div>
+
                     <Button
                       type="button"
                       variant="outline"
@@ -1000,6 +1033,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                           certFormData.append('station_id', stationId);
                           certFormData.append('callsign', formData.callsign);
                           certFormData.append('cert_name', certName.trim());
+                          certFormData.append('p12_password', certPassword);
 
                           const response = await fetch('/api/lotw/certificate', {
                             method: 'POST',
@@ -1012,6 +1046,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                             setSuccess('LoTW certificate uploaded successfully!');
                             setCertFile(null);
                             setCertName('');
+                            setCertPassword('');
                             const fileInput = document.getElementById('cert-file') as HTMLInputElement;
                             if (fileInput) fileInput.value = '';
                             // Refresh certificates list
