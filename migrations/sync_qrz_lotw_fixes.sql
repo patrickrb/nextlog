@@ -6,6 +6,19 @@
 --   4. Carry the cross-service 'M' (modified) and 'I' (ignore) flags
 --
 -- Idempotent — safe to re-run.
+--
+-- Prerequisite: postgres-lotw-migration.sql must have been run first to create
+-- the lotw_credentials / lotw_upload_logs / lotw_download_logs tables.
+
+-- 0. contacts: ensure QRZ tracking columns exist (some envs were initialized
+--    before the in-app /install route added these). sync_qrz_lotw_fixes is the
+--    canonical setup for the QRZ flow now.
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS qrz_qsl_sent      VARCHAR(10);
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS qrz_qsl_rcvd      VARCHAR(10);
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS qrz_qsl_sent_date DATE;
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS qrz_qsl_rcvd_date DATE;
+CREATE INDEX IF NOT EXISTS idx_contacts_qrz_qsl_sent ON contacts(qrz_qsl_sent);
+CREATE INDEX IF NOT EXISTS idx_contacts_qrz_qsl_rcvd ON contacts(qrz_qsl_rcvd);
 
 -- 1. lotw_credentials: store the encrypted P12 password and CRL state.
 ALTER TABLE lotw_credentials ADD COLUMN IF NOT EXISTS p12_password   TEXT;
