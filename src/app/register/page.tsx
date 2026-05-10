@@ -57,7 +57,7 @@ export default function RegisterPage() {
           password: formData.password,
           name: formData.name,
           callsign: formData.callsign,
-          gridLocator: formData.gridLocator,
+          grid_locator: formData.gridLocator,
         }),
       });
 

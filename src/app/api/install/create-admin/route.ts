@@ -4,7 +4,7 @@ import pool from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
-    const { name, email, password, callsign, gridLocator } = await request.json();
+    const { name, email, password, callsign, grid_locator } = await request.json();
     
     // Validate required fields
     if (!name || !email || !password || !callsign) {
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
           name, email, password, callsign, grid_locator, role, status, created_at
         ) VALUES ($1, $2, $3, $4, $5, 'admin', 'active', NOW())
         RETURNING id, name, email, callsign, role
-      `, [name, email, hashedPassword, callsign.toUpperCase(), gridLocator?.toUpperCase() || null]);
+      `, [name, email, hashedPassword, callsign.toUpperCase(), grid_locator?.toUpperCase() || null]);
       
       const user = userResult.rows[0];
       
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
           callsign.toUpperCase(),
           `${callsign.toUpperCase()} Station`,
           name,
-          gridLocator?.toUpperCase() || null
+          grid_locator?.toUpperCase() || null
         ]);
       } else {
         // Fallback schema with minimal columns
