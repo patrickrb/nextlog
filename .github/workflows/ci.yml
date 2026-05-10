@@ -16,7 +16,7 @@ jobs:
     
     - uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '22'
         cache: 'npm'
     
     - name: Install dependencies
@@ -42,6 +42,39 @@ jobs:
         name: playwright-report
         path: playwright-report/
         retention-days: 30
+
+  security:
+    runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Check Snyk token
+        id: snyk_token
+        run: |
+          if [ -n "$SNYK_TOKEN" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::SNYK_TOKEN not set - skipping Snyk scan. Add it to repo secrets to enable enforcement."
+          fi
+      - name: Snyk SCA test
+        if: steps.snyk_token.outputs.present == 'true'
+        uses: snyk/actions/node@master
+        with:
+          args: --severity-threshold=high
+      - name: Snyk container test (Dockerfile)
+        if: steps.snyk_token.outputs.present == 'true'
+        uses: snyk/actions/docker@master
+        with:
+          image: node:22-alpine
+          args: --file=Dockerfile --severity-threshold=high
 
   # This job will be required for merging PRs
   tests-required:

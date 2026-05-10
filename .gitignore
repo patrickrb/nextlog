@@ -36,6 +36,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# snyk
+snyk-report.json
+container-report.json
+.dccache
+
 #claude
 /.claude/
 
