@@ -22,8 +22,8 @@ interface CallsignSuggestion {
   value: string;
   label: string;
   secondary?: string;
-  contactCount: number;
-  lastContact: string;
+  contact_count: number;
+  last_contact: string;
 }
 
 interface SearchInputProps {
@@ -140,7 +140,7 @@ export default function SearchInput({ className }: SearchInputProps) {
                       <div className="flex items-center justify-between">
                         <span className="font-medium">{suggestion.label}</span>
                         <span className="text-xs text-muted-foreground">
-                          {suggestion.contactCount} contact{suggestion.contactCount !== 1 ? 's' : ''}
+                          {suggestion.contact_count} contact{suggestion.contact_count !== 1 ? 's' : ''}
                         </span>
                       </div>
                       {suggestion.secondary && (

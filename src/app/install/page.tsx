@@ -164,7 +164,7 @@ export default function InstallPage() {
           email: formData.email,
           password: formData.password,
           callsign: formData.callsign,
-          gridLocator: formData.gridLocator
+          grid_locator: formData.gridLocator
         }),
       });
       

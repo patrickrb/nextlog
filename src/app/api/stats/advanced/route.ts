@@ -166,17 +166,17 @@ async function getGeographicAnalytics(whereClause: string, params: unknown[]) {
   const gridActivity = await query(gridActivityQuery, params);
 
   return {
-    countryDistribution: countryDistribution.rows.map(row => ({
+    country_distribution: countryDistribution.rows.map(row => ({
       country: row.country || 'Unknown',
       continent: row.continent || 'Unknown',
       qsos: parseInt(row.qsos)
     })),
-    continentDistribution: continentDistribution.rows.map(row => ({
+    continent_distribution: continentDistribution.rows.map(row => ({
       continent: row.continent,
       qsos: parseInt(row.qsos)
     })),
-    gridActivity: gridActivity.rows.map(row => ({
-      gridSquare: row.grid_square,
+    grid_activity: gridActivity.rows.map(row => ({
+      grid_square: row.grid_square,
       qsos: parseInt(row.qsos)
     }))
   };

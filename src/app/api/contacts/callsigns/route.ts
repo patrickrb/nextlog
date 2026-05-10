@@ -46,8 +46,8 @@ export async function GET(request: NextRequest) {
       value: row.callsign,
       label: row.callsign,
       secondary: row.name ? `${row.name}${row.qth ? ` - ${row.qth}` : ''}` : row.qth,
-      contactCount: parseInt(row.contact_count),
-      lastContact: row.last_contact
+      contact_count: parseInt(row.contact_count),
+      last_contact: row.last_contact
     }));
 
     return NextResponse.json({ callsigns });

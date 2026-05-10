@@ -5,7 +5,7 @@ import { User } from "@/models/User";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password, name, callsign, gridLocator } =
+    const { email, password, name, callsign, grid_locator } =
       await request.json();
 
     if (!email || !password || !name) {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       password: hashedPassword,
       name,
       callsign,
-      grid_locator: gridLocator,
+      grid_locator,
     });
 
     const token = jwt.sign(
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
           email: newUser.email,
           name: newUser.name,
           callsign: newUser.callsign,
-          gridLocator: newUser.grid_locator,
+          grid_locator: newUser.grid_locator,
         },
       },
       { status: 201 }
