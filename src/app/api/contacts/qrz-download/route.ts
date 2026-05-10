@@ -3,7 +3,8 @@ import jwt from 'jsonwebtoken';
 import { User } from '@/models/User';
 import { Contact } from '@/models/Contact';
 import { Station } from '@/models/Station';
-import { downloadQSOsFromQRZ } from '@/lib/qrz';
+import { downloadQSOsFromQRZ, matchQRZConfirmation } from '@/lib/qrz';
+import { query } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,21 +68,44 @@ export async function POST(request: NextRequest) {
         console.log(`Found ${stationContacts.length} unconfirmed contacts for station ${station.callsign}`);
         
         let confirmationsFound = 0;
-        
-        // Match QRZ QSOs with our contacts to find confirmations
-        for (const contact of stationContacts) {
+
+        // Annotate each contact with the station callsign so the matcher can
+        // cross-check against QRZ's STATION_CALLSIGN field. ContactData has
+        // station_id but not station_callsign — fill it in from the iterated station.
+        const stationCall = station.callsign;
+        const annotated = stationContacts.map(c => ({ ...c, station_callsign: stationCall }));
+
+        // Match QRZ QSOs with our contacts. Tighter rules: callsign + band +
+        // mode + station_callsign + ±15min, so two QSOs on different bands at
+        // the same minute don't false-match.
+        for (const contact of annotated) {
           for (const qrzQSO of downloadResult.qsos) {
-            if (Contact.matchQSO(contact, qrzQSO)) {
-              console.log(`Found confirmation match for ${contact.callsign} on ${contact.datetime}`);
-              
-              // Check if QRZ shows this as confirmed
-              if (qrzQSO.qsl_rcvd === 'Y' || qrzQSO.qsl_sent === 'Y') {
-                console.log(`Marking ${contact.callsign} as QRZ confirmed`);
-                await Contact.updateQrzQsl(contact.id, undefined, 'Y'); // Mark received
-                confirmationsFound++;
-              }
-              break; // Found match, no need to check other QRZ QSOs for this contact
+            if (!matchQRZConfirmation(contact, qrzQSO)) continue;
+
+            // QRZ marks confirmed records with app_qrzlog_status='C'. The legacy
+            // qsl_rcvd / qsl_sent fields aren't always populated, so prefer the
+            // app field when present.
+            const isConfirmed =
+              qrzQSO.app_qrzlog_status?.toUpperCase() === 'C' ||
+              qrzQSO.qsl_rcvd === 'Y' ||
+              qrzQSO.qsl_sent === 'Y';
+            if (!isConfirmed) {
+              break;
             }
+
+            console.log(`Marking ${contact.callsign} as QRZ confirmed (status=${qrzQSO.app_qrzlog_status ?? '<missing>'})`);
+            await Contact.updateQrzQsl(contact.id, undefined, 'Y');
+            confirmationsFound++;
+
+            // Cross-sync: if LoTW already shipped this QSO, flag for re-upload
+            // so the new qrz_qsl_rcvd value propagates back into LoTW (wavelog 'M').
+            if (contact.lotw_qsl_sent === 'Y') {
+              await query(
+                `UPDATE contacts SET lotw_qsl_sent = 'M', updated_at = NOW() WHERE id = $1`,
+                [contact.id]
+              );
+            }
+            break;
           }
         }
         

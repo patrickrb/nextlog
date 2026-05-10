@@ -143,7 +143,11 @@ export async function POST(request: NextRequest) {
       );
 
       // Build LoTW download URL
-      const downloadUrl = buildLoTWDownloadUrl(lotwUsername, lotwPassword, date_from, date_to);
+      const downloadUrl = buildLoTWDownloadUrl(lotwUsername, lotwPassword, {
+        dateFrom: date_from,
+        dateTo: date_to,
+        ownCallsign: station.callsign,
+      });
 
       // Download confirmations from LoTW
       let adifContent: string;
@@ -209,27 +213,30 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(response);
       }
 
-      // Get contacts from this station to match against
+      // Get contacts from this station to match against. Join the station
+      // callsign so the matcher can disambiguate multi-station accounts
+      // against LoTW's app_lotw_owncall.
       let contactQuery = `
-        SELECT * FROM contacts 
-        WHERE user_id = $1 AND station_id = $2
+        SELECT c.*, s.callsign as station_callsign
+        FROM contacts c
+        JOIN stations s ON c.station_id = s.id
+        WHERE c.user_id = $1 AND c.station_id = $2
       `;
       const queryParams: (string | number)[] = [userId, station_id];
 
-      // Add date filters based on confirmation dates if provided
       if (date_from || date_to) {
         if (date_from) {
-          contactQuery += ` AND datetime >= $3`;
+          contactQuery += ` AND c.datetime >= $3`;
           queryParams.push(date_from);
         }
         if (date_to) {
           const paramIndex = queryParams.length + 1;
-          contactQuery += ` AND datetime <= $${paramIndex}`;
+          contactQuery += ` AND c.datetime <= $${paramIndex}`;
           queryParams.push(date_to);
         }
       }
 
-      contactQuery += ` ORDER BY datetime ASC`;
+      contactQuery += ` ORDER BY c.datetime ASC`;
 
       const contactsResult = await query(contactQuery, queryParams);
       const contacts: ContactWithLoTW[] = contactsResult.rows;
@@ -240,21 +247,84 @@ export async function POST(request: NextRequest) {
       let matchedCount = 0;
       let unmatchedCount = confirmations.length;
 
-      // Update matched contacts
+      // Apply each confirmation: set LoTW QSL flags, enrich location fields
+      // (state/county/CQZ/ITUZ/DXCC/country/grid/iota), and cross-flag QRZ
+      // for re-upload when the QSO was already in QRZ ('Y' → 'M').
       for (const match of matches) {
+        const conf = match.confirmation;
+
+        // Build a dynamic UPDATE — only set fields LoTW returned non-empty.
+        const sets: string[] = [
+          'qsl_lotw = true',
+          `qsl_lotw_date = NOW()::date`,
+          `lotw_qsl_rcvd = 'Y'`,
+          'lotw_match_status = $1',
+          'updated_at = NOW()',
+        ];
+        const params: (string | number | Date)[] = [match.matchStatus];
+
+        const addEnrich = (col: string, value: string | undefined) => {
+          if (!value) return;
+          params.push(value);
+          sets.push(`${col} = $${params.length}`);
+        };
+        addEnrich('state', conf.state);
+        addEnrich('cnty', conf.cnty);
+        if (conf.cqz) {
+          const n = parseInt(conf.cqz, 10);
+          if (!Number.isNaN(n)) { params.push(n); sets.push(`cqz = $${params.length}`); }
+        }
+        if (conf.ituz) {
+          const n = parseInt(conf.ituz, 10);
+          if (!Number.isNaN(n)) { params.push(n); sets.push(`ituz = $${params.length}`); }
+        }
+        if (conf.dxcc) {
+          const n = parseInt(conf.dxcc, 10);
+          if (!Number.isNaN(n)) { params.push(n); sets.push(`dxcc = $${params.length}`); }
+        }
+        addEnrich('country', conf.country);
+        // Only update gridsquare if LoTW reported one and ours was missing/different.
+        if (conf.gridsquare && conf.gridsquare !== match.contact.grid_locator) {
+          params.push(conf.gridsquare);
+          sets.push(`grid_locator = $${params.length}`);
+        }
+        // Cross-sync: if QRZ already shipped this QSO, mark for re-upload so the
+        // updated lotw_qsl_rcvd / location fields propagate. Wavelog's 'M' flag.
+        if (match.contact.qrz_qsl_sent === 'Y') {
+          sets.push(`qrz_qsl_sent = 'M'`);
+        }
+        // qsl_rcvd_date from LoTW is YYYY-MM-DD already.
+        if (conf.qsl_rcvd_date) {
+          params.push(conf.qsl_rcvd_date);
+          sets.push(`qsl_lotw_date = $${params.length}::date`);
+        }
+
+        params.push(match.contact.id);
         await query(
-          `UPDATE contacts 
-           SET qsl_lotw = true, 
-               qsl_lotw_date = NOW()::date,
-               lotw_qsl_rcvd = 'Y',
-               lotw_match_status = $1,
-               updated_at = NOW()
-           WHERE id = $2`,
-          [match.matchStatus, match.contact.id]
+          `UPDATE contacts SET ${sets.join(', ')} WHERE id = $${params.length}`,
+          params
         );
 
         matchedCount++;
         unmatchedCount--;
+      }
+
+      // Persist the most recent qsl_rcvd_date so the next download can use it
+      // as qso_qslsince for an incremental fetch.
+      if (matches.length > 0) {
+        const maxDate = matches
+          .map(m => m.confirmation.qsl_rcvd_date)
+          .filter((d): d is string => !!d)
+          .sort()
+          .pop();
+        if (maxDate) {
+          await query(
+            `UPDATE stations SET lotw_last_qsl_rcvd_date = GREATEST(
+                COALESCE(lotw_last_qsl_rcvd_date, '1970-01-01'::date), $1::date
+             ) WHERE id = $2`,
+            [maxDate, station_id]
+          );
+        }
       }
 
       // Update download log as completed

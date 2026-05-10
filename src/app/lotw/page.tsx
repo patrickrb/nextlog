@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Upload, Download, Settings, ArrowLeft, RefreshCw, FileText } from 'lucide-react';
+import { Loader2, Upload, Download, Settings, ArrowLeft, RefreshCw, FileText, Eye, EyeOff } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { useUser } from '@/contexts/UserContext';
 
@@ -63,6 +63,9 @@ export default function LotwPage() {
   const [dateTo, setDateTo] = useState('');
   const [certFile, setCertFile] = useState<File | null>(null);
   const [certCallsign, setCertCallsign] = useState('');
+  const [certName, setCertName] = useState('');
+  const [certPassword, setCertPassword] = useState('');
+  const [showCertPassword, setShowCertPassword] = useState(false);
 
   const { user } = useUser();
   const router = useRouter();
@@ -197,8 +200,8 @@ export default function LotwPage() {
   };
 
   const handleCertificateUpload = async () => {
-    if (!certFile || !selectedStation || !certCallsign) {
-      setMessage({ type: 'error', text: 'Please select a station, enter callsign, and choose a certificate file' });
+    if (!certFile || !selectedStation || !certCallsign || !certName.trim()) {
+      setMessage({ type: 'error', text: 'Select a station and provide a callsign, certificate name, and file.' });
       return;
     }
 
@@ -210,6 +213,8 @@ export default function LotwPage() {
       formData.append('p12_file', certFile);
       formData.append('station_id', selectedStation);
       formData.append('callsign', certCallsign);
+      formData.append('cert_name', certName.trim());
+      formData.append('p12_password', certPassword);
 
       const response = await fetch('/api/lotw/certificate', {
         method: 'POST',
@@ -222,7 +227,8 @@ export default function LotwPage() {
         setMessage({ type: 'success', text: 'Certificate uploaded successfully' });
         setCertFile(null);
         setCertCallsign('');
-        // Reset file input
+        setCertName('');
+        setCertPassword('');
         const fileInput = document.getElementById('cert-file') as HTMLInputElement;
         if (fileInput) fileInput.value = '';
       } else {
@@ -404,30 +410,74 @@ export default function LotwPage() {
                   Upload a .p12 certificate file to enable LoTW uploads for the selected station.
                 </p>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="cert-callsign">Callsign</Label>
-                    <Input
-                      id="cert-callsign"
-                      type="text"
-                      value={certCallsign}
-                      onChange={(e) => setCertCallsign(e.target.value.toUpperCase())}
-                      placeholder="Enter callsign"
-                    />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="cert-callsign">Callsign</Label>
+                      <Input
+                        id="cert-callsign"
+                        type="text"
+                        value={certCallsign}
+                        onChange={(e) => setCertCallsign(e.target.value.toUpperCase())}
+                        placeholder="Enter callsign"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cert-name">Certificate Name</Label>
+                      <Input
+                        id="cert-name"
+                        type="text"
+                        value={certName}
+                        onChange={(e) => setCertName(e.target.value)}
+                        placeholder="e.g., Main LoTW Cert"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cert-file">Certificate File</Label>
-                    <Input
-                      id="cert-file"
-                      type="file"
-                      accept=".p12,.pfx"
-                      onChange={(e) => setCertFile(e.target.files?.[0] || null)}
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="cert-file">Certificate File</Label>
+                      <Input
+                        id="cert-file"
+                        type="file"
+                        accept=".p12,.pfx"
+                        onChange={(e) => setCertFile(e.target.files?.[0] || null)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cert-password">Certificate Password</Label>
+                      <div className="relative">
+                        <Input
+                          id="cert-password"
+                          type={showCertPassword ? 'text' : 'password'}
+                          value={certPassword}
+                          onChange={(e) => setCertPassword(e.target.value)}
+                          placeholder="Password set during TQSL export (leave blank if none)"
+                          autoComplete="new-password"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                          onClick={() => setShowCertPassword(!showCertPassword)}
+                        >
+                          {showCertPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-end">
+                  <p className="text-xs text-muted-foreground">
+                    Required to sign uploads. Stored encrypted; never returned to the browser.
+                    TQSL exports without a password are accepted (leave blank).
+                  </p>
+                  <div>
                     <Button
                       onClick={handleCertificateUpload}
-                      disabled={uploadingCert || !certFile || !selectedStation || !certCallsign}
+                      disabled={uploadingCert || !certFile || !selectedStation || !certCallsign || !certName.trim()}
                     >
                       {uploadingCert ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -7,10 +7,16 @@
       "maxDuration": 30
     },
     "src/app/api/cron/lotw-upload/route.ts": {
-      "maxDuration": 60
+      "maxDuration": 300
     },
     "src/app/api/cron/lotw-download/route.ts": {
-      "maxDuration": 60
+      "maxDuration": 300
+    },
+    "src/app/api/lotw/upload/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/lotw/download/route.ts": {
+      "maxDuration": 300
     }
   },
   "crons": [
