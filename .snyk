@@ -1,0 +1,15 @@
+# Snyk (https://snyk.io) policy file
+# Ignored vulnerabilities require a `reason` and an `expires` date so they
+# resurface for re-evaluation. Do not add permanent suppressions.
+version: v1.25.0
+ignore:
+  SNYK-JS-LEAFLET-16427276:
+    - '*':
+        reason: >-
+          leaflet 1.9.4 XSS — no upstream patch available as of 2026-05-10.
+          Tracked at https://security.snyk.io/vuln/SNYK-JS-LEAFLET-16427276.
+          Re-evaluate at expiry: bump if patched, otherwise consider replacing
+          with maplibre-gl-js / openlayers.
+        expires: 2026-08-10
+        created: 2026-05-10
+patch: {}
