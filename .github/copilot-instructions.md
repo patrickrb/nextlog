@@ -24,19 +24,16 @@ Nextlog is a modern Next.js 15 amateur radio logging application with PostgreSQL
    # Start PostgreSQL if not running
    sudo systemctl start postgresql  # Linux
    brew services start postgresql@15  # macOS
-   
-   # Create PostgreSQL user (one-time setup)
+
+   # Create PostgreSQL user + empty database (one-time setup)
    sudo -u postgres createuser -d -r -s nextlog
    sudo -u postgres psql -c "ALTER USER nextlog PASSWORD 'password';"
-   
-   # Run complete database setup - TAKES 2-3 SECONDS
-   chmod +x install-database.sh
-   echo "y" | ./install-database.sh
+   sudo -u postgres createdb -O nextlog nextlog
    ```
-   - Database installation takes ~2 seconds (much faster than expected), NEVER CANCEL
-   - Set timeout to 60 seconds for safety
-   - Creates user, database, schema, and loads 402 DXCC entities + 1851 states/provinces
-   - Script is interactive but can be automated with "y" input
+   - DB schema + reference data are loaded by the in-app installer at
+     http://localhost:3000/install after `npm run dev` is started. The
+     installer's migrate step creates all 18 tables and loads 402 DXCC
+     entities + 1849 states/provinces in one shot.
 
 3. **Environment configuration:**
    ```bash
@@ -188,10 +185,11 @@ docker compose up -d
 - `tests/` - Playwright end-to-end test suite
 
 ### Key Files to Know
-- `install-database.sh` - Complete database setup script (fast execution)
-- `postgres-init.sql` - Docker PostgreSQL initialization
-- `src/app/api/cloudlog/` - Third-party API compatibility
+- `drizzle/schema.ts` - Canonical schema (source of truth, 18 tables)
+- `drizzle/migrations/` - Drizzle Kit-generated SQL migrations
+- `src/lib/migrator.ts` - Runtime migration runner (backfill + apply)
 - `src/app/install/` - First-time setup workflow
+- `src/app/api/cloudlog/` - Third-party API compatibility
 - `src/components/ui/` - Shadcn/ui component library
 - `tests/*.spec.ts` - Comprehensive Playwright test suite
 
@@ -227,10 +225,11 @@ docker compose up -d
 5. **Always run test suite** - npm run test validates UI and functionality
 
 ### Database Changes
-1. **Never modify install-database.sql directly** - create migration scripts
-2. **Always test with reference data** - DXCC/states data is critical
-3. **Verify indexes** - contact lookups must be fast
-4. **Test station relationships** - users can have multiple stations
+1. **Edit `drizzle/schema.ts`, then `npm run db:generate`** - never hand-write SQL migrations; let Drizzle Kit diff the schema and emit them
+2. **Review the generated SQL before committing** - especially for destructive operations (DROP COLUMN, etc.)
+3. **Always test with reference data** - DXCC/states data is critical
+4. **Verify indexes** - contact lookups must be fast
+5. **Test station relationships** - users can have multiple stations
 
 ### Debugging Issues
 1. **Check database connection** - many features require PostgreSQL

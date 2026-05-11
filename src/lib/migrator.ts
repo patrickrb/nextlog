@@ -5,12 +5,11 @@
 // 1. Fresh DB: `__drizzle_migrations` doesn't exist, no canonical tables
 //    either. `migrate()` runs every migration including the baseline.
 //
-// 2. Existing install: canonical tables already exist (the install path ran
-//    `install-database.sql` + `propagation-schema.sql` + the hand-rolled
-//    migrate-schema endpoint). We seed `drizzle.__drizzle_migrations` with
-//    the baseline marked as applied so `migrate()` doesn't try to recreate
-//    schema that already exists. Future incremental migrations apply
-//    normally.
+// 2. Existing install: canonical tables already exist from a pre-#196 install
+//    that ran the legacy SQL bootstrap (since deleted). We seed
+//    `drizzle.__drizzle_migrations` with the baseline marked as applied so
+//    `migrate()` doesn't try to recreate schema that already exists. Future
+//    incremental migrations apply normally.
 //
 // Detection heuristic: `public.users` exists.
 //

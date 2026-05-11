@@ -3,11 +3,12 @@
 // Usage: npx tsx scripts/test-migrator.ts
 //
 // Spins up two temp DBs in the running Postgres container:
-//   1. Existing-install path: pre-populate with install-database.sql, then run
-//      the migrator. Expect: backfill seeds __drizzle_migrations with the
-//      baseline, migrate() applies nothing.
-//   2. Fresh-install path: empty DB. Expect: migrate() applies the baseline,
-//      __drizzle_migrations has exactly one row.
+//   1. Existing-install path: apply the baseline migration directly (canonical
+//      schema, no drizzle tracking) — same shape as a prod install set up by
+//      the now-deleted install-database.sql. Expect: backfill seeds
+//      __drizzle_migrations with the baseline, then 0001 applies.
+//   2. Fresh-install path: empty DB. Expect: migrate() applies the baseline +
+//      0001, __drizzle_migrations has both rows.
 
 import { Pool } from 'pg';
 import { execSync } from 'node:child_process';
@@ -26,13 +27,13 @@ async function recreateTestDb(): Promise<void> {
   }
 }
 
-function applyLegacyInstall(): void {
-  // Copy install-database.sql into the test DB via docker exec, like the
-  // current install endpoint does. Ignore the reference-data INSERT failure
-  // (one of the DXCC entries has an unescaped apostrophe — schema is what we
-  // need for the test).
+function applyBaselineOnly(): void {
+  // Apply the canonical baseline migration directly (without going through the
+  // migrator). Result: canonical schema present, drizzle tracking table absent
+  // — same shape as a pre-#196 prod install that was bootstrapped by the
+  // legacy install-database.sql path.
   execSync(
-    `cat install-database.sql | docker exec -i nextlog-postgres psql -U nextlog -d ${TEST_DB}`,
+    `cat drizzle/migrations/0000_baseline_canonical_schema.sql | docker exec -i nextlog-postgres psql -U nextlog -d ${TEST_DB}`,
     { stdio: 'pipe' }
   );
 }
@@ -93,7 +94,7 @@ async function runScenario(label: string, prepare: () => void | Promise<void>) {
 
 async function main() {
   await runScenario('Existing install (backfill)', async () => {
-    applyLegacyInstall();
+    applyBaselineOnly();
   });
 
   await runScenario('Fresh install (full apply)', async () => {

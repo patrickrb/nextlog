@@ -59,14 +59,16 @@ async function main() {
   await migrate();
   await report('After migrate');
 
-  // Existing install (backfill)
+  // Existing install (backfill): canonical schema present, no drizzle tracking.
+  // Simulates a prod install that was bootstrapped by the now-deleted
+  // install-database.sql before #196's migrator existed.
   await recreate();
-  console.log('\n=== Existing install (legacy install-database.sql, then migrator) ===');
+  console.log('\n=== Existing install (baseline only, then migrator) ===');
   execSync(
-    `cat install-database.sql | docker exec -i nextlog-postgres psql -U nextlog -d ${DB}`,
+    `cat drizzle/migrations/0000_baseline_canonical_schema.sql | docker exec -i nextlog-postgres psql -U nextlog -d ${DB}`,
     { stdio: 'pipe' }
   );
-  await report('After legacy install only');
+  await report('After baseline only');
   await migrate();
   await report('After migrator backfill');
 
