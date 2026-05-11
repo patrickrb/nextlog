@@ -32,9 +32,7 @@ export default function InstallPage() {
   const [installComplete, setInstallComplete] = useState(false);
   const [installSteps, setInstallSteps] = useState<InstallStep[]>([
     { id: 'validate', title: 'Validating installation requirements', status: 'pending' },
-    { id: 'database', title: 'Setting up database schema', status: 'pending' },
-    { id: 'migrate', title: 'Running database migrations', status: 'pending' },
-    { id: 'reference', title: 'Loading DXCC entities and reference data', status: 'pending' },
+    { id: 'migrate', title: 'Creating schema and loading reference data', status: 'pending' },
     { id: 'user', title: 'Creating administrator account', status: 'pending' },
     { id: 'finalize', title: 'Finalizing installation', status: 'pending' }
   ]);
@@ -101,56 +99,26 @@ export default function InstallPage() {
       
       updateStepStatus('validate', 'completed', 'System requirements validated');
 
-      // Step 2: Setup database
-      updateStepStatus('database', 'running');
-      await sleep(1500);
-      
-      const dbResponse = await fetch('/api/install/database', {
-        method: 'POST'
-      });
-      
-      if (!dbResponse.ok) {
-        const errorData = await dbResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to create database schema. Please ensure PostgreSQL is running and accessible.');
-      }
-      
-      updateStepStatus('database', 'completed', 'Database schema created successfully');
-
-      // Step 3: Run schema migrations
+      // Step 2: Apply Drizzle migrations (creates schema + loads reference data)
       updateStepStatus('migrate', 'running');
-      await sleep(1000);
-      
-      const migrateResponse = await fetch('/api/install/migrate-schema', {
+
+      const migrateResponse = await fetch('/api/install/migrate', {
         method: 'POST'
       });
-      
+
       if (!migrateResponse.ok) {
         const errorData = await migrateResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to run database migrations. Some features may not work properly.');
+        throw new Error(errorData.error || 'Failed to apply database migrations. Please ensure PostgreSQL is running and accessible.');
       }
-      
+
       const migrateResult = await migrateResponse.json();
-      updateStepStatus('migrate', 'completed', 
-        `Applied ${migrateResult.migrationsExecuted} database migrations`);
+      const appliedCount = migrateResult.migrationsAppliedCount ?? 0;
+      const detail = migrateResult.backfilled
+        ? `Backfilled existing schema and applied ${appliedCount} new migration${appliedCount === 1 ? '' : 's'}`
+        : `Applied ${appliedCount} migration${appliedCount === 1 ? '' : 's'} (schema + reference data)`;
+      updateStepStatus('migrate', 'completed', detail);
 
-      // Step 4: Load reference data
-      updateStepStatus('reference', 'running');
-      await sleep(3000); // This step takes longer
-      
-      const refDataResponse = await fetch('/api/install/reference-data', {
-        method: 'POST'
-      });
-      
-      if (!refDataResponse.ok) {
-        const errorData = await refDataResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to load DXCC entities and reference data. This may be due to missing data files.');
-      }
-      
-      const refDataResult = await refDataResponse.json();
-      updateStepStatus('reference', 'completed', 
-        `Loaded ${refDataResult.dxccCount} DXCC entities and ${refDataResult.statesCount} states/provinces`);
-
-      // Step 5: Create admin user
+      // Step 3: Create admin user
       updateStepStatus('user', 'running');
       await sleep(1000);
       
@@ -175,7 +143,7 @@ export default function InstallPage() {
       
       updateStepStatus('user', 'completed', 'Administrator account created');
 
-      // Step 6: Finalize
+      // Step 4: Finalize
       updateStepStatus('finalize', 'running');
       await sleep(500);
       
