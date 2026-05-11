@@ -1,7 +1,6 @@
 'use client';
 
 import { Upload, Download, CheckCircle, Clock, AlertCircle, Loader2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 // Using title attribute for tooltips since tooltip component is not available
 
@@ -240,32 +239,4 @@ export default function LotwSyncIndicator({
       </div>
     </div>
   );
-}
-
-// Helper component for status badges
-export function LotwStatusBadge({ 
-  lotwQslSent, 
-  lotwQslRcvd, 
-  qslLotw, 
-  lotwMatchStatus 
-}: Pick<LotwSyncIndicatorProps, 'lotwQslSent' | 'lotwQslRcvd' | 'qslLotw' | 'lotwMatchStatus'>) {
-  
-  // Determine overall status
-  const isUploaded = lotwQslSent === 'Y';
-  const isConfirmed = qslLotw === true || lotwQslRcvd === 'Y';
-  
-  if (isUploaded && isConfirmed) {
-    const variant = lotwMatchStatus === 'mismatch' ? 'destructive' : 
-                   lotwMatchStatus === 'partial' ? 'secondary' : 'default';
-    const text = lotwMatchStatus === 'mismatch' ? 'LoTW Mismatch' :
-                lotwMatchStatus === 'partial' ? 'LoTW Partial' : 'LoTW Confirmed';
-    
-    return <Badge variant={variant} className="text-xs">{text}</Badge>;
-  } else if (isUploaded) {
-    return <Badge variant="secondary" className="text-xs">LoTW Uploaded</Badge>;
-  } else if (isConfirmed) {
-    return <Badge variant="outline" className="text-xs">LoTW Confirmed</Badge>;
-  } else {
-    return <Badge variant="outline" className="text-xs text-muted-foreground">No LoTW</Badge>;
-  }
 }

@@ -1,7 +1,6 @@
 'use client';
 
 import { Upload, Download, AlertCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 
 interface QRZSyncIndicatorProps {
   // Upload status
@@ -119,28 +118,4 @@ export default function QRZSyncIndicator({
       </div>
     </div>
   );
-}
-
-// Helper component for status badges
-export function QRZStatusBadge({ 
-  qrzQslSent, 
-  qrzQslRcvd 
-}: Pick<QRZSyncIndicatorProps, 'qrzQslSent' | 'qrzQslRcvd'>) {
-  
-  // Determine overall status
-  const isUploaded = qrzQslSent === 'Y';
-  const isConfirmed = qrzQslRcvd === 'Y';
-  const isError = qrzQslSent === 'R';
-  
-  if (isError) {
-    return <Badge variant="destructive" className="text-xs">QRZ Error</Badge>;
-  } else if (isUploaded && isConfirmed) {
-    return <Badge variant="default" className="text-xs">QRZ Confirmed</Badge>;
-  } else if (isUploaded) {
-    return <Badge variant="secondary" className="text-xs">QRZ Uploaded</Badge>;
-  } else if (isConfirmed) {
-    return <Badge variant="outline" className="text-xs">QRZ Confirmed</Badge>;
-  } else {
-    return <Badge variant="outline" className="text-xs text-muted-foreground">No QRZ</Badge>;
-  }
 }
