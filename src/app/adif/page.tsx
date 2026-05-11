@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -66,37 +66,14 @@ export default function ADIFPage() {
   
   const router = useRouter();
 
-  useEffect(() => {
-    fetchStations();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Auto-select default station when stations are loaded
-  useEffect(() => {
-    if (stations.length > 0 && !selectedStationId) {
-      const defaultStation = stations.find((s: Station) => s.is_default);
-      
-      let defaultId = '';
-      if (defaultStation) {
-        defaultId = defaultStation.id.toString();
-      } else if (stations.length === 1) {
-        defaultId = stations[0].id.toString();
-      }
-      
-      if (defaultId) {
-        setSelectedStationId(defaultId);
-        setExportStationId(defaultId);
-      }
-    }
-  }, [stations, selectedStationId]);
-
-  const fetchStations = async () => {
+  const fetchStations = useCallback(async () => {
     try {
       const response = await fetch('/api/stations');
       if (response.status === 401) {
         router.push('/login');
         return;
       }
-      
+
       const data = await response.json();
       if (response.ok) {
         const stations = data.stations || [];
@@ -110,7 +87,30 @@ export default function ADIFPage() {
       setImportError('Network error. Please try again.');
       setStationsLoaded(true);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    fetchStations();
+  }, [fetchStations]);
+
+  // Auto-select default station when stations are loaded
+  useEffect(() => {
+    if (stations.length > 0 && !selectedStationId) {
+      const defaultStation = stations.find((s: Station) => s.is_default);
+
+      let defaultId = '';
+      if (defaultStation) {
+        defaultId = defaultStation.id.toString();
+      } else if (stations.length === 1) {
+        defaultId = stations[0].id.toString();
+      }
+
+      if (defaultId) {
+        setSelectedStationId(defaultId);
+        setExportStationId(defaultId);
+      }
+    }
+  }, [stations, selectedStationId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];

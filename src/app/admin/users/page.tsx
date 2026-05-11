@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
 import Navbar from '@/components/Navbar';
@@ -51,29 +51,12 @@ export default function UserManagementPage() {
     status: 'active'
   });
 
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-      
-      if (user.role !== 'admin') {
-        router.push('/dashboard');
-        return;
-      }
-      
-      setIsAuthorized(true);
-      fetchUsers();
-    }
-  }, [user, loading, router]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setError('');
       const response = await fetch('/api/admin/users');
       const data = await response.json();
-      
+
       if (response.ok) {
         setUsers(data.users || []);
       } else {
@@ -84,7 +67,24 @@ export default function UserManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      if (user.role !== 'admin') {
+        router.push('/dashboard');
+        return;
+      }
+
+      setIsAuthorized(true);
+      fetchUsers();
+    }
+  }, [user, loading, router, fetchUsers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

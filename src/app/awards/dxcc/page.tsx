@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,17 +19,11 @@ export default function DXCCPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState('overview');
 
-  useEffect(() => {
-    if (user) {
-      fetchDXCCSummary();
-    }
-  }, [user]);
-
-  const fetchDXCCSummary = async () => {
+  const fetchDXCCSummary = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch('/api/awards/dxcc/summary');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -47,7 +41,13 @@ export default function DXCCPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchDXCCSummary();
+    }
+  }, [user, fetchDXCCSummary]);
 
   const getNeededEntities = (): DXCCEntityProgress[] => {
     if (!summary) return [];

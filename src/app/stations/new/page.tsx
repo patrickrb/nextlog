@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -90,20 +90,7 @@ export default function NewStationPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  useEffect(() => {
-    fetchDxccEntities();
-  }, []);
-
-  useEffect(() => {
-    if (formData.dxcc_entity_code) {
-      fetchStatesProvinces(parseInt(formData.dxcc_entity_code));
-    } else {
-      setStatesProvinces([]);
-      setFormData(prev => ({ ...prev, state_province: '' }));
-    }
-  }, [formData.dxcc_entity_code]);
-
-  const fetchDxccEntities = async () => {
+  const fetchDxccEntities = useCallback(async () => {
     try {
       const response = await fetch('/api/dxcc');
       if (response.ok) {
@@ -113,9 +100,9 @@ export default function NewStationPage() {
     } catch {
       // Silent error handling for DXCC fetch
     }
-  };
+  }, []);
 
-  const fetchStatesProvinces = async (dxccId: number) => {
+  const fetchStatesProvinces = useCallback(async (dxccId: number) => {
     try {
       const response = await fetch(`/api/states?dxcc=${dxccId}`);
       if (response.ok) {
@@ -125,7 +112,20 @@ export default function NewStationPage() {
     } catch {
       // Silent error handling for states fetch
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDxccEntities();
+  }, [fetchDxccEntities]);
+
+  useEffect(() => {
+    if (formData.dxcc_entity_code) {
+      fetchStatesProvinces(parseInt(formData.dxcc_entity_code));
+    } else {
+      setStatesProvinces([]);
+      setFormData(prev => ({ ...prev, state_province: '' }));
+    }
+  }, [formData.dxcc_entity_code, fetchStatesProvinces]);
 
   const handleInputChange = (field: keyof StationFormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));

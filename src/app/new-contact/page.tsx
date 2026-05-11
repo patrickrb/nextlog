@@ -89,10 +89,43 @@ export default function NewContactPage() {
   const modes = ['SSB', 'CW', 'FM', 'AM', 'RTTY', 'PSK31', 'FT8', 'FT4', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'CONTESTIA'];
   const bands = ['160M', '80M', '60M', '40M', '30M', '20M', '17M', '15M', '12M', '10M', '6M', '2M', '1.25M', '70CM', '33CM', '23CM'];
 
+  const fetchStations = useCallback(async () => {
+    try {
+      setStationsLoading(true);
+      const response = await fetch('/api/stations');
+      if (response.ok) {
+        const data = await response.json();
+        setStations(data.stations || []);
+
+        // Auto-select default station
+        const defaultStation = data.stations?.find((station: Station) => station.is_default);
+        if (defaultStation) {
+          setSelectedStationId(defaultStation.id.toString());
+        }
+      }
+    } catch {
+      // Silent error handling for stations fetch
+    } finally {
+      setStationsLoading(false);
+    }
+  }, []);
+
+  const fetchCurrentUser = useCallback(async () => {
+    try {
+      const response = await fetch('/api/user');
+      if (response.ok) {
+        const userData = await response.json();
+        setCurrentUser(userData);
+      }
+    } catch {
+      // Silent error handling for user fetch
+    }
+  }, []);
+
   useEffect(() => {
     fetchStations();
     fetchCurrentUser();
-  }, []);
+  }, [fetchStations, fetchCurrentUser]);
 
   // Live logging effect - update datetime every second when enabled
   useEffect(() => {
@@ -250,39 +283,6 @@ export default function NewContactPage() {
 
     return () => clearTimeout(timeoutId);
   }, [formData.callsign, handleCallsignLookup]);
-
-  const fetchStations = async () => {
-    try {
-      setStationsLoading(true);
-      const response = await fetch('/api/stations');
-      if (response.ok) {
-        const data = await response.json();
-        setStations(data.stations || []);
-        
-        // Auto-select default station
-        const defaultStation = data.stations?.find((station: Station) => station.is_default);
-        if (defaultStation) {
-          setSelectedStationId(defaultStation.id.toString());
-        }
-      }
-    } catch {
-      // Silent error handling for stations fetch
-    } finally {
-      setStationsLoading(false);
-    }
-  };
-
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await fetch('/api/user');
-      if (response.ok) {
-        const userData = await response.json();
-        setCurrentUser(userData);
-      }
-    } catch {
-      // Silent error handling for user fetch
-    }
-  };
 
   // Validation functions
   const validateCallsign = (callsign: string): string | null => {

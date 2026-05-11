@@ -135,12 +135,9 @@ async function uploadToAzureBlob(
  * NOTE: AWS S3 storage is not yet implemented
  */
 async function uploadToS3(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _config: StorageConfig,
   filename: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _buffer: Buffer,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _mimeType: string
 ): Promise<UploadResult> {
   // AWS S3 is not yet implemented
@@ -160,7 +157,6 @@ async function uploadToLocalStorage(
   config: StorageConfig,
   filename: string,
   buffer: Buffer,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _mimeType: string
 ): Promise<UploadResult> {
   try {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -24,21 +24,7 @@ export default function WASPage() {
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
 
-  useEffect(() => {
-    // Wait for user context to finish loading
-    if (userLoading) return;
-    
-    // Redirect to login if no user
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    
-    // Load stations data
-    loadStations();
-  }, [user, userLoading, router]);
-
-  const loadStations = async () => {
+  const loadStations = useCallback(async () => {
     try {
       setPageLoading(true);
       setError(null);
@@ -56,7 +42,21 @@ export default function WASPage() {
     } finally {
       setPageLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Wait for user context to finish loading
+    if (userLoading) return;
+
+    // Redirect to login if no user
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    // Load stations data
+    loadStations();
+  }, [user, userLoading, router, loadStations]);
 
   if (pageLoading || userLoading) {
     return (
