@@ -75,7 +75,7 @@ The `details:` field used by some install/cron routes (`{ error, details }`) is 
 - `src/components/` — React components. Radix-based UI primitives in `src/components/ui/`.
 - `src/contexts/` — React Context (UserContext, ThemeContext).
 - `src/types/` — shared TS types not tied to a single model.
-- `/migrations/` — hand-written SQL migrations. Root-level `*.sql` files are install/seed schema.
+- `/drizzle/migrations/` — Drizzle Kit-generated SQL migrations (only place SQL migrations live).
 - `/tests/` — Playwright specs.
 
 ## Schema changes
@@ -87,7 +87,7 @@ The canonical schema lives in TypeScript at `drizzle/schema.ts`. To evolve it:
 3. Review the generated SQL, commit it alongside the `schema.ts` change.
 4. Apply with `npm run db:migrate` (uses `DATABASE_URL`).
 
-**Canonical schema:** `drizzle/schema.ts` matches the in-app installer (`install-database.sql` + `propagation-schema.sql` + `migrations/*.sql` + the `system_settings` table created by the migrate-schema endpoint). 18 tables, 284 columns. The baseline migration is `drizzle/migrations/0000_baseline_canonical_schema.sql` — produced by `drizzle-kit generate`, executable as-is.
+**Canonical schema:** `drizzle/schema.ts` is the single source of truth. 18 tables, 284 columns. The baseline migration is `drizzle/migrations/0000_baseline_canonical_schema.sql` — produced by `drizzle-kit generate`, executable as-is.
 
 **Applying migrations at runtime:** `POST /api/admin/migrate` (admin-only) runs the Drizzle migrator with backfill for existing installs:
 - Detects existing installs (`public.users` exists, `drizzle.__drizzle_migrations` doesn't) and seeds the tracking table with the baseline marked as applied — so the baseline isn't reapplied against an already-populated schema.
@@ -97,7 +97,6 @@ The canonical schema lives in TypeScript at `drizzle/schema.ts`. To evolve it:
 **Install flow:** `/install` POSTs `/api/install/{validate,migrate,create-admin,finalize}` in order. The `migrate` step calls the runtime migrator (gated on "no users yet exist" instead of admin auth), which creates schema + loads reference data in one shot — same code path as `/api/admin/migrate`.
 
 **Current state (still deliberate limitations):**
-- Legacy SQL files (`install-database.sql`, `propagation-schema.sql`, `postgres-lotw-migration.sql`, `migrations/*.sql`) and the legacy install endpoints (`/api/install/{database,migrate-schema,reference-data}`) still exist on disk but are no longer called by the install UI. Safe to delete once the new install path is proven on at least one production install.
 - Local dev DBs bootstrapped via the old `postgres-init.sql` (deleted in #195) need to be wiped and re-installed via the in-app installer for parity. The dev-only `api_key_usage_logs` table is intentionally not canonical.
 
 ## Ham radio domain notes

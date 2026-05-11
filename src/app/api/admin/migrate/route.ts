@@ -4,9 +4,8 @@
 // on first run for existing installs (so the baseline isn't reapplied against
 // a populated schema), then applies any pending migrations.
 //
-// Not yet wired into the install UI — current install flow still uses
-// /api/install/database + /api/install/migrate-schema. This endpoint is the
-// foundation for switching that over in a follow-up PR.
+// /api/install/migrate uses the same runner with a "no users yet" gate
+// instead of admin auth, for the bootstrap case.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Pool } from 'pg';

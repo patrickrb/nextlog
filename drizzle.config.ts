@@ -4,10 +4,8 @@ import { defineConfig } from 'drizzle-kit';
 // generate` (diff schema.ts → migration SQL), and `drizzle-kit migrate` (apply
 // pending migrations).
 //
-// Current scope: schema-as-code + tooling only. The runtime install path
-// (src/app/api/install/database/route.ts, /migrate-schema/route.ts) still uses
-// the hand-rolled SQL files; a follow-up PR will switch the runtime over to
-// `drizzle-kit migrate` with a backfill for existing installs.
+// At runtime, install + admin migration both go through src/lib/migrator.ts
+// (called by /api/install/migrate and /api/admin/migrate respectively).
 export default defineConfig({
   dialect: 'postgresql',
   schema: './drizzle/schema.ts',
