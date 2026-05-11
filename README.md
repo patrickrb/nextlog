@@ -77,12 +77,7 @@ createuser -U postgres nextlog
 createdb -U postgres -O nextlog nextlog
 ```
 
-4. Run the database installation script:
-```bash
-./install-database.sh
-```
-
-5. Set up environment variables:
+4. Set up environment variables:
 ```bash
 cp .env.example .env.local
 ```
@@ -95,60 +90,23 @@ NEXT_PUBLIC_API_URL=http://localhost:3000
 ENCRYPTION_SECRET=supersecretkeyforencryption
 ```
 
-6. Start the development server:
+5. Start the development server:
 ```bash
 npm run dev
 ```
 
-7. Open [http://localhost:3000](http://localhost:3000) in your browser
+6. Open [http://localhost:3000/install](http://localhost:3000/install) in your browser and walk through the in-app installer. It validates the DB connection, runs the Drizzle migrations (creating all 18 tables and loading 402 DXCC entities + 1849 states/provinces), creates your administrator account, and redirects you to the login page.
 
-## Database Installation Script
+## Database Installation
 
-Nextlog includes a comprehensive database installation script that sets up the complete schema and reference data.
+The first time you visit `/install`, Nextlog walks through:
 
-### Features
+1. **Validate** — checks PostgreSQL connectivity.
+2. **Migrate** — applies the Drizzle migrations: creates the canonical schema (18 tables) and seeds reference data (402 DXCC entities, 1849 states/provinces). Same code path as `/api/admin/migrate`.
+3. **Create admin** — creates your administrator account from the form.
+4. **Finalize** — sanity-checks the install and redirects to login.
 
-- Creates all required tables (users, stations, contacts, dxcc_entities, states_provinces)
-- Sets up indexes for optimal performance
-- Installs database functions and triggers
-- Loads DXCC entities data (340+ countries/entities)
-- Loads states/provinces data for awards tracking
-- Verifies installation completeness
-
-### Usage
-
-```bash
-# Make the script executable
-chmod +x install-database.sh
-
-# Run the installation
-./install-database.sh
-```
-
-The script will:
-1. Create the database if it doesn't exist
-2. Install the complete schema
-3. Load reference data
-4. Verify the installation
-
-### Configuration
-
-The script uses these default settings:
-- Database: `nextlog`
-- User: `nextlog`
-- Password: `password`
-- Host: `localhost`
-- Port: `5432`
-
-You can modify these values at the top of the `install-database.sh` file if needed.
-
-### Required Files
-
-The script requires these data files to be present:
-- `scripts/dxcc_entities.sql` - DXCC entities reference data
-- `scripts/states_provinces_import.sql` - States/provinces reference data
-
-Both files are included in the repository.
+After the first install, the migrator is also reachable as `POST /api/admin/migrate` (admin-only) for applying future migrations against an existing prod install. See `drizzle/migrations/` for the canonical migrations and `drizzle/schema.ts` for the schema source of truth.
 
 ## Testing
 

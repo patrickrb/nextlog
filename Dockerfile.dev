@@ -1,6 +1,6 @@
 FROM node:22-alpine
 
-# Install dependencies for development including PostgreSQL client
+# Install dependencies for development including PostgreSQL client (for psql CLI)
 RUN apk add --no-cache libc6-compat postgresql-client bash
 
 WORKDIR /app
@@ -11,17 +11,11 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci
 
-# Copy database setup scripts
-COPY install-database.sql ./
-COPY postgres-lotw-migration.sql ./
-COPY docker-install.sh ./
-COPY scripts/ ./scripts/
-
-# Make install script executable
-RUN chmod +x docker-install.sh
-
 # Expose port
 EXPOSE 3000
 
-# Start script that initializes database and then starts dev server
-CMD ["sh", "-c", "./docker-install.sh && npm run dev"]
+# Start the dev server. On first boot the database will be empty; open
+# http://localhost:3000/install in a browser to run the in-app installer
+# (validate → migrate → create-admin → finalize), which applies the
+# Drizzle migrations and seeds reference data.
+CMD ["npm", "run", "dev"]
