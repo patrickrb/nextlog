@@ -184,7 +184,10 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    addRateLimitHeaders(response, 999, auth.rateLimitPerHour); // TODO: Get actual remaining from rate limiter
+    // Rate limit enforcement isn't implemented yet, so report Remaining == Limit
+    // until a real limiter lands. This keeps the documented headers truthful
+    // (rather than a hardcoded "999") while we ship.
+    addRateLimitHeaders(response, auth.rateLimitPerHour, auth.rateLimitPerHour);
     return addCorsHeaders(response);
 
   } catch (error) {

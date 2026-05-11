@@ -129,7 +129,6 @@ export default function AdminDashboard() {
     setSyncMessage(null);
     
     try {
-      // TODO: Implement bulk LoTW upload
       setSyncMessage({ type: 'error', text: 'LoTW bulk upload functionality coming soon!' });
     } finally {
       setLotwUploading(false);
@@ -141,7 +140,6 @@ export default function AdminDashboard() {
     setSyncMessage(null);
     
     try {
-      // TODO: Implement bulk LoTW download
       setSyncMessage({ type: 'error', text: 'LoTW bulk download functionality coming soon!' });
     } finally {
       setLotwDownloading(false);

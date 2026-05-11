@@ -132,9 +132,10 @@ export async function GET(request: NextRequest) {
       categories: Object.keys(AMATEUR_MODES)
     });
 
-    // Add rate limit headers
+    // Rate limit headers — enforcement isn't implemented yet, so Remaining == Limit
+    // until a real limiter lands (avoids the hardcoded "999" lie).
     response.headers.set('X-RateLimit-Limit', auth.rateLimitPerHour.toString());
-    response.headers.set('X-RateLimit-Remaining', '999'); // TODO: Get actual remaining
+    response.headers.set('X-RateLimit-Remaining', auth.rateLimitPerHour.toString());
     
     return addCorsHeaders(response);
 
