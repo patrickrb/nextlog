@@ -132,7 +132,6 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
   const [validatingQrz, setValidatingQrz] = useState(false);
   const [qrzValidation, setQrzValidation] = useState<{ valid: boolean; message: string } | null>(null);
   const [showLotwPassword, setShowLotwPassword] = useState(false);
-  // const [testingLotw, setTestingLotw] = useState(false); // Unused - for future LoTW validation
   const [certFile, setCertFile] = useState<File | null>(null);
   const [certName, setCertName] = useState('');
   const [certPassword, setCertPassword] = useState('');
