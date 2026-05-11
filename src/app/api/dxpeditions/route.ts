@@ -178,7 +178,6 @@ async function fetchDXpeditionData(): Promise<DXpedition[]> {
     console.error('Error fetching DXpedition data:', error);
     // Return cached data if available, even if stale
     if (cachedData) {
-      console.log('Using stale cache due to fetch error');
       return cachedData;
     }
     return [];

@@ -31,13 +31,7 @@ export async function POST() {
       const statesCount = parseInt(statesResult.rows[0].count);
       
       const tableNames = tableListResult.rows.map(row => row.table_name);
-      
-      console.log('Installation verification:');
-      console.log(`Tables found (${tableCount}):`, tableNames);
-      console.log(`Admin users: ${adminCount}`);
-      console.log(`DXCC entities: ${dxccCount}`);
-      console.log(`States/provinces: ${statesCount}`);
-      
+
       // Expected tables
       const expectedTables = [
         'users', 'stations', 'contacts', 'dxcc_entities', 'states_provinces',
@@ -48,8 +42,7 @@ export async function POST() {
       const missingTables = expectedTables.filter(table => !tableNames.includes(table));
       
       if (missingTables.length > 0) {
-        console.log('Missing tables:', missingTables);
-        // Don't fail the installation for missing tables, just log them
+        // Don't fail the installation for missing tables, just warn
         console.warn(`Some optional tables are missing: ${missingTables.join(', ')}`);
       }
       
@@ -80,8 +73,6 @@ export async function POST() {
           VALUES ('local_storage', true, NOW())
           ON CONFLICT (config_type) DO NOTHING
         `);
-      } else {
-        console.log('storage_config table not found, skipping installation marker');
       }
       
       return NextResponse.json({ 
