@@ -39,17 +39,12 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    console.log(`Starting QRZ download for ${stationsWithKeys.length} stations`);
-
     for (const station of stationsWithKeys) {
       try {
-        console.log(`Processing station: ${station.callsign} (${station.station_name})`);
-        
         // Download QSOs from QRZ for this station
         const downloadResult = await downloadQSOsFromQRZ(station.qrz_api_key!, since);
-        
+
         if (!downloadResult.success) {
-          console.log(`QRZ download failed for station ${station.callsign}: ${downloadResult.error}`);
           results.push({
             stationId: station.id,
             stationCallsign: station.callsign,
@@ -59,14 +54,10 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        console.log(`Downloaded ${downloadResult.qsos.length} QSOs from QRZ for station ${station.callsign}`);
-        
         // Get contacts for this station that were sent to QRZ but not confirmed
         const unconfirmedContacts = await Contact.findQrzSentNotConfirmed(decoded.userId);
         const stationContacts = unconfirmedContacts.filter(c => c.station_id === station.id);
-        
-        console.log(`Found ${stationContacts.length} unconfirmed contacts for station ${station.callsign}`);
-        
+
         let confirmationsFound = 0;
 
         // Annotate each contact with the station callsign so the matcher can
@@ -93,7 +84,6 @@ export async function POST(request: NextRequest) {
               break;
             }
 
-            console.log(`Marking ${contact.callsign} as QRZ confirmed (status=${qrzQSO.app_qrzlog_status ?? '<missing>'})`);
             await Contact.updateQrzQsl(contact.id, undefined, 'Y');
             confirmationsFound++;
 
@@ -122,8 +112,6 @@ export async function POST(request: NextRequest) {
         
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.log(`Exception processing station ${station.callsign}: ${errorMessage}`);
-        
         results.push({
           stationId: station.id,
           stationCallsign: station.callsign,
@@ -132,8 +120,6 @@ export async function POST(request: NextRequest) {
         });
       }
     }
-
-    console.log(`QRZ download completed. Processed ${stationsProcessed.size} stations`);
 
     // Calculate summary
     const successful = results.filter(r => r.success).length;

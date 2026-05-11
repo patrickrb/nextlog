@@ -17,6 +17,7 @@ const eslintConfig = [
       // in useCallback.
       "react-hooks/immutability": "warn",
       "react-hooks/preserve-manual-memoization": "warn",
+      "no-console": ["error", { allow: ["warn", "error"] }],
       // Standard convention: a leading underscore signals "intentionally
       // unused" (e.g. function-signature params kept for API compatibility).
       "@typescript-eslint/no-unused-vars": ["warn", {
@@ -27,9 +28,16 @@ const eslintConfig = [
     },
   },
   {
-    files: ["scripts/**/*.js"],
+    files: ["scripts/**/*.{js,mjs}"],
     rules: {
       "@typescript-eslint/no-require-imports": "off",
+      "no-console": "off",
+    },
+  },
+  {
+    files: ["tests/**/*.{ts,js}"],
+    rules: {
+      "no-console": "off",
     },
   },
 ];

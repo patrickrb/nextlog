@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
           email: user.email,
           name: user.name,
           callsign: user.callsign,
-          gridLocator: user.grid_locator
+          grid_locator: user.grid_locator
         }
       },
       { status: 200 }

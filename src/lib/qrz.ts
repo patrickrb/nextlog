@@ -269,13 +269,11 @@ export async function uploadQSOToQRZWithApiKey(
     });
     
     const uploadResult = await uploadResponse.text();
-    console.log('QRZ upload raw response:', uploadResult);
-    
+
     // Parse upload result
     if (uploadResult.includes('FAIL')) {
       // Check for duplicate (case-insensitive)
       if (uploadResult.toLowerCase().includes('duplicate')) {
-        console.log('Detected duplicate QSO in QRZ - treating as success');
         return {
           success: true,  // Changed to true - duplicate means it's in QRZ (success!)
           already_exists: true,
@@ -473,8 +471,6 @@ function formatQSOAsADIF(qso: QRZQSOData): string {
 
 // Function to validate QRZ API key (for logbook operations)
 export async function validateQRZApiKey(apiKey: string): Promise<{valid: boolean; error?: string}> {
-  console.log('Validating QRZ API key (first 8 chars):', apiKey.substring(0, 8) + '...');
-  
   if (!apiKey) {
     return {
       valid: false,
@@ -489,30 +485,25 @@ export async function validateQRZApiKey(apiKey: string): Promise<{valid: boolean
     const testFormData = new FormData();
     testFormData.append('KEY', apiKey);
     testFormData.append('ACTION', 'STATUS');
-    
-    console.log('Making request to QRZ logbook API for API key validation...');
+
     const response = await fetch(sessionUrl, {
       method: 'POST',
       body: testFormData
     });
-    
+
     const result = await response.text();
-    console.log('QRZ API key validation response:', result);
-    
+
     if (result.includes('INVALID_KEY')) {
-      console.log('QRZ API key validation failed - invalid key');
       return {
         valid: false,
         error: 'Invalid QRZ API key'
       };
     }
-    
+
     if (result.includes('OK') || result.includes('STATUS')) {
-      console.log('QRZ API key validation successful');
       return { valid: true };
     }
-    
-    console.log('Unexpected QRZ API response');
+
     return {
       valid: false,
       error: `Unexpected response from QRZ: ${result}`
@@ -532,8 +523,6 @@ export async function downloadQSOsFromQRZ(
   apiKey: string,
   since?: string // YYYY-MM-DD format
 ): Promise<QRZDownloadResult> {
-  console.log('Downloading QSOs from QRZ logbook...');
-  
   if (!apiKey) {
     return {
       success: false,
@@ -559,38 +548,33 @@ export async function downloadQSOsFromQRZ(
     downloadFormData.append('KEY', apiKey);
     downloadFormData.append('ACTION', 'FETCH');
     downloadFormData.append('OPTION', optionParts.join(';'));
-    
-    console.log('Making request to QRZ for QSO download...');
+
     const downloadResponse = await fetch(sessionUrl, {
       method: 'POST',
       body: downloadFormData
     });
-    
+
     const downloadResult = await downloadResponse.text();
-    console.log('QRZ download response received, parsing ADIF...');
-    
+
     if (downloadResult.includes('INVALID_KEY')) {
-      console.log('QRZ download failed - invalid key');
       return {
         success: false,
         qsos: [],
         error: 'Invalid QRZ API key'
       };
     }
-    
+
     if (downloadResult.includes('FAIL')) {
-      console.log('QRZ download failed');
       return {
         success: false,
         qsos: [],
         error: `QRZ download failed: ${downloadResult}`
       };
     }
-    
+
     // Parse ADIF data to extract QSOs
     const qsos = parseADIFForQRZ(downloadResult);
-    console.log(`Successfully parsed ${qsos.length} QSOs from QRZ`);
-    
+
     return {
       success: true,
       qsos
@@ -708,8 +692,6 @@ function parseADIFForQRZ(adifData: string): QRZQSORecord[] {
 
 // Function to validate QRZ logbook credentials (legacy)
 export async function validateQRZCredentials(username: string, password: string): Promise<{valid: boolean; error?: string}> {
-  console.log('Validating QRZ credentials for username:', username);
-  
   try {
     const sessionUrl = `https://logbook.qrz.com/api`;
     
@@ -717,34 +699,29 @@ export async function validateQRZCredentials(username: string, password: string)
     authFormData.append('username', username);
     authFormData.append('password', password);
     authFormData.append('agent', 'Nextlog_1.0');
-    
-    console.log('Making request to QRZ logbook API...');
+
     const response = await fetch(sessionUrl, {
       method: 'POST',
       body: authFormData
     });
-    
+
     const result = await response.text();
-    console.log('QRZ API response:', result);
-    
+
     if (result.includes('AUTH_FAILED') || result.includes('INVALID')) {
-      console.log('QRZ authentication failed');
       return {
         valid: false,
         error: 'Invalid QRZ credentials for logbook access'
       };
     }
-    
+
     const keyMatch = result.match(/KEY=([A-Za-z0-9]+)/);
     if (!keyMatch) {
-      console.log('No session key found in response');
       return {
         valid: false,
         error: 'Unable to authenticate with QRZ logbook API'
       };
     }
-    
-    console.log('QRZ validation successful, session key obtained');
+
     return { valid: true };
     
   } catch (error) {

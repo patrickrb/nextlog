@@ -6,17 +6,6 @@ import { query } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-    // Enhanced error logging for troubleshooting
-    console.log('LoTW download cron job authentication check...');
-    console.log('Request headers (excluding sensitive data):', {
-      'user-agent': request.headers.get('user-agent'),
-      'x-vercel-id': request.headers.get('x-vercel-id'),
-      'x-forwarded-for': request.headers.get('x-forwarded-for'),
-      'host': request.headers.get('host'),
-      'has-authorization': !!request.headers.get('authorization'),
-      'cron-secret-configured': !!process.env.CRON_SECRET
-    });
-
     // Environment validation
     const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'ENCRYPTION_SECRET'];
     const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
@@ -48,8 +37,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('Starting LoTW download cron job...');
-    
     // Get all active stations that have LoTW credentials configured
     const stationsResult = await query(`
       SELECT DISTINCT s.id, s.callsign, s.user_id
@@ -77,7 +64,6 @@ export async function GET(request: NextRequest) {
         );
 
         if (recentDownloadResult.rows.length > 0) {
-          console.log(`Skipping station ${station.callsign} - downloaded recently`);
           results.push({
             station_id: station.id,
             callsign: station.callsign,
@@ -121,8 +107,6 @@ export async function GET(request: NextRequest) {
           error: downloadResponse.ok ? null : downloadData.error
         });
 
-        console.log(`Station ${station.callsign}: ${downloadResponse.ok ? 'success' : 'error'} - ${downloadData.confirmations_found || 0} confirmations found, ${downloadData.confirmations_matched || 0} matched`);
-
       } catch (stationError) {
         console.error(`Error processing station ${station.callsign}:`, stationError);
         results.push({
@@ -133,8 +117,6 @@ export async function GET(request: NextRequest) {
         });
       }
     }
-
-    console.log('LoTW download cron job completed');
 
     return NextResponse.json({
       success: true,

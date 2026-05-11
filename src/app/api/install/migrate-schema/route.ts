@@ -3,8 +3,6 @@ import db from '@/lib/db';
 
 export async function POST() {
   try {
-    console.log('Starting schema migration...');
-    
     // Check what columns exist and add missing ones
     const contactsColumns = await db.query(`
       SELECT column_name 
@@ -256,12 +254,9 @@ export async function POST() {
       migrations.push('CREATE INDEX IF NOT EXISTS idx_qsl_images_created_at ON qsl_images(created_at DESC)');
     }
     
-    console.log(`Running ${migrations.length} migrations...`);
-    
     // Execute migrations
     for (const migration of migrations) {
       try {
-        console.log('Executing:', migration);
         await db.query(migration);
       } catch (error) {
         console.warn('Migration failed (may already exist):', migration, error);
@@ -285,9 +280,7 @@ export async function POST() {
       }
     }
     
-    console.log('Schema migration completed successfully');
-    
-    return NextResponse.json({ 
+    return NextResponse.json({
       success: true,
       message: 'Schema migration completed',
       migrationsExecuted: migrations.length

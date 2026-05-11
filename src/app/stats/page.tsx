@@ -46,9 +46,9 @@ interface AdvancedStatsData {
 }
 
 interface GeographicStatsData {
-  countryDistribution: Array<{ country: string; continent: string; qsos: number }>;
-  continentDistribution: Array<{ continent: string; qsos: number }>;
-  gridActivity: Array<{ gridSquare: string; qsos: number }>;
+  country_distribution: Array<{ country: string; continent: string; qsos: number }>;
+  continent_distribution: Array<{ continent: string; qsos: number }>;
+  grid_activity: Array<{ grid_square: string; qsos: number }>;
 }
 
 interface HeatmapStatsData {
@@ -430,13 +430,13 @@ export default function StatsPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-2">
-                          {geographicStats.continentDistribution.map(item => (
+                          {geographicStats.continent_distribution.map(item => (
                             <div key={item.continent} className="flex justify-between items-center">
                               <span className="font-medium">{item.continent}</span>
                               <span className="text-muted-foreground">{item.qsos.toLocaleString()}</span>
                             </div>
                           ))}
-                          {geographicStats.continentDistribution.length === 0 && (
+                          {geographicStats.continent_distribution.length === 0 && (
                             <p className="text-muted-foreground text-center py-4">No data available</p>
                           )}
                         </div>
@@ -450,13 +450,13 @@ export default function StatsPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-2">
-                          {geographicStats.countryDistribution.slice(0, 10).map(item => (
+                          {geographicStats.country_distribution.slice(0, 10).map(item => (
                             <div key={item.country} className="flex justify-between items-center">
                               <span className="font-medium text-sm">{item.country}</span>
                               <span className="text-muted-foreground text-sm">{item.qsos.toLocaleString()}</span>
                             </div>
                           ))}
-                          {geographicStats.countryDistribution.length === 0 && (
+                          {geographicStats.country_distribution.length === 0 && (
                             <p className="text-muted-foreground text-center py-4">No data available</p>
                           )}
                         </div>
@@ -470,13 +470,13 @@ export default function StatsPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-2">
-                          {geographicStats.gridActivity.slice(0, 10).map(item => (
-                            <div key={item.gridSquare} className="flex justify-between items-center">
-                              <span className="font-medium font-mono">{item.gridSquare}</span>
+                          {geographicStats.grid_activity.slice(0, 10).map(item => (
+                            <div key={item.grid_square} className="flex justify-between items-center">
+                              <span className="font-medium font-mono">{item.grid_square}</span>
                               <span className="text-muted-foreground">{item.qsos.toLocaleString()}</span>
                             </div>
                           ))}
-                          {geographicStats.gridActivity.length === 0 && (
+                          {geographicStats.grid_activity.length === 0 && (
                             <p className="text-muted-foreground text-center py-4">No data available</p>
                           )}
                         </div>

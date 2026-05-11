@@ -620,10 +620,7 @@ export default function SearchPage() {
         if (skipped > 0) messages.push(`${skipped} contact(s) skipped (already synced)`);
         if (failed > 0) messages.push(`${failed} contact(s) failed to sync`);
         
-        if (messages.length > 0) {
-          // You could add a toast notification here
-          console.log('QRZ Sync Results:', messages.join(', '));
-        }
+        // TODO: surface QRZ sync results via toast notification
       } else {
         setError(data.error || 'Failed to sync contacts to QRZ');
       }

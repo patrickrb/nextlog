@@ -114,9 +114,7 @@ async function parseAndImportADIF(content: string, userId: number, stationId: nu
 
     // Parse records
     const records = parseADIFRecords(dataContent);
-    console.log(`Parsed ${records.length} records from ADIF file`);
-    console.log(`First record sample:`, records[0]?.fields ? Object.keys(records[0].fields).slice(0, 5) : 'No records');
-    
+
     // Limit number of records for large imports using dynamic setting
     if (records.length > maxRecords) {
       return {
@@ -153,18 +151,10 @@ async function parseAndImportADIF(content: string, userId: number, stationId: nu
       const startIdx = batchIndex * batchSize;
       const endIdx = Math.min(startIdx + batchSize, records.length);
       const batch = records.slice(startIdx, endIdx);
-      
-      console.log(`Processing batch ${batchIndex + 1}/${totalBatches} (${batch.length} records) - ${elapsedTime/1000}s elapsed`);
-      console.log(`Current results so far: ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors`);
-      
+
       try {
         // Process batch with transaction for better performance
         await processBatch(batch, userId, stationId, result);
-        
-        // Log progress every 10 batches
-        if ((batchIndex + 1) % 10 === 0) {
-          console.log(`Progress: ${batchIndex + 1}/${totalBatches} batches completed. ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors.`);
-        }
       } catch (batchError) {
         console.error(`Batch ${batchIndex + 1} failed:`, batchError);
         result.errors += batch.length; // Mark all records in batch as errors
@@ -209,30 +199,21 @@ async function parseAndImportADIF(content: string, userId: number, stationId: nu
 }
 
 async function processBatch(records: ADIFRecord[], userId: number, stationId: number, result: ImportResult): Promise<void> {
-  console.log(`Starting batch of ${records.length} records...`);
-  
   for (let i = 0; i < records.length; i++) {
     const record = records[i];
     try {
       await importRecord(record, userId, stationId, result);
-      
-      // Log progress every 10 records within batch
-      if ((i + 1) % 10 === 0) {
-        console.log(`  Processed ${i + 1}/${records.length} records in current batch`);
-      }
     } catch (error) {
       result.errors++;
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`Record ${i + 1} import error:`, errorMsg);
-      
+
       // Only store first 10 error details to avoid memory issues
       if (result.details && result.details.length < 10) {
         result.details.push(`Error importing record ${i + 1}: ${errorMsg}`);
       }
     }
   }
-  
-  console.log(`Batch completed: ${result.imported} total imported, ${result.skipped} total skipped, ${result.errors} total errors`);
 }
 
 function parseADIFRecords(content: string): ADIFRecord[] {

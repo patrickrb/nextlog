@@ -29,17 +29,12 @@ export async function POST(request: NextRequest) {
 
     const results = [];
 
-    console.log(`Starting QRZ upload for ${contactIds.length} contacts`);
-    
     // Process each contact
     for (const contactId of contactIds) {
       try {
-        console.log(`Processing contact ID: ${contactId}`);
-        
         // Get the contact
         const contact = await Contact.findById(contactId);
         if (!contact || contact.user_id !== decoded.userId) {
-          console.log(`Contact ${contactId}: Not found or access denied`);
           results.push({
             contactId,
             success: false,
@@ -48,12 +43,8 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        console.log(`Contact ${contactId}: Found contact for ${contact.callsign} on ${contact.datetime}`);
-      
-
         // Skip if already sent to QRZ
         if (contact.qrz_qsl_sent === 'Y') {
-          console.log(`Contact ${contactId}: Already sent to QRZ, skipping`);
           results.push({
             contactId,
             success: true,
@@ -65,7 +56,6 @@ export async function POST(request: NextRequest) {
 
         // If we've received confirmation from QRZ, mark as sent too (it exists in QRZ)
         if (contact.qrz_qsl_rcvd === 'Y') {
-          console.log(`Contact ${contactId}: Already confirmed by QRZ - marking as sent in our database`);
           await Contact.updateQrzQsl(contactId, 'Y');
           results.push({
             contactId,
@@ -78,7 +68,6 @@ export async function POST(request: NextRequest) {
 
         // Get the station for this contact to get QRZ API key
         if (!contact.station_id) {
-          console.log(`Contact ${contactId}: No station_id associated`);
           results.push({
             contactId,
             success: false,
@@ -87,10 +76,8 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        console.log(`Contact ${contactId}: Looking up station ID ${contact.station_id}`);
         const station = await Station.findByUserIdAndId(decoded.userId, contact.station_id);
         if (!station) {
-          console.log(`Contact ${contactId}: Station ${contact.station_id} not found`);
           results.push({
             contactId,
             success: false,
@@ -99,10 +86,7 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        console.log(`Contact ${contactId}: Found station ${station.callsign} (${station.station_name})`);
-        
         if (!station.qrz_api_key) {
-          console.log(`Contact ${contactId}: Station ${station.callsign} has no QRZ API key`);
           results.push({
             contactId,
             success: false,
@@ -111,32 +95,14 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        console.log(`Contact ${contactId}: Station has QRZ API key, proceeding with sync`);
-      
-
-        // Convert contact to QRZ format
-        console.log(`Contact ${contactId}: Converting to QRZ format`);
+        // Convert contact to QRZ format and upload
         const qrzData = contactToQRZFormat(contact);
-        console.log(`Contact ${contactId}: QRZ data:`, { 
-          call: qrzData.call, 
-          qso_date: qrzData.qso_date, 
-          time_on: qrzData.time_on, 
-          band: qrzData.band, 
-          mode: qrzData.mode 
-        });
-
-        // Upload to QRZ using API key
-        console.log(`Contact ${contactId}: Uploading to QRZ with API key`);
         const uploadResult = await uploadQSOToQRZWithApiKey(qrzData, station.qrz_api_key);
-        console.log(`Contact ${contactId}: QRZ upload result:`, uploadResult);
 
         if (uploadResult.success) {
           if (uploadResult.already_exists) {
-            console.log(`Contact ${contactId}: QSO already exists in QRZ - marking as both sent and received in our database`);
             // Mark as both sent AND received since it exists in QRZ (it's confirmed!)
-            const updateResult = await Contact.updateQrzQsl(contactId, 'Y', 'Y');
-            console.log(`Contact ${contactId}: Database update result:`, updateResult ? 'success' : 'failed');
-            
+            await Contact.updateQrzQsl(contactId, 'Y', 'Y');
             results.push({
               contactId,
               success: true,
@@ -144,11 +110,8 @@ export async function POST(request: NextRequest) {
               message: 'QSO already exists in QRZ logbook (marked as sent and confirmed)'
             });
           } else {
-            console.log(`Contact ${contactId}: QRZ upload successful - marking as sent in our database`);
             // Mark as sent to QRZ (but not yet confirmed)
-            const updateResult = await Contact.updateQrzQsl(contactId, 'Y');
-            console.log(`Contact ${contactId}: Database update result:`, updateResult ? 'success' : 'failed');
-            
+            await Contact.updateQrzQsl(contactId, 'Y');
             results.push({
               contactId,
               success: true,
@@ -156,10 +119,8 @@ export async function POST(request: NextRequest) {
             });
           }
         } else {
-          console.log(`Contact ${contactId}: QRZ upload failed: ${uploadResult.error}`);
           // Mark as request failed
           await Contact.updateQrzQsl(contactId, 'R');
-          
           results.push({
             contactId,
             success: false,
@@ -170,9 +131,7 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         // Mark as error
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.log(`Contact ${contactId}: Exception occurred: ${errorMessage}`);
         await Contact.updateQrzQsl(contactId, 'R');
-        
         results.push({
           contactId,
           success: false,
@@ -180,13 +139,6 @@ export async function POST(request: NextRequest) {
         });
       }
     }
-
-    console.log(`QRZ upload completed. Processing summary:`);
-    console.log(`- Total contacts: ${contactIds.length}`);
-    console.log(`- Successfully sent: ${results.filter(r => r.success).length}`);
-    console.log(`- Failed: ${results.filter(r => !r.success).length}`);
-    console.log(`- Skipped: ${results.filter(r => r.skipped).length}`);
-    console.log(`- Already existed: ${results.filter(r => r.already_existed).length}`);
 
     // Calculate summary
     const successful = results.filter(r => r.success).length;
@@ -207,8 +159,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('QRZ sync error:', error);
-    return NextResponse.json({ 
-      error: 'Failed to sync with QRZ' 
+    return NextResponse.json({
+      error: 'Failed to sync with QRZ'
     }, { status: 500 });
   }
 }

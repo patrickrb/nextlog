@@ -72,20 +72,15 @@ export async function POST(request: NextRequest) {
     let lotwPassword = station.lotw_password;
     let credentialSource = 'none';
 
-    console.log(`[LoTW Download] Checking credentials for station ${station_id} (${station.callsign})`);
-    console.log(`[LoTW Download] Station credentials present: username=${!!lotwUsername}, password=${!!lotwPassword}`);
-
     // Try user's third_party_services if station doesn't have credentials
     if (!lotwUsername || !lotwPassword) {
       const thirdPartyServices = station.third_party_services;
-      console.log(`[LoTW Download] Checking user-level credentials: third_party_services=${!!thirdPartyServices}, lotw field=${!!thirdPartyServices?.lotw}`);
 
       if (thirdPartyServices?.lotw) {
         lotwUsername = thirdPartyServices.lotw.username;
         try {
           lotwPassword = decryptString(thirdPartyServices.lotw.password);
           credentialSource = 'user';
-          console.log(`[LoTW Download] Using user-level credentials, username present: ${!!lotwUsername}`);
         } catch (error) {
           console.error('[LoTW Download] Failed to decrypt user password:', error);
           lotwPassword = undefined;
@@ -96,7 +91,6 @@ export async function POST(request: NextRequest) {
       try {
         lotwPassword = decryptString(lotwPassword);
         credentialSource = 'station';
-        console.log(`[LoTW Download] Using station-level credentials for station ${station_id}`);
       } catch (error) {
         console.error('[LoTW Download] Failed to decrypt station password:', error);
         lotwPassword = undefined;
@@ -121,8 +115,6 @@ export async function POST(request: NextRequest) {
         }
       }, { status: 400 });
     }
-
-    console.log(`[LoTW Download] Credentials validated from source: ${credentialSource}`);
 
     // Create download log entry
     const downloadLogResult = await query(
