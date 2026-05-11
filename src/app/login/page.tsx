@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { BrandLockup } from '@/components/ui/brand-mark';
 import { Loader2, CheckCircle } from 'lucide-react';
 
 export default function LoginPage() {
@@ -56,20 +57,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <Card className="w-full max-w-md bg-background text-foreground">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center text-foreground">Welcome back</CardTitle>
-          <CardDescription className="text-center text-muted-foreground">
-            Sign in to your Nextlog account
-          </CardDescription>
+    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <BrandLockup size="lg" />
+      </div>
+      <Card className="w-full max-w-md">
+        <CardHeader className="border-b-0 text-center">
+          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <CardDescription>Sign in to your Nextlog account</CardDescription>
         </CardHeader>
         <CardContent>
           {showInstallSuccess && (
-            <Alert className="mb-4 border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-200">
+            <Alert variant="ok" className="mb-4">
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
-                🎉 Installation completed successfully! You can now log in with your administrator account.
+                Installation completed. Sign in with your administrator account.
               </AlertDescription>
             </Alert>
           )}
@@ -104,7 +106,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="bg-destructive/15 border border-destructive/20 text-destructive px-4 py-3 rounded-md text-sm">
+              <div className="bg-bad/10 border border-bad/25 text-bad px-4 py-3 rounded-[10px] text-sm">
                 {error}
               </div>
             )}
@@ -121,8 +123,8 @@ export default function LoginPage() {
             </Button>
 
             <div className="text-center text-sm">
-              <span className="text-muted-foreground">Don&apos;t have an account? </span>
-              <Link href="/register" className="text-primary hover:underline">
+              <span className="text-fg-2">Don&apos;t have an account? </span>
+              <Link href="/register" className="text-accent hover:underline">
                 Register here
               </Link>
             </div>

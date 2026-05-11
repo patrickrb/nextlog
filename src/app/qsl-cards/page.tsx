@@ -176,7 +176,7 @@ export default function QSLCardsPage() {
 
         {!isLoading && storageChecked && !storageAvailable && (
           <Alert className="mb-6 border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
-            <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <AlertCircle className="h-4 w-4 text-warn dark:text-orange-400" />
             <AlertDescription className="text-orange-800 dark:text-orange-200">
               File uploads are disabled. Please contact your administrator to configure storage.
             </AlertDescription>
@@ -188,15 +188,15 @@ export default function QSLCardsPage() {
         ) : images.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
-              <ImageIcon className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+              <ImageIcon className="mx-auto h-16 w-16 text-fg-2 mb-4" />
               <h3 className="text-lg font-medium mb-2">No QSL card images found</h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-fg-2 mb-4">
                 {imageTypeFilter === 'all' 
                   ? 'You haven\'t uploaded any QSL card images yet.'
                   : `No ${imageTypeFilter} images found.`
                 }
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-fg-2">
                 Upload QSL card images from the contact details page by editing a contact.
               </p>
             </CardContent>
@@ -206,7 +206,7 @@ export default function QSLCardsPage() {
             <div className="mb-6 flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">QSL Card Images</h2>
-                <p className="text-muted-foreground">
+                <p className="text-fg-2">
                   Showing {images.length} of {pagination.total} images
                   {imageTypeFilter !== 'all' && ` (${imageTypeFilter} only)`}
                 </p>
@@ -226,7 +226,7 @@ export default function QSLCardsPage() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="h-12 w-12 text-muted-foreground" />
+                        <ImageIcon className="h-12 w-12 text-fg-2" />
                       </div>
                     )}
                     
@@ -250,24 +250,24 @@ export default function QSLCardsPage() {
                   
                   <CardContent className="pt-0 space-y-2">
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="flex items-center text-muted-foreground">
+                      <div className="flex items-center text-fg-2">
                         <Calendar className="mr-1 h-3 w-3" />
                         {formatDate(image.datetime)}
                       </div>
-                      <div className="flex items-center text-muted-foreground">
+                      <div className="flex items-center text-fg-2">
                         <Radio className="mr-1 h-3 w-3" />
                         {formatFrequency(image.frequency)}
                       </div>
                     </div>
                     
                     {image.qth && (
-                      <div className="flex items-center text-sm text-muted-foreground">
+                      <div className="flex items-center text-sm text-fg-2">
                         <MapPin className="mr-1 h-3 w-3" />
                         {image.qth}
                       </div>
                     )}
                     
-                    <div className="pt-2 border-t text-xs text-muted-foreground">
+                    <div className="pt-2 border-t text-xs text-fg-2">
                       <div className="flex justify-between">
                         <span>{image.original_filename}</span>
                         <span>{formatFileSize(image.file_size)}</span>
@@ -292,7 +292,7 @@ export default function QSLCardsPage() {
                 </Button>
                 
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-fg-2">
                     Page {pagination.page} of {pagination.totalPages}
                   </span>
                 </div>

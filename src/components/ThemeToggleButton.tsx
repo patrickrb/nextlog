@@ -13,17 +13,13 @@ export default function ThemeToggleButton() {
 
   return (
     <Button
-      variant="ghost"
-      size="sm"
+      variant="secondary"
+      size="icon"
       onClick={toggleTheme}
-      className="h-8 w-8 p-0"
       title={`Switch to ${actualTheme === 'dark' ? 'light' : 'dark'} mode`}
+      aria-label={`Switch to ${actualTheme === 'dark' ? 'light' : 'dark'} mode`}
     >
-      {actualTheme === 'dark' ? (
-        <Sun className="h-4 w-4" />
-      ) : (
-        <Moon className="h-4 w-4" />
-      )}
+      {actualTheme === 'dark' ? <Sun /> : <Moon />}
     </Button>
   );
 }

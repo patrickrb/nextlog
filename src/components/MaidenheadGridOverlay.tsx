@@ -53,7 +53,7 @@ const generateMaidenheadGrid = (map: L.Map): L.LayerGroup => {
       const fieldMarker = L.marker(fieldCenter, {
         icon: L.divIcon({
           className: 'maidenhead-label field-label',
-          html: `<div class="font-bold text-red-600 text-lg bg-white/80 px-1 rounded">${fieldLabel}</div>`,
+          html: `<div class="font-bold text-bad text-lg bg-white/80 px-1 rounded">${fieldLabel}</div>`,
           iconSize: [40, 20],
           iconAnchor: [20, 10]
         }),
@@ -93,7 +93,7 @@ const generateMaidenheadGrid = (map: L.Map): L.LayerGroup => {
               const squareMarker = L.marker(squareCenter, {
                 icon: L.divIcon({
                   className: 'maidenhead-label square-label',
-                  html: `<div class="text-blue-600 text-sm bg-white/70 px-1 rounded">${squareLabel}</div>`,
+                  html: `<div class="text-accent text-sm bg-white/70 px-1 rounded">${squareLabel}</div>`,
                   iconSize: [24, 16],
                   iconAnchor: [12, 8]
                 }),
@@ -135,7 +135,7 @@ const generateMaidenheadGrid = (map: L.Map): L.LayerGroup => {
                     const subSquareMarker = L.marker(subSquareCenter, {
                       icon: L.divIcon({
                         className: 'maidenhead-label subsquare-label',
-                        html: `<div class="text-green-600 text-xs bg-white/60 px-1 rounded">${subSquareLabel}</div>`,
+                        html: `<div class="text-ok text-xs bg-white/60 px-1 rounded">${subSquareLabel}</div>`,
                         iconSize: [16, 12],
                         iconAnchor: [8, 6]
                       }),

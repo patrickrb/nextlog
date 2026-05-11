@@ -47,7 +47,7 @@ export default function EnhancedProgressBar({ progress, percentage, isComplete, 
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-2">
             {isComplete ? (
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-4 w-4 text-ok" />
             ) : hasError ? (
               <AlertCircle className="h-4 w-4 text-destructive" />
             ) : (
@@ -65,7 +65,7 @@ export default function EnhancedProgressBar({ progress, percentage, isComplete, 
           className="h-4 w-full border-2 border-border bg-gray-200 dark:bg-gray-800"
         />
         
-        <div className="flex justify-between text-xs text-muted-foreground">
+        <div className="flex justify-between text-xs text-fg-2">
           <span>{progress.processed.toLocaleString()} of {progress.total.toLocaleString()} records</span>
           {progress.rate && !isComplete && !hasError && (
             <span>{progress.rate} records/sec</span>
@@ -75,7 +75,7 @@ export default function EnhancedProgressBar({ progress, percentage, isComplete, 
 
       {/* Status Message */}
       {progress.message && (
-        <div className="text-sm text-muted-foreground bg-muted p-2 rounded-md">
+        <div className="text-sm text-fg-2 bg-muted p-2 rounded-md">
           {progress.message}
         </div>
       )}
@@ -83,27 +83,27 @@ export default function EnhancedProgressBar({ progress, percentage, isComplete, 
       {/* Detailed Statistics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         <div className="flex items-center space-x-2">
-          <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+          <Badge variant="secondary" className="bg-green-100 text-ok dark:bg-green-900 dark:text-green-300">
             <CheckCircle className="h-3 w-3 mr-1" />
             {progress.imported.toLocaleString()}
           </Badge>
-          <span className="text-xs text-muted-foreground">Imported</span>
+          <span className="text-xs text-fg-2">Imported</span>
         </div>
         
         <div className="flex items-center space-x-2">
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+          <Badge variant="secondary" className="bg-yellow-100 text-warn dark:bg-yellow-900 dark:text-yellow-300">
             <FileText className="h-3 w-3 mr-1" />
             {progress.skipped.toLocaleString()}
           </Badge>
-          <span className="text-xs text-muted-foreground">Skipped</span>
+          <span className="text-xs text-fg-2">Skipped</span>
         </div>
         
         <div className="flex items-center space-x-2">
-          <Badge variant="secondary" className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
+          <Badge variant="secondary" className="bg-red-100 text-bad dark:bg-red-900 dark:text-red-300">
             <AlertCircle className="h-3 w-3 mr-1" />
             {progress.errors.toLocaleString()}
           </Badge>
-          <span className="text-xs text-muted-foreground">Errors</span>
+          <span className="text-xs text-fg-2">Errors</span>
         </div>
 
         {progress.rate && !isComplete && !hasError && (
@@ -112,14 +112,14 @@ export default function EnhancedProgressBar({ progress, percentage, isComplete, 
               <Gauge className="h-3 w-3 mr-1" />
               {progress.rate}/s
             </Badge>
-            <span className="text-xs text-muted-foreground">Rate</span>
+            <span className="text-xs text-fg-2">Rate</span>
           </div>
         )}
       </div>
 
       {/* Time Estimation */}
       {progress.estimatedTimeRemaining && progress.estimatedTimeRemaining > 0 && !isComplete && !hasError && (
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <div className="flex items-center space-x-2 text-sm text-fg-2">
           <Clock className="h-4 w-4" />
           <span>Estimated time remaining: {formatTime(progress.estimatedTimeRemaining)}</span>
         </div>

@@ -695,8 +695,8 @@ export default function SearchPage() {
           {/* Search Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Search Contacts</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-2xl font-bold text-fg">Search Contacts</h1>
+              <p className="text-fg-2">
                 Find contacts using advanced filtering and search options
               </p>
             </div>
@@ -717,7 +717,7 @@ export default function SearchPage() {
                       )}
                       Sync {selectedContacts.size} to QRZ
                     </Button>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-fg-2">
                       {selectedContacts.size} contact{selectedContacts.size !== 1 ? 's' : ''} selected
                     </div>
                   </>
@@ -919,12 +919,12 @@ export default function SearchPage() {
                         disabled={dxccLoading}
                       />
                       {dxccLoading && (
-                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-2 text-sm text-fg-2">
                           <Loader2 className="h-3 w-3 animate-spin" />
                           <span>Loading DXCC entities...</span>
                         </div>
                       )}
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-fg-2">
                         Filter contacts by DXCC entity (country/territory). Search by country name or prefix.
                       </p>
                     </div>
@@ -981,7 +981,7 @@ export default function SearchPage() {
                   {loading && (
                     <div className="flex items-center space-x-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span className="text-sm text-muted-foreground">Searching...</span>
+                      <span className="text-sm text-fg-2">Searching...</span>
                     </div>
                   )}
                 </div>
@@ -990,7 +990,7 @@ export default function SearchPage() {
             <CardContent>
               {pagination.total === 0 && !loading ? (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">
+                  <p className="text-fg-2">
                     {activeFilterCount === 0 
                       ? 'Enter search criteria above to find contacts.'
                       : 'No contacts match your search criteria. Try adjusting your filters.'
@@ -1006,7 +1006,7 @@ export default function SearchPage() {
                       height="500px"
                     />
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-fg-2">
                     <p>
                       🏠 Red markers show your QTH location • 📻 Blue markers show contact locations
                       {contacts.filter(c => (c.latitude && c.longitude) || c.grid_locator).length < contacts.length && (

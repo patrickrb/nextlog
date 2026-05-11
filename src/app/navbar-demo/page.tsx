@@ -54,7 +54,7 @@ function DemoNavbar() {
               <DataMenu />
             </div>
             
-            <span className="mx-2 text-muted-foreground">/</span>
+            <span className="mx-2 text-fg-2">/</span>
             <h1 className="text-xl font-semibold">Demo Page</h1>
           </div>
           
@@ -88,7 +88,7 @@ function DemoNavbar() {
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{mockUser.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
+                    <p className="text-xs leading-none text-fg-2">
                       {mockUser.callsign || mockUser.email}
                     </p>
                   </div>
@@ -129,32 +129,32 @@ export default function NavbarDemoPage() {
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-card border rounded-lg p-8 text-center">
             <h1 className="text-3xl font-bold mb-4">Navbar Layout Demo with Search</h1>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-fg-2 mb-6">
               This page demonstrates the improved navbar layout with dropdown navigation menus and the new callsign search functionality.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
               <div className="bg-muted/50 p-4 rounded-lg">
                 <h3 className="font-semibold mb-2">🔍 Search Input</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-fg-2">
                   Callsign search with autocomplete and navigation to advanced search
                 </p>
               </div>
               <div className="bg-muted/50 p-4 rounded-lg">
                 <h3 className="font-semibold mb-2">📞 Contacts Menu</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-fg-2">
                   Contains New Contact and Search Contacts
                 </p>
               </div>
               <div className="bg-muted/50 p-4 rounded-lg">
                 <h3 className="font-semibold mb-2">🛠️ Tools Menu</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-fg-2">
                   Contains Awards, Propagation, DXpeditions, and QSL Cards
                 </p>
               </div>
               <div className="bg-muted/50 p-4 rounded-lg">
                 <h3 className="font-semibold mb-2">📊 Data Menu</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-fg-2">
                   Contains Statistics and ADIF Import/Export
                 </p>
               </div>

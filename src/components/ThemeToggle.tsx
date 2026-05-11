@@ -67,7 +67,7 @@ export default function ThemeToggle() {
           </SelectItem>
         </SelectContent>
       </Select>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-fg-2">
         Choose your preferred theme or let the system decide
       </p>
     </div>

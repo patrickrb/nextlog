@@ -183,8 +183,8 @@ export default function AdminDashboard() {
       
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Admin Dashboard</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-3xl font-bold text-fg">Admin Dashboard</h1>
+          <p className="text-fg-2 mt-2">
             Manage users, configure storage, and monitor system activity.
           </p>
         </div>
@@ -209,7 +209,7 @@ export default function AdminDashboard() {
                     Manage Users
                   </Link>
                 </Button>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-fg-2">
                   View, create, edit, and manage user accounts and their roles.
                 </p>
               </div>
@@ -235,7 +235,7 @@ export default function AdminDashboard() {
                     Storage Settings
                   </Link>
                 </Button>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-fg-2">
                   Set up and manage cloud storage configurations.
                 </p>
               </div>
@@ -261,7 +261,7 @@ export default function AdminDashboard() {
                     Configure Settings
                   </Link>
                 </Button>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-fg-2">
                   Manage ADIF import limits, timeouts, and system preferences.
                 </p>
               </div>
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
                     View Audit Logs
                   </Link>
                 </Button>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-fg-2">
                   Monitor all administrative actions and system changes.
                 </p>
               </div>
@@ -308,15 +308,15 @@ export default function AdminDashboard() {
             <CardContent>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Your Role:</span>
+                  <span className="text-fg-2">Your Role:</span>
                   <span className="font-medium capitalize">{user?.role}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status:</span>
-                  <span className="font-medium capitalize text-green-600">{user?.status}</span>
+                  <span className="text-fg-2">Status:</span>
+                  <span className="font-medium capitalize text-ok">{user?.status}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Admin Since:</span>
+                  <span className="text-fg-2">Admin Since:</span>
                   <span className="font-medium">Today</span>
                 </div>
               </div>
@@ -372,7 +372,7 @@ export default function AdminDashboard() {
                       {lotwDownloading ? 'Downloading...' : 'Bulk Download from LoTW'}
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-fg-2">
                     Upload QSOs to LoTW or download confirmations for all configured stations
                   </p>
                 </div>
@@ -411,7 +411,7 @@ export default function AdminDashboard() {
                       {qrzDownloading ? 'Downloading...' : 'Download QRZ Confirmations'}
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-fg-2">
                     Upload QSOs to QRZ.com logbook and download QSL confirmations for all users with configured API keys
                   </p>
                 </div>
@@ -423,19 +423,19 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center">
                     <div className="text-2xl font-bold text-primary">--</div>
-                    <div className="text-xs text-muted-foreground">LoTW Pending</div>
+                    <div className="text-xs text-fg-2">LoTW Pending</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">--</div>
-                    <div className="text-xs text-muted-foreground">LoTW Synced</div>
+                    <div className="text-2xl font-bold text-ok">--</div>
+                    <div className="text-xs text-fg-2">LoTW Synced</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-primary">--</div>
-                    <div className="text-xs text-muted-foreground">QRZ Pending</div>
+                    <div className="text-xs text-fg-2">QRZ Pending</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">--</div>
-                    <div className="text-xs text-muted-foreground">QRZ Synced</div>
+                    <div className="text-2xl font-bold text-ok">--</div>
+                    <div className="text-xs text-fg-2">QRZ Synced</div>
                   </div>
                 </div>
               </div>
@@ -444,8 +444,8 @@ export default function AdminDashboard() {
               {syncMessage && (
                 <div className={`mt-4 p-3 rounded-md ${
                   syncMessage.type === 'success' 
-                    ? 'bg-green-50 text-green-700 border border-green-200' 
-                    : 'bg-red-50 text-red-700 border border-red-200'
+                    ? 'bg-green-50 text-ok border border-green-200' 
+                    : 'bg-red-50 text-bad border border-red-200'
                 }`}>
                   {syncMessage.text}
                 </div>
@@ -458,7 +458,7 @@ export default function AdminDashboard() {
           <h3 className="font-semibold text-card-foreground mb-2">
             🔐 Admin Access Granted
           </h3>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-fg-2 text-sm">
             You have full administrative access to Nextlog. Use these tools responsibly to manage 
             users, configure system settings, and monitor activity. All admin actions are logged 
             for security and auditing purposes.

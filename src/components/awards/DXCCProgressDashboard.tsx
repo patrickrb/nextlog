@@ -153,7 +153,7 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Entities</p>
+                <p className="text-sm font-medium text-fg-2">Total Entities</p>
                 <p className="text-2xl font-bold">{currentProgress.total_entities}</p>
               </div>
               <Globe className="h-8 w-8 text-primary" />
@@ -165,11 +165,11 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Worked</p>
-                <p className="text-2xl font-bold text-yellow-600">{currentProgress.worked_entities}</p>
-                <p className="text-xs text-muted-foreground">{currentProgress.progress_percentage}%</p>
+                <p className="text-sm font-medium text-fg-2">Worked</p>
+                <p className="text-2xl font-bold text-warn">{currentProgress.worked_entities}</p>
+                <p className="text-xs text-fg-2">{currentProgress.progress_percentage}%</p>
               </div>
-              <Target className="h-8 w-8 text-yellow-600" />
+              <Target className="h-8 w-8 text-warn" />
             </div>
           </CardContent>
         </Card>
@@ -178,11 +178,11 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Confirmed</p>
-                <p className="text-2xl font-bold text-green-600">{currentProgress.confirmed_entities}</p>
-                <p className="text-xs text-muted-foreground">{currentProgress.confirmed_percentage}%</p>
+                <p className="text-sm font-medium text-fg-2">Confirmed</p>
+                <p className="text-2xl font-bold text-ok">{currentProgress.confirmed_entities}</p>
+                <p className="text-xs text-fg-2">{currentProgress.confirmed_percentage}%</p>
               </div>
-              <Trophy className="h-8 w-8 text-green-600" />
+              <Trophy className="h-8 w-8 text-ok" />
             </div>
           </CardContent>
         </Card>
@@ -191,10 +191,10 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Needed</p>
-                <p className="text-2xl font-bold text-muted-foreground">{currentProgress.needed_entities}</p>
+                <p className="text-sm font-medium text-fg-2">Needed</p>
+                <p className="text-2xl font-bold text-fg-2">{currentProgress.needed_entities}</p>
               </div>
-              <Zap className="h-8 w-8 text-muted-foreground" />
+              <Zap className="h-8 w-8 text-fg-2" />
             </div>
           </CardContent>
         </Card>
@@ -226,7 +226,7 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
             className="h-3"
           />
           
-          <div className="flex justify-between text-sm text-muted-foreground">
+          <div className="flex justify-between text-sm text-fg-2">
             <span>{currentProgress.confirmed_entities} confirmed</span>
             <span>{awardDefinition.entities_required} required</span>
           </div>
@@ -234,12 +234,12 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
           {isEligible && (
             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
               <div className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-green-600" />
+                <Trophy className="h-5 w-5 text-ok" />
                 <p className="text-green-800 dark:text-green-200 font-medium">
                   Congratulations! You are eligible for the {awardDefinition.name} award!
                 </p>
               </div>
-              <p className="text-green-700 dark:text-green-300 text-sm mt-1">
+              <p className="text-ok dark:text-green-300 text-sm mt-1">
                 {awardDefinition.requirements}
               </p>
             </div>
@@ -270,7 +270,7 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
                 <div key={continent} className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">{continent}</span>
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-fg-2">
                       {stats.worked}/{stats.total}
                     </span>
                   </div>
@@ -278,7 +278,7 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
                     value={(stats.worked / stats.total) * 100} 
                     className="h-2"
                   />
-                  <div className="flex justify-between text-xs text-muted-foreground">
+                  <div className="flex justify-between text-xs text-fg-2">
                     <span>{stats.confirmed} confirmed</span>
                     <span>{Math.round((stats.worked / stats.total) * 100)}%</span>
                   </div>
@@ -306,7 +306,7 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
                     <Badge variant="outline">{confirmation.entity_id}</Badge>
                     <span className="font-medium">Entity #{confirmation.entity_id}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-fg-2">
                     <Badge variant="secondary">{confirmation.mode}</Badge>
                     <span>{confirmation.confirmed_date ? new Date(confirmation.confirmed_date).toLocaleDateString() : ''}</span>
                   </div>
@@ -347,7 +347,7 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
                         value={bandProgress?.confirmed_percentage || 0} 
                         className="h-2"
                       />
-                      <div className="text-xs text-center text-muted-foreground">
+                      <div className="text-xs text-center text-fg-2">
                         {bandProgress?.confirmed_percentage || 0}% confirmed
                       </div>
                     </div>
@@ -381,7 +381,7 @@ export default function DXCCProgressDashboard({ stationId }: DXCCProgressDashboa
                         value={modeProgress?.confirmed_percentage || 0} 
                         className="h-2"
                       />
-                      <div className="text-xs text-center text-muted-foreground">
+                      <div className="text-xs text-center text-fg-2">
                         {modeProgress?.confirmed_percentage || 0}% confirmed
                       </div>
                     </div>

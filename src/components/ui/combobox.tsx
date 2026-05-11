@@ -56,10 +56,10 @@ export function Combobox({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          variant="secondary"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between", className)}
+          className={cn("w-full justify-between font-normal", className)}
           disabled={disabled}
         >
           <span className="truncate">
@@ -67,7 +67,7 @@ export function Combobox({
               <span>
                 {selectedOption.label}
                 {selectedOption.secondary && (
-                  <span className="ml-2 text-muted-foreground">
+                  <span className="ml-2 text-fg-2">
                     ({selectedOption.secondary})
                   </span>
                 )}
@@ -80,9 +80,9 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0" align="start">
-        <div className="border-b px-3 py-2">
+        <div className="border-b border-line px-3 py-2">
           <input
-            className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="w-full bg-transparent text-sm text-fg outline-none placeholder:text-fg-3"
             placeholder={searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -90,14 +90,14 @@ export function Combobox({
         </div>
         <div className="max-h-[300px] overflow-y-auto">
           {filteredOptions.length === 0 ? (
-            <div className="py-6 text-center text-sm text-muted-foreground">
+            <div className="py-6 text-center text-sm text-fg-2">
               {emptyText}
             </div>
           ) : (
             filteredOptions.map((option) => (
               <div
                 key={option.value}
-                className="relative flex cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                className="relative flex cursor-pointer select-none items-center rounded-[6px] px-2 py-1.5 text-sm outline-none hover:bg-accent-soft hover:text-accent-hi"
                 onClick={() => {
                   onValueChange(option.value);
                   setOpen(false);
@@ -113,7 +113,7 @@ export function Combobox({
                 <div className="flex flex-col">
                   <span>{option.label}</span>
                   {option.secondary && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-fg-2">
                       {option.secondary}
                     </span>
                   )}

@@ -44,7 +44,7 @@ export function BandActivityHeatmap({ data }: BandActivityHeatmapProps) {
             {/* Header with hour labels */}
             <div className="col-span-1"></div>
             {hours.map(hour => (
-              <div key={hour} className="text-xs text-center text-muted-foreground">
+              <div key={hour} className="text-xs text-center text-fg-2">
                 {hour}
               </div>
             ))}
@@ -52,7 +52,7 @@ export function BandActivityHeatmap({ data }: BandActivityHeatmapProps) {
             {/* Heatmap grid */}
             {dayNames.map((dayName, dayIndex) => (
               <div key={dayIndex} className="contents">
-                <div className="text-xs text-right text-muted-foreground pr-2 flex items-center">
+                <div className="text-xs text-right text-fg-2 pr-2 flex items-center">
                   {dayName}
                 </div>
                 {hours.map(hour => {
@@ -80,7 +80,7 @@ export function BandActivityHeatmap({ data }: BandActivityHeatmapProps) {
       </ChartContainer>
       
       {/* Legend */}
-      <div className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground">
+      <div className="flex items-center justify-center gap-2 mt-4 text-xs text-fg-2">
         <span>Less</span>
         <div className="flex gap-1">
           {[0, 0.2, 0.4, 0.6, 0.8, 1.0].map(intensity => (

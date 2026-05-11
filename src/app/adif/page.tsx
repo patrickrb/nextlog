@@ -384,7 +384,7 @@ export default function ADIFPage() {
                                     <span>-</span>
                                     <span>{station.station_name}</span>
                                     {station.is_default && (
-                                      <span className="text-xs text-muted-foreground">(Default)</span>
+                                      <span className="text-xs text-fg-2">(Default)</span>
                                     )}
                                   </div>
                                 </SelectItem>
@@ -392,12 +392,12 @@ export default function ADIFPage() {
                             </SelectContent>
                           </Select>
                         ) : (
-                          <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
+                          <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-fg-2">
                             Loading stations...
                           </div>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-fg-2">
                         All imported contacts will be associated with this station
                       </p>
                     </div>
@@ -415,7 +415,7 @@ export default function ADIFPage() {
                         />
                       </div>
                       {file && (
-                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-2 text-sm text-fg-2">
                           <FileText className="h-4 w-4" />
                           <span>{file.name}</span>
                           <span>({file.size > 1024 * 1024 ? (file.size / 1024 / 1024).toFixed(1) + ' MB' : (file.size / 1024).toFixed(1) + ' KB'})</span>
@@ -424,7 +424,7 @@ export default function ADIFPage() {
                           )}
                         </div>
                       )}
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-fg-2">
                         Supported formats: .adi, .adif, .txt (ADIF 3.1.5 compatible). Max size: 10MB, Max records: 5,000
                       </p>
                     </div>
@@ -486,7 +486,7 @@ export default function ADIFPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
-                      <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                      <CheckCircle className="h-5 w-5 mr-2 text-ok" />
                       Import Results
                     </CardTitle>
                   </CardHeader>
@@ -494,16 +494,16 @@ export default function ADIFPage() {
                     <div className="space-y-4">
                       <div className="grid grid-cols-3 gap-4 text-center">
                         <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
-                          <div className="text-2xl font-bold text-green-600">{importResult.imported}</div>
-                          <div className="text-sm text-green-700 dark:text-green-300">Imported</div>
+                          <div className="text-2xl font-bold text-ok">{importResult.imported}</div>
+                          <div className="text-sm text-ok dark:text-green-300">Imported</div>
                         </div>
                         <div className="p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
-                          <div className="text-2xl font-bold text-yellow-600">{importResult.skipped}</div>
-                          <div className="text-sm text-yellow-700 dark:text-yellow-300">Skipped</div>
+                          <div className="text-2xl font-bold text-warn">{importResult.skipped}</div>
+                          <div className="text-sm text-warn dark:text-yellow-300">Skipped</div>
                         </div>
                         <div className="p-4 bg-red-50 dark:bg-red-950 rounded-lg">
-                          <div className="text-2xl font-bold text-red-600">{importResult.errors}</div>
-                          <div className="text-sm text-red-700 dark:text-red-300">Errors</div>
+                          <div className="text-2xl font-bold text-bad">{importResult.errors}</div>
+                          <div className="text-sm text-bad dark:text-red-300">Errors</div>
                         </div>
                       </div>
                       
@@ -562,7 +562,7 @@ export default function ADIFPage() {
                         {stations.map((station) => (
                           <SelectItem key={station.id} value={station.id.toString()}>
                             {station.callsign} - {station.station_name}
-                            {station.is_default && <span className="ml-1 text-xs text-blue-600">(Default)</span>}
+                            {station.is_default && <span className="ml-1 text-xs text-accent">(Default)</span>}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -587,7 +587,7 @@ export default function ADIFPage() {
               {!stationsLoaded && (
                 <div className="text-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-                  <p className="text-sm text-muted-foreground mt-2">Loading stations...</p>
+                  <p className="text-sm text-fg-2 mt-2">Loading stations...</p>
                 </div>
               )}
 
@@ -633,7 +633,7 @@ export default function ADIFPage() {
                                     <span>-</span>
                                     <span>{station.station_name}</span>
                                     {station.is_default && (
-                                      <span className="text-xs text-muted-foreground">(Default)</span>
+                                      <span className="text-xs text-fg-2">(Default)</span>
                                     )}
                                   </div>
                                 </SelectItem>
@@ -641,12 +641,12 @@ export default function ADIFPage() {
                             </SelectContent>
                           </Select>
                         ) : (
-                          <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">
+                          <div className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-fg-2">
                             Loading stations...
                           </div>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-fg-2">
                         All contacts from this station will be exported
                       </p>
                     </div>
@@ -680,7 +680,7 @@ export default function ADIFPage() {
                         />
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-fg-2">
                       Leave dates empty to export all contacts from the selected station
                     </p>
 
@@ -724,21 +724,21 @@ export default function ADIFPage() {
             <CardContent className="space-y-4">
               <div>
                 <h4 className="font-medium mb-2">Supported Fields</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-fg-2">
                   Nextlog supports the most common ADIF fields including: callsign, frequency, mode, 
                   band, date/time, RST sent/received, QTH, grid locator, name, and more.
                 </p>
               </div>
               <div>
                 <h4 className="font-medium mb-2">Import Features</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-fg-2">
                   Contacts with the same callsign, date, time, and frequency will be skipped to avoid duplicates.
                   All imported contacts will be associated with the selected station.
                 </p>
               </div>
               <div>
                 <h4 className="font-medium mb-2">Export Features</h4>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-fg-2">
                   Export contacts from any of your stations. Use the optional date range to filter contacts
                   by QSO date. The exported file will be compatible with other amateur radio logging software.
                 </p>

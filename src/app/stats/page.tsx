@@ -310,9 +310,9 @@ export default function StatsPage() {
                 <Card>
                   <CardContent className="p-6">
                     <div className="flex items-center">
-                      <Activity className="h-8 w-8 text-blue-600" />
+                      <Activity className="h-8 w-8 text-accent" />
                       <div className="ml-4">
-                        <p className="text-sm font-medium text-muted-foreground">Total QSOs</p>
+                        <p className="text-sm font-medium text-fg-2">Total QSOs</p>
                         <p className="text-2xl font-bold">{statsData.totalQsos.toLocaleString()}</p>
                       </div>
                     </div>
@@ -322,9 +322,9 @@ export default function StatsPage() {
                 <Card>
                   <CardContent className="p-6">
                     <div className="flex items-center">
-                      <Radio className="h-8 w-8 text-green-600" />
+                      <Radio className="h-8 w-8 text-ok" />
                       <div className="ml-4">
-                        <p className="text-sm font-medium text-muted-foreground">Unique Modes</p>
+                        <p className="text-sm font-medium text-fg-2">Unique Modes</p>
                         <p className="text-2xl font-bold">{statsData.qsosByMode.length}</p>
                       </div>
                     </div>
@@ -334,9 +334,9 @@ export default function StatsPage() {
                 <Card>
                   <CardContent className="p-6">
                     <div className="flex items-center">
-                      <BarChart3 className="h-8 w-8 text-purple-600" />
+                      <BarChart3 className="h-8 w-8 text-info" />
                       <div className="ml-4">
-                        <p className="text-sm font-medium text-muted-foreground">Unique Bands</p>
+                        <p className="text-sm font-medium text-fg-2">Unique Bands</p>
                         <p className="text-2xl font-bold">{statsData.qsosByBand.length}</p>
                       </div>
                     </div>
@@ -346,9 +346,9 @@ export default function StatsPage() {
                 <Card>
                   <CardContent className="p-6">
                     <div className="flex items-center">
-                      <Globe className="h-8 w-8 text-orange-600" />
+                      <Globe className="h-8 w-8 text-warn" />
                       <div className="ml-4">
-                        <p className="text-sm font-medium text-muted-foreground">Unique Callsigns</p>
+                        <p className="text-sm font-medium text-fg-2">Unique Callsigns</p>
                         <p className="text-2xl font-bold">
                           {advancedStats?.uniqueCallsigns?.unique_callsigns?.toLocaleString() || '-'}
                         </p>
@@ -433,11 +433,11 @@ export default function StatsPage() {
                           {geographicStats.continent_distribution.map(item => (
                             <div key={item.continent} className="flex justify-between items-center">
                               <span className="font-medium">{item.continent}</span>
-                              <span className="text-muted-foreground">{item.qsos.toLocaleString()}</span>
+                              <span className="text-fg-2">{item.qsos.toLocaleString()}</span>
                             </div>
                           ))}
                           {geographicStats.continent_distribution.length === 0 && (
-                            <p className="text-muted-foreground text-center py-4">No data available</p>
+                            <p className="text-fg-2 text-center py-4">No data available</p>
                           )}
                         </div>
                       </CardContent>
@@ -453,11 +453,11 @@ export default function StatsPage() {
                           {geographicStats.country_distribution.slice(0, 10).map(item => (
                             <div key={item.country} className="flex justify-between items-center">
                               <span className="font-medium text-sm">{item.country}</span>
-                              <span className="text-muted-foreground text-sm">{item.qsos.toLocaleString()}</span>
+                              <span className="text-fg-2 text-sm">{item.qsos.toLocaleString()}</span>
                             </div>
                           ))}
                           {geographicStats.country_distribution.length === 0 && (
-                            <p className="text-muted-foreground text-center py-4">No data available</p>
+                            <p className="text-fg-2 text-center py-4">No data available</p>
                           )}
                         </div>
                       </CardContent>
@@ -473,11 +473,11 @@ export default function StatsPage() {
                           {geographicStats.grid_activity.slice(0, 10).map(item => (
                             <div key={item.grid_square} className="flex justify-between items-center">
                               <span className="font-medium font-mono">{item.grid_square}</span>
-                              <span className="text-muted-foreground">{item.qsos.toLocaleString()}</span>
+                              <span className="text-fg-2">{item.qsos.toLocaleString()}</span>
                             </div>
                           ))}
                           {geographicStats.grid_activity.length === 0 && (
-                            <p className="text-muted-foreground text-center py-4">No data available</p>
+                            <p className="text-fg-2 text-center py-4">No data available</p>
                           )}
                         </div>
                       </CardContent>
@@ -505,25 +505,25 @@ export default function StatsPage() {
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
                             <span className="text-sm font-medium">Active Days</span>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm text-fg-2">
                               {advancedStats.qsoRates.active_days?.toLocaleString() || '-'}
                             </span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm font-medium">QSOs per Day</span>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm text-fg-2">
                               {advancedStats.qsoRates.qsos_per_day || '-'}
                             </span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm font-medium">QSOs per Month</span>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm text-fg-2">
                               {advancedStats.qsoRates.qsos_per_month || '-'}
                             </span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm font-medium">QSOs per Callsign</span>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm text-fg-2">
                               {advancedStats.uniqueCallsigns.qsos_per_callsign || '-'}
                             </span>
                           </div>

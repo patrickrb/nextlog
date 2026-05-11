@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { BrandLockup } from "@/components/ui/brand-mark";
 import { Loader2 } from "lucide-react";
 
 export default function RegisterPage() {
@@ -76,15 +77,14 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <Card className="w-full max-w-md bg-background text-foreground">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center text-foreground">
-            Create your account
-          </CardTitle>
-          <CardDescription className="text-center text-muted-foreground">
-            Enter your details to create your Nextlog account
-          </CardDescription>
+    <div className="min-h-screen flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <BrandLockup size="lg" />
+      </div>
+      <Card className="w-full max-w-md">
+        <CardHeader className="border-b-0 text-center">
+          <CardTitle className="text-2xl">Create your account</CardTitle>
+          <CardDescription>Enter your details to create your Nextlog account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -168,7 +168,7 @@ export default function RegisterPage() {
             </div>
 
             {error && (
-              <div className="bg-destructive/15 border border-destructive/20 text-destructive px-4 py-3 rounded-md text-sm">
+              <div className="bg-bad/10 border border-bad/25 text-bad px-4 py-3 rounded-[10px] text-sm">
                 {error}
               </div>
             )}
@@ -185,10 +185,8 @@ export default function RegisterPage() {
             </Button>
 
             <div className="text-center text-sm">
-              <span className="text-muted-foreground">
-                Already have an account?{" "}
-              </span>
-              <Link href="/login" className="text-primary hover:underline">
+              <span className="text-fg-2">Already have an account? </span>
+              <Link href="/login" className="text-accent hover:underline">
                 Sign in here
               </Link>
             </div>

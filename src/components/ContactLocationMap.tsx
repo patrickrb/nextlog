@@ -147,7 +147,7 @@ export default function ContactLocationMap({ contact, user, height = '300px' }: 
 
   if (!mounted) {
     return <div className="w-full bg-muted rounded-lg flex items-center justify-center" style={{ height }}>
-      <span className="text-muted-foreground">Loading map...</span>
+      <span className="text-fg-2">Loading map...</span>
     </div>;
   }
 
@@ -160,10 +160,10 @@ export default function ContactLocationMap({ contact, user, height = '300px' }: 
     return (
       <div className="w-full bg-muted/50 rounded-lg border border-dashed border-muted-foreground/50 flex items-center justify-center text-center p-6" style={{ height }}>
         <div>
-          <p className="text-muted-foreground font-medium">
+          <p className="text-fg-2 font-medium">
             📍 {isCallsignEmpty ? 'No Contact Selected' : 'No Location Data'}
           </p>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-fg-2 mt-1">
             {isCallsignEmpty 
               ? 'Enter a callsign or location data to see the contact on the map'
               : 'Location information not available for this callsign'
@@ -220,7 +220,7 @@ export default function ContactLocationMap({ contact, user, height = '300px' }: 
               <Marker position={userLocation} icon={qthIcon}>
                 <Popup>
                   <div className="min-w-[200px]">
-                    <h3 className="font-semibold text-lg text-red-600">🏠 Your QTH</h3>
+                    <h3 className="font-semibold text-lg text-bad">🏠 Your QTH</h3>
                     <div className="mt-2 space-y-1 text-sm">
                       <p><strong>Callsign:</strong> {user.callsign || 'Not set'}</p>
                       <p><strong>Name:</strong> {user.name}</p>
@@ -253,8 +253,8 @@ export default function ContactLocationMap({ contact, user, height = '300px' }: 
             <Marker position={position} icon={contactIcon}>
               <Popup>
                 <div className="min-w-[200px]">
-                  <h3 className="font-semibold text-lg text-green-600">📻 {contact.callsign}</h3>
-                  {contact.name && <p className="text-sm text-muted-foreground">{contact.name}</p>}
+                  <h3 className="font-semibold text-lg text-ok">📻 {contact.callsign}</h3>
+                  {contact.name && <p className="text-sm text-fg-2">{contact.name}</p>}
                   <div className="mt-2 space-y-1 text-sm">
                     {contact.qth && <p><strong>QTH:</strong> {contact.qth}</p>}
                     {contact.grid_locator && (

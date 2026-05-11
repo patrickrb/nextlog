@@ -245,14 +245,14 @@ export default function AdminSettingsPage() {
 
         {success && (
           <Alert className="mb-6 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
-            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <CheckCircle className="h-4 w-4 text-ok dark:text-green-400" />
             <AlertDescription className="text-green-800 dark:text-green-200">{success}</AlertDescription>
           </Alert>
         )}
 
         {hasModifications && (
           <Alert className="mb-6 border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950">
-            <Settings className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <Settings className="h-4 w-4 text-warn dark:text-orange-400" />
             <AlertDescription className="text-orange-800 dark:text-orange-200">
               You have unsaved changes. Click &quot;Save Changes&quot; to apply them.
             </AlertDescription>
@@ -263,7 +263,7 @@ export default function AdminSettingsPage() {
           <div className="text-center py-8">Loading settings...</div>
         ) : Object.keys(settings).length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">No settings found. Make sure the system_settings table exists and contains data.</p>
+            <p className="text-fg-2">No settings found. Make sure the system_settings table exists and contains data.</p>
           </div>
         ) : (
           <Tabs defaultValue={Object.keys(settings)[0]} className="space-y-6">
@@ -315,13 +315,13 @@ export default function AdminSettingsPage() {
                                   </span>
                                 )}
                               </Label>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-fg-2">
                                 {setting.data_type}
                               </span>
                             </div>
                             {renderSettingInput(setting)}
                             {setting.description && (
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-sm text-fg-2">
                                 {setting.description}
                               </p>
                             )}

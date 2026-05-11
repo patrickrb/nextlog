@@ -90,15 +90,13 @@ export default function SearchInput({ className }: SearchInputProps) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="outline"
+          variant="secondary"
           role="combobox"
           aria-expanded={open}
-          className={`justify-between bg-background ${className}`}
+          className={`justify-start font-normal text-fg-2 ${className ?? ''}`}
         >
-          <div className="flex items-center">
-            <Search className="h-4 w-4 mr-2 opacity-50" />
-            <span className="text-muted-foreground">Search callsigns...</span>
-          </div>
+          <Search className="h-4 w-4 mr-2 text-fg-2" />
+          <span>Search callsigns...</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="start">
@@ -111,20 +109,20 @@ export default function SearchInput({ className }: SearchInputProps) {
           />
           <CommandList>
             {loading ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">
+              <div className="py-6 text-center text-sm text-fg-2">
                 Searching...
               </div>
             ) : suggestions.length === 0 && search.trim() ? (
               <CommandEmpty>
                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-2">No callsigns found.</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-fg-2 mb-2">No callsigns found.</p>
+                  <p className="text-xs text-fg-3">
                     Press Enter to search for &ldquo;{search.toUpperCase()}&rdquo;
                   </p>
                 </div>
               </CommandEmpty>
             ) : suggestions.length === 0 ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">
+              <div className="py-6 text-center text-sm text-fg-2">
                 Start typing to search callsigns...
               </div>
             ) : (
@@ -134,17 +132,16 @@ export default function SearchInput({ className }: SearchInputProps) {
                     key={suggestion.value}
                     value={suggestion.value}
                     onSelect={() => handleSelectCallsign(suggestion.value)}
-                    className="cursor-pointer"
                   >
                     <div className="flex flex-col w-full">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{suggestion.label}</span>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="font-medium font-mono">{suggestion.label}</span>
+                        <span className="text-xs text-fg-2">
                           {suggestion.contact_count} contact{suggestion.contact_count !== 1 ? 's' : ''}
                         </span>
                       </div>
                       {suggestion.secondary && (
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-fg-2">
                           {suggestion.secondary}
                         </span>
                       )}
@@ -155,10 +152,10 @@ export default function SearchInput({ className }: SearchInputProps) {
                   <CommandItem
                     value={search.trim().toUpperCase()}
                     onSelect={() => handleSelectCallsign(search.trim().toUpperCase())}
-                    className="cursor-pointer border-t"
+                    className="border-t border-line"
                   >
                     <div className="flex items-center w-full">
-                      <Search className="h-4 w-4 mr-2 opacity-50" />
+                      <Search className="h-4 w-4 mr-2 text-fg-2" />
                       <span>Search for &ldquo;{search.trim().toUpperCase()}&rdquo;</span>
                     </div>
                   </CommandItem>
