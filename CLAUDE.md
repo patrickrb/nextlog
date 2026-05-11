@@ -87,10 +87,11 @@ The canonical schema lives in TypeScript at `drizzle/schema.ts`. To evolve it:
 3. Review the generated SQL, commit it alongside the `schema.ts` change.
 4. Apply with `npm run db:migrate` (uses `DATABASE_URL`).
 
-**Current state (deliberate limitations):**
-- The runtime install path (`/api/install/database`, `/api/install/migrate-schema`) and the legacy SQL files (`install-database.sql`, `postgres-init.sql`, `propagation-schema.sql`, `postgres-lotw-migration.sql`, `migrations/*.sql`) are still in place. They haven't been switched to `drizzle-kit migrate` yet — that's a follow-up PR that needs careful coordination with existing production installs.
-- The baseline migration `drizzle/migrations/0000_thankful_penance.sql` is generated from a dev-DB introspection and is wrapped in a `/* ... */` block (Drizzle's safety default). It represents the state at adoption; future migrations build on top.
-- The dev DB used for introspection had a subset of tables (no `dxcc_entities`, `states_provinces`, `qsl_images`, propagation tables, etc.). Before the runtime switchover, `schema.ts` needs to be reconciled against a fully-installed canonical DB.
+**Canonical schema:** `drizzle/schema.ts` now matches the in-app installer (`install-database.sql` + `propagation-schema.sql` + `migrations/*.sql` + the `system_settings` table created by the migrate-schema endpoint). 18 tables, 284 columns. The baseline migration is `drizzle/migrations/0000_baseline_canonical_schema.sql` — produced by `drizzle-kit generate` from the introspected canonical state, executable as-is.
+
+**Current state (still deliberate limitations):**
+- The runtime install path (`/api/install/database`, `/api/install/migrate-schema`) and the legacy SQL files (`install-database.sql`, `propagation-schema.sql`, `postgres-lotw-migration.sql`, `migrations/*.sql`) are still in place. They haven't been switched to `drizzle-kit migrate` yet — that's a follow-up PR that needs backfill logic for existing production installs.
+- Local dev DBs bootstrapped via the old `postgres-init.sql` (now deleted) need to be wiped and re-installed via the in-app installer for parity with the canonical schema. The dev-only `api_key_usage_logs` table from that bootstrap is intentionally not in the canonical schema.
 
 ## Scripts (run from repo root)
 
