@@ -94,10 +94,10 @@ The canonical schema lives in TypeScript at `drizzle/schema.ts`. To evolve it:
 - For fresh DBs, applies the baseline normally to create all 18 tables.
 - Returns `{ backfilled, migrationsAppliedCount, baselineTag }`.
 
+**Install flow:** `/install` POSTs `/api/install/{validate,migrate,create-admin,finalize}` in order. The `migrate` step calls the runtime migrator (gated on "no users yet exist" instead of admin auth), which creates schema + loads reference data in one shot — same code path as `/api/admin/migrate`.
+
 **Current state (still deliberate limitations):**
-- The install UI still calls `/api/install/database` and `/api/install/migrate-schema` (the legacy SQL paths). Switching the UI over to `/api/admin/migrate` is a follow-up PR.
-- Legacy SQL files (`install-database.sql`, `propagation-schema.sql`, `postgres-lotw-migration.sql`, `migrations/*.sql`) still exist. Safe to delete only after the install UI uses `drizzle-kit migrate` exclusively and the runtime path is proven on at least one production install.
-- The baseline doesn't include the reference data INSERTs (DXCC entities, states/provinces) that `install-database.sql` ships. Fresh installs that *only* run the migrator will have empty `dxcc_entities` and `states_provinces` tables. A future migration should seed these.
+- Legacy SQL files (`install-database.sql`, `propagation-schema.sql`, `postgres-lotw-migration.sql`, `migrations/*.sql`) and the legacy install endpoints (`/api/install/{database,migrate-schema,reference-data}`) still exist on disk but are no longer called by the install UI. Safe to delete once the new install path is proven on at least one production install.
 - Local dev DBs bootstrapped via the old `postgres-init.sql` (deleted in #195) need to be wiped and re-installed via the in-app installer for parity. The dev-only `api_key_usage_logs` table is intentionally not canonical.
 
 ## Scripts (run from repo root)
