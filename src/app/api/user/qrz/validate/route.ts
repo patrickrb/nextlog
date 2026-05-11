@@ -12,34 +12,50 @@ export async function POST(request: NextRequest) {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: number };
-    
-    // Get user's QRZ credentials
-    const user = await User.findById(decoded.userId);
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+
+    // Accept credentials in the request body to allow smoke-testing before save.
+    // Fall back to the user's saved credentials when the body is empty.
+    let bodyUsername: string | undefined;
+    let bodyPassword: string | undefined;
+    try {
+      const body = await request.json() as { qrz_username?: unknown; qrz_password?: unknown };
+      if (typeof body.qrz_username === 'string') bodyUsername = body.qrz_username.trim();
+      if (typeof body.qrz_password === 'string') bodyPassword = body.qrz_password;
+    } catch {
+      // No JSON body — fall through to saved-credential path.
     }
 
-    if (!user.qrz_username || !user.qrz_password) {
-      console.error('QRZ credentials missing:', {
-        userId: decoded.userId,
-        qrz_username: user.qrz_username ? 'present' : 'missing',
-        qrz_password: user.qrz_password ? 'present' : 'missing'
-      });
-      return NextResponse.json({ 
-        error: 'QRZ credentials not configured. Please add your QRZ username and password in your profile settings.' 
-      }, { status: 400 });
-    }
+    let username: string;
+    let password: string;
 
-    // Decrypt the password if it's encrypted
-    const decryptedPassword = User.getDecryptedQrzPassword(user);
-    if (!decryptedPassword) {
-      return NextResponse.json({ 
-        error: 'Failed to decrypt QRZ password. Please update your credentials in profile settings.' 
-      }, { status: 400 });
+    if (bodyUsername && bodyPassword) {
+      username = bodyUsername;
+      password = bodyPassword;
+    } else {
+      const user = await User.findById(decoded.userId);
+      if (!user) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+
+      if (!user.qrz_username || !user.qrz_password) {
+        return NextResponse.json({
+          error: 'QRZ credentials not configured. Please enter your QRZ username and password.'
+        }, { status: 400 });
+      }
+
+      const decryptedPassword = User.getDecryptedQrzPassword(user);
+      if (!decryptedPassword) {
+        return NextResponse.json({
+          error: 'Failed to decrypt QRZ password. Please re-enter your credentials.'
+        }, { status: 400 });
+      }
+
+      username = user.qrz_username;
+      password = decryptedPassword;
     }
 
     // Validate credentials by doing a test lookup with QRZ XML API (for callsign lookups)
-    const testResult = await lookupCallsign('W1AW', user.qrz_username, decryptedPassword);
+    const testResult = await lookupCallsign('W1AW', username, password);
     
     if (!testResult.found && testResult.error) {
       return NextResponse.json({ 
