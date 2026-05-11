@@ -28,18 +28,39 @@ The database is `snake_case`. To eliminate boundary-translation bugs (the kind w
 
 ## Error response shape
 
-API routes return:
+Two acceptable patterns. Pick based on what consumers already expect.
+
+**Default — `{ error: string }` with HTTP status:**
 
 ```ts
-{ error: string }
+return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
 ```
 
-with an appropriate HTTP status (400 client error, 401 unauthorized, 403 forbidden, 404 not found, 500 server error). Some routes return richer shapes (`{ success: boolean, error?: string, ... }`) — that's fine where it's already established, but new routes should default to the simple shape.
+HTTP status carries the error category (400 client error, 401 unauthorized, 403 forbidden, 404 not found, 500 server error). New internal routes should default to this shape.
+
+**Discriminated union — `{ success, data, error }`:** used by `/api/awards/*` and the public-facing `/api/cloudlog/*`. Consumers check `data.success` to branch. The shape is part of the contract; don't change it without updating every consumer.
+
+```ts
+type AwardResponse<T> =
+  | { success: true; data: T }
+  | { success: false; error: string };
+```
+
+**Don't leak raw error messages.** A `catch` block that returns `error.message` to the client can expose DB constraint names, stack frames, and other internals. Log the real message with `console.error` and return a generic string:
+
+```ts
+catch (error) {
+  console.error('DXCC summary error:', error);
+  return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+}
+```
+
+The `details:` field used by some install/cron routes (`{ error, details }`) is admin/diagnostic only and not consumed by the frontend — keep it scoped to flows where untrusted callers can't reach.
 
 ## Logging
 
-- `console.log` in `src/` is being phased out — don't add new ones. (Lint rule coming in a follow-up PR.)
-- `console.error` is acceptable in genuine error paths until a real logger is introduced.
+- `no-console` is lint-enforced in `src/` (allows `warn`, `error` only). Use `console.error` in genuine error paths; everything else should go through `src/lib/logger.ts` (`logger.debug` / `logger.info` / `logger.warn` / `logger.error`).
+- `scripts/` and `tests/` are exempt from the rule — CLI utilities and test diagnostics may use `console.log`.
 
 ## Type discipline
 

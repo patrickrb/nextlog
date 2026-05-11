@@ -104,16 +104,7 @@ export async function POST(request: NextRequest) {
         ? 'LoTW credentials not configured. Please configure LoTW credentials in Settings > LoTW Integration (either at User level for all stations, or Station level for this specific station).'
         : 'LoTW credentials are incomplete or invalid. Please reconfigure them in Settings > LoTW Integration.';
 
-      return NextResponse.json({
-        error: errorMessage,
-        debug: {
-          station_id: station_id,
-          station_callsign: station.callsign,
-          credential_source: credentialSource,
-          has_username: !!lotwUsername,
-          has_password: !!lotwPassword
-        }
-      }, { status: 400 });
+      return NextResponse.json({ error: errorMessage }, { status: 400 });
     }
 
     // Create download log entry

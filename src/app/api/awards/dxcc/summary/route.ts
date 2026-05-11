@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     console.error('DXCC summary error:', error);
     const response: DXCCSummaryResponse = {
       success: false,
-      error: error instanceof Error ? error.message : 'Internal server error'
+      error: 'Internal server error'
     };
     return NextResponse.json(response, { status: 500 });
   }
