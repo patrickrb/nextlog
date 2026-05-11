@@ -137,13 +137,10 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
       
       // Parse all records
       const allRecords = parseADIFRecords(content);
-      console.log(`Parsed ${allRecords.length} total records`);
 
       // Determine chunk size (200 records per chunk for reliable Vercel processing)
       const chunkSize = 200;
       const chunks = Math.ceil(allRecords.length / chunkSize);
-
-      console.log(`Splitting into ${chunks} chunks of ${chunkSize} records each`);
 
       // Set initial progress data immediately to ensure progress bar shows
       const startTime = Date.now();
@@ -168,8 +165,6 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
         const startIdx = i * chunkSize;
         const endIdx = Math.min(startIdx + chunkSize, allRecords.length);
         const chunkRecords = allRecords.slice(startIdx, endIdx);
-
-        console.log(`Processing chunk ${i + 1}/${chunks} (${chunkRecords.length} records)`);
 
         // Update progress data for current chunk
         const currentProgress = Math.round(((i) / chunks) * 100);
@@ -209,8 +204,6 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
           totalSkipped += result.skipped;
           totalErrors += result.errors;
 
-          console.log(`Chunk ${i + 1} completed: ${result.imported} imported, ${result.skipped} skipped, ${result.errors} errors`);
-
           // Delay between chunks to avoid overwhelming the server and allow connections to reset
           if (i < chunks - 1) {
             await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
@@ -238,7 +231,6 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
           
           // For timeouts, add extra delay before continuing
           if (isTimeout && i < chunks - 1) {
-            console.log('Adding extra delay after timeout...');
             await new Promise(resolve => setTimeout(resolve, 3000));
           }
         }

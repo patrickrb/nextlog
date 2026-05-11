@@ -6,17 +6,6 @@ import { query } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-    // Enhanced error logging for troubleshooting
-    console.log('LoTW upload cron job authentication check...');
-    console.log('Request headers (excluding sensitive data):', {
-      'user-agent': request.headers.get('user-agent'),
-      'x-vercel-id': request.headers.get('x-vercel-id'),
-      'x-forwarded-for': request.headers.get('x-forwarded-for'),
-      'host': request.headers.get('host'),
-      'has-authorization': !!request.headers.get('authorization'),
-      'cron-secret-configured': !!process.env.CRON_SECRET
-    });
-
     // Environment validation
     const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'ENCRYPTION_SECRET'];
     const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
@@ -48,8 +37,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('Starting LoTW upload cron job...');
-    
     // Check if lotw_credentials table exists before proceeding
     const tableCheckResult = await query(`
       SELECT table_name 
@@ -58,7 +45,6 @@ export async function GET(request: NextRequest) {
     `);
     
     if (tableCheckResult.rows.length === 0) {
-      console.log('lotw_credentials table does not exist, skipping LoTW upload cron job');
       return NextResponse.json({
         success: true,
         message: 'LoTW upload skipped - lotw_credentials table not found',
@@ -106,7 +92,6 @@ export async function GET(request: NextRequest) {
           );
 
           if (recentUploadResult.rows.length > 0) {
-            console.log(`Skipping station ${station.callsign} - uploaded recently`);
             results.push({
               station_id: station.id,
               callsign: station.callsign,
@@ -150,8 +135,6 @@ export async function GET(request: NextRequest) {
           error: uploadResponse.ok ? null : uploadData.error
         });
 
-        console.log(`Station ${station.callsign}: ${uploadResponse.ok ? 'success' : 'error'} - ${uploadData.qso_count || 0} QSOs`);
-
       } catch (stationError) {
         console.error(`Error processing station ${station.callsign}:`, stationError);
         results.push({
@@ -162,8 +145,6 @@ export async function GET(request: NextRequest) {
         });
       }
     }
-
-    console.log('LoTW upload cron job completed');
 
     return NextResponse.json({
       success: true,

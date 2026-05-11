@@ -15,6 +15,7 @@ export const logger = {
      */
     debug: (message: string, context?: LogContext) => {
         if (process.env.NODE_ENV === 'development') {
+            // eslint-disable-next-line no-console
             console.log(`[DEBUG] ${message}`, context || '');
         }
     },
@@ -24,6 +25,7 @@ export const logger = {
      * Use for general informational messages
      */
     info: (message: string, context?: LogContext) => {
+        // eslint-disable-next-line no-console
         console.log(`[INFO] ${message}`, context || '');
     },
 
