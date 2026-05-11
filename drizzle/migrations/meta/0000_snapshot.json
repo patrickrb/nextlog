@@ -127,14 +127,14 @@
               "isExpression": false,
               "asc": true,
               "nulls": "last",
-              "opclass": "int4_ops"
+              "opclass": "text_ops"
             },
             {
               "expression": "target_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last",
-              "opclass": "text_ops"
+              "opclass": "int4_ops"
             }
           ],
           "isUnique": false,

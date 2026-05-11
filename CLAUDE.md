@@ -87,11 +87,18 @@ The canonical schema lives in TypeScript at `drizzle/schema.ts`. To evolve it:
 3. Review the generated SQL, commit it alongside the `schema.ts` change.
 4. Apply with `npm run db:migrate` (uses `DATABASE_URL`).
 
-**Canonical schema:** `drizzle/schema.ts` now matches the in-app installer (`install-database.sql` + `propagation-schema.sql` + `migrations/*.sql` + the `system_settings` table created by the migrate-schema endpoint). 18 tables, 284 columns. The baseline migration is `drizzle/migrations/0000_baseline_canonical_schema.sql` — produced by `drizzle-kit generate` from the introspected canonical state, executable as-is.
+**Canonical schema:** `drizzle/schema.ts` matches the in-app installer (`install-database.sql` + `propagation-schema.sql` + `migrations/*.sql` + the `system_settings` table created by the migrate-schema endpoint). 18 tables, 284 columns. The baseline migration is `drizzle/migrations/0000_baseline_canonical_schema.sql` — produced by `drizzle-kit generate`, executable as-is.
+
+**Applying migrations at runtime:** `POST /api/admin/migrate` (admin-only) runs the Drizzle migrator with backfill for existing installs:
+- Detects existing installs (`public.users` exists, `drizzle.__drizzle_migrations` doesn't) and seeds the tracking table with the baseline marked as applied — so the baseline isn't reapplied against an already-populated schema.
+- For fresh DBs, applies the baseline normally to create all 18 tables.
+- Returns `{ backfilled, migrationsAppliedCount, baselineTag }`.
 
 **Current state (still deliberate limitations):**
-- The runtime install path (`/api/install/database`, `/api/install/migrate-schema`) and the legacy SQL files (`install-database.sql`, `propagation-schema.sql`, `postgres-lotw-migration.sql`, `migrations/*.sql`) are still in place. They haven't been switched to `drizzle-kit migrate` yet — that's a follow-up PR that needs backfill logic for existing production installs.
-- Local dev DBs bootstrapped via the old `postgres-init.sql` (now deleted) need to be wiped and re-installed via the in-app installer for parity with the canonical schema. The dev-only `api_key_usage_logs` table from that bootstrap is intentionally not in the canonical schema.
+- The install UI still calls `/api/install/database` and `/api/install/migrate-schema` (the legacy SQL paths). Switching the UI over to `/api/admin/migrate` is a follow-up PR.
+- Legacy SQL files (`install-database.sql`, `propagation-schema.sql`, `postgres-lotw-migration.sql`, `migrations/*.sql`) still exist. Safe to delete only after the install UI uses `drizzle-kit migrate` exclusively and the runtime path is proven on at least one production install.
+- The baseline doesn't include the reference data INSERTs (DXCC entities, states/provinces) that `install-database.sql` ships. Fresh installs that *only* run the migrator will have empty `dxcc_entities` and `states_provinces` tables. A future migration should seed these.
+- Local dev DBs bootstrapped via the old `postgres-init.sql` (deleted in #195) need to be wiped and re-installed via the in-app installer for parity. The dev-only `api_key_usage_logs` table is intentionally not canonical.
 
 ## Scripts (run from repo root)
 

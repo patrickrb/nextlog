@@ -192,7 +192,8 @@ export const adminAuditLog = pgTable("admin_audit_log", {
 	index("idx_audit_log_action").using("btree", table.action.asc().nullsLast().op("text_ops")),
 	index("idx_audit_log_admin_user").using("btree", table.adminUserId.asc().nullsLast().op("int4_ops")),
 	index("idx_audit_log_created_at").using("btree", table.createdAt.desc().nullsFirst().op("timestamp_ops")),
-	index("idx_audit_log_target").using("btree", table.targetType.asc().nullsLast().op("int4_ops"), table.targetId.asc().nullsLast().op("text_ops")),
+	// drizzle-kit pull swapped the opclasses (target_type is varchar, target_id is integer).
+	index("idx_audit_log_target").using("btree", table.targetType.asc().nullsLast().op("text_ops"), table.targetId.asc().nullsLast().op("int4_ops")),
 	foreignKey({
 			columns: [table.adminUserId],
 			foreignColumns: [users.id],

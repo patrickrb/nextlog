@@ -28,7 +28,7 @@ const eslintConfig = [
     },
   },
   {
-    files: ["scripts/**/*.{js,mjs}"],
+    files: ["scripts/**/*.{js,mjs,ts}"],
     rules: {
       "@typescript-eslint/no-require-imports": "off",
       "no-console": "off",

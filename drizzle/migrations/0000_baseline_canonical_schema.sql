@@ -388,7 +388,7 @@ ALTER TABLE "user_propagation_preferences" ADD CONSTRAINT "user_propagation_pref
 CREATE INDEX "idx_audit_log_action" ON "admin_audit_log" USING btree ("action" text_ops);--> statement-breakpoint
 CREATE INDEX "idx_audit_log_admin_user" ON "admin_audit_log" USING btree ("admin_user_id" int4_ops);--> statement-breakpoint
 CREATE INDEX "idx_audit_log_created_at" ON "admin_audit_log" USING btree ("created_at" timestamp_ops);--> statement-breakpoint
-CREATE INDEX "idx_audit_log_target" ON "admin_audit_log" USING btree ("target_type" int4_ops,"target_id" text_ops);--> statement-breakpoint
+CREATE INDEX "idx_audit_log_target" ON "admin_audit_log" USING btree ("target_type" text_ops,"target_id" int4_ops);--> statement-breakpoint
 CREATE INDEX "idx_api_keys_api_key" ON "api_keys" USING btree ("api_key" text_ops);--> statement-breakpoint
 CREATE INDEX "idx_api_keys_expires_at" ON "api_keys" USING btree ("expires_at" timestamp_ops);--> statement-breakpoint
 CREATE INDEX "idx_api_keys_is_active" ON "api_keys" USING btree ("is_active" bool_ops);--> statement-breakpoint
