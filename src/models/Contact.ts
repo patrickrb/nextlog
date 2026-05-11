@@ -193,8 +193,60 @@ export class Contact {
   static async countByUserIdSince(userId: number, since: string): Promise<number> {
     const sql = 'SELECT COUNT(*) FROM contacts WHERE user_id = $1 AND datetime >= $2';
     const result = await query(sql, [userId, since]);
-    
+
     return parseInt(result.rows[0].count);
+  }
+
+  /**
+   * Aggregates contacts per band since a given timestamp. Returns a map keyed
+   * by band string ('20m', '40m', etc.). Used by the dashboard band activity strip.
+   */
+  static async getBandActivity(userId: number, since: string): Promise<Record<string, number>> {
+    const sql = `
+      SELECT band, COUNT(*)::int AS count
+      FROM contacts
+      WHERE user_id = $1 AND datetime >= $2 AND band IS NOT NULL
+      GROUP BY band
+    `;
+    const result = await query(sql, [userId, since]);
+    const activity: Record<string, number> = {};
+    for (const row of result.rows) {
+      activity[row.band as string] = row.count as number;
+    }
+    return activity;
+  }
+
+  /**
+   * Counts QSOs that have a confirmed QSL via any source (LoTW, QRZ, paper, eQSL).
+   * Used by the dashboard QSL Confirmed stat card.
+   */
+  static async countConfirmedByUserId(userId: number): Promise<number> {
+    const sql = `
+      SELECT COUNT(*)::int AS count
+      FROM contacts
+      WHERE user_id = $1 AND (
+        qsl_lotw = true
+        OR lotw_qsl_rcvd = 'Y'
+        OR qrz_qsl_rcvd = 'Y'
+        OR qsl_rcvd = 'Y'
+        OR eqsl_qsl_rcvd = 'Y'
+      )
+    `;
+    const result = await query(sql, [userId]);
+    return result.rows[0]?.count ?? 0;
+  }
+
+  /**
+   * Counts distinct DXCC entities worked. Used by the dashboard DXCC stat card.
+   */
+  static async countDxccByUserId(userId: number): Promise<number> {
+    const sql = `
+      SELECT COUNT(DISTINCT dxcc)::int AS count
+      FROM contacts
+      WHERE user_id = $1 AND dxcc IS NOT NULL
+    `;
+    const result = await query(sql, [userId]);
+    return result.rows[0]?.count ?? 0;
   }
 
   static async findByStationId(stationId: number, limit?: number, offset?: number): Promise<ContactData[]> {

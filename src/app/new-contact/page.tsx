@@ -1,20 +1,41 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Loader2, Check, AlertCircle, Radio, Clock } from 'lucide-react';
+import {
+  Loader2,
+  Check,
+  AlertCircle,
+  Radio,
+  Plus,
+} from 'lucide-react';
+
 import Navbar from '@/components/Navbar';
 import PreviousContacts from '@/components/PreviousContacts';
 import ContactLocationMap from '@/components/ContactLocationMap';
+import { Button } from '@/components/ui/button';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { Dot } from '@/components/ui/dot';
+import { Input } from '@/components/ui/input';
+import { Kbd } from '@/components/ui/kbd';
+import { Label } from '@/components/ui/label';
+import { PageHeader } from '@/components/ui/page-header';
+import { Pill, PillGroup } from '@/components/ui/pill';
+import { PageHeader as _PageHeader } from '@/components/ui/page-header';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
+void _PageHeader;
 
 interface Station {
   id: number;
@@ -36,6 +57,46 @@ interface PreviousContact {
   notes?: string;
 }
 
+const MODES = ['SSB', 'CW', 'FT8', 'FT4', 'RTTY', 'PSK31', 'AM', 'FM'] as const;
+const BAND_PILLS = [
+  '160M', '80M', '60M', '40M', '30M', '20M', '17M', '15M', '12M', '10M', '6M', '2M', '1.25M', '70CM',
+] as const;
+
+function freqToBand(freq: number): string {
+  if (freq >= 1.8 && freq <= 2.0) return '160M';
+  if (freq >= 3.5 && freq <= 4.0) return '80M';
+  if (freq >= 5.33 && freq <= 5.408) return '60M';
+  if (freq >= 7.0 && freq <= 7.3) return '40M';
+  if (freq >= 10.1 && freq <= 10.15) return '30M';
+  if (freq >= 14.0 && freq <= 14.35) return '20M';
+  if (freq >= 18.068 && freq <= 18.168) return '17M';
+  if (freq >= 21.0 && freq <= 21.45) return '15M';
+  if (freq >= 24.89 && freq <= 24.99) return '12M';
+  if (freq >= 28.0 && freq <= 29.7) return '10M';
+  if (freq >= 50.0 && freq <= 54.0) return '6M';
+  if (freq >= 144.0 && freq <= 148.0) return '2M';
+  if (freq >= 219.0 && freq <= 225.0) return '1.25M';
+  if (freq >= 420.0 && freq <= 450.0) return '70CM';
+  return '';
+}
+
+function rstToBars(rst: string | undefined, mode: string): number {
+  if (!rst) return 0;
+  // Voice/CW RST values like 59, 599, 57 — readability is the first digit (1-5)
+  // Digital values like -10 / +12 — map to 5 bars across -25..+10 dB
+  const numeric = Number.parseInt(rst.replace(/[^-\d]/g, ''), 10);
+  if (Number.isNaN(numeric)) return 0;
+  const isDigital = ['FT8', 'FT4', 'PSK31', 'RTTY', 'MFSK', 'OLIVIA', 'CONTESTIA'].includes(mode);
+  if (isDigital) {
+    const clamped = Math.min(10, Math.max(-25, numeric));
+    return Math.round(((clamped + 25) / 35) * 5);
+  }
+  // Voice/CW: first digit 1-5
+  const readability = Number.parseInt(String(Math.abs(numeric))[0], 10);
+  if (Number.isNaN(readability)) return 0;
+  return Math.min(5, Math.max(0, readability));
+}
+
 export default function NewContactPage() {
   const [stations, setStations] = useState<Station[]>([]);
   const [stationsLoading, setStationsLoading] = useState(true);
@@ -55,12 +116,12 @@ export default function NewContactPage() {
     latitude: undefined as number | undefined,
     longitude: undefined as number | undefined,
     power: '',
-    notes: ''
+    notes: '',
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
   const [lookupResult, setLookupResult] = useState<{
     found: boolean;
     name?: string;
@@ -75,7 +136,6 @@ export default function NewContactPage() {
   const [previousContacts, setPreviousContacts] = useState<PreviousContact[]>([]);
   const [previousContactsLoading, setPreviousContactsLoading] = useState(false);
   const [previousContactsError, setPreviousContactsError] = useState('');
-
   const [currentUser, setCurrentUser] = useState<{
     id: number;
     email: string;
@@ -86,9 +146,6 @@ export default function NewContactPage() {
 
   const router = useRouter();
 
-  const modes = ['SSB', 'CW', 'FM', 'AM', 'RTTY', 'PSK31', 'FT8', 'FT4', 'JT65', 'JT9', 'MFSK', 'OLIVIA', 'CONTESTIA'];
-  const bands = ['160M', '80M', '60M', '40M', '30M', '20M', '17M', '15M', '12M', '10M', '6M', '2M', '1.25M', '70CM', '33CM', '23CM'];
-
   const fetchStations = useCallback(async () => {
     try {
       setStationsLoading(true);
@@ -96,15 +153,11 @@ export default function NewContactPage() {
       if (response.ok) {
         const data = await response.json();
         setStations(data.stations || []);
-
-        // Auto-select default station
-        const defaultStation = data.stations?.find((station: Station) => station.is_default);
-        if (defaultStation) {
-          setSelectedStationId(defaultStation.id.toString());
-        }
+        const defaultStation = data.stations?.find((s: Station) => s.is_default);
+        if (defaultStation) setSelectedStationId(defaultStation.id.toString());
       }
     } catch {
-      // Silent error handling for stations fetch
+      /* noop */
     } finally {
       setStationsLoading(false);
     }
@@ -113,12 +166,9 @@ export default function NewContactPage() {
   const fetchCurrentUser = useCallback(async () => {
     try {
       const response = await fetch('/api/user');
-      if (response.ok) {
-        const userData = await response.json();
-        setCurrentUser(userData);
-      }
+      if (response.ok) setCurrentUser(await response.json());
     } catch {
-      // Silent error handling for user fetch
+      /* noop */
     }
   }, []);
 
@@ -127,103 +177,64 @@ export default function NewContactPage() {
     fetchCurrentUser();
   }, [fetchStations, fetchCurrentUser]);
 
-  // Live logging effect - update datetime every second when enabled
+  // Live logging — tick datetime every second when toggled on
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (isLiveLogging) {
-      interval = setInterval(() => {
-        setFormData(prev => ({
-          ...prev,
-          datetime: new Date().toISOString().slice(0, 19) // Include seconds for visible ticking
-        }));
-      }, 1000);
-    }
-    
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [isLiveLogging]);
-
-  // Update datetime immediately when toggling to live mode
-  useEffect(() => {
-    if (isLiveLogging) {
-      setFormData(prev => ({
+    if (!isLiveLogging) return;
+    const tick = () =>
+      setFormData((prev) => ({
         ...prev,
-        datetime: new Date().toISOString().slice(0, 19) // Include seconds for visible ticking
+        datetime: new Date().toISOString().slice(0, 19),
       }));
-    }
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
   }, [isLiveLogging]);
 
   const handleCallsignLookup = useCallback(async () => {
     if (!formData.callsign.trim()) return;
-
     setLookupLoading(true);
     setLookupResult(null);
-
     try {
       const response = await fetch('/api/lookup/callsign', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ callsign: formData.callsign }),
       });
-
       const data = await response.json();
-
       if (response.ok) {
         setLookupResult(data);
-        
-        // Auto-fill form if lookup was successful
         if (data.found) {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             name: data.name || prev.name,
             qth: data.qth || prev.qth,
             gridLocator: data.grid_locator || prev.gridLocator,
-            // Use lat/lng from QRZ directly (already calculated in the lookup)
             latitude: data.latitude,
-            longitude: data.longitude
+            longitude: data.longitude,
           }));
         }
       } else {
-        setLookupResult({
-          found: false,
-          error: data.error || 'Lookup failed'
-        });
+        setLookupResult({ found: false, error: data.error || 'Lookup failed' });
       }
     } catch {
-      setLookupResult({
-        found: false,
-        error: 'Network error during lookup'
-      });
+      setLookupResult({ found: false, error: 'Network error during lookup' });
     } finally {
       setLookupLoading(false);
     }
   }, [formData.callsign]);
 
-  // Keyboard shortcuts
+  // Keyboard shortcuts — Ctrl+Enter saves, Ctrl+L focuses callsign
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+Enter to save
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
-        const form = document.querySelector('form');
-        if (form) {
-          form.requestSubmit();
-        }
+        document.querySelector('form')?.requestSubmit();
       }
-      
-      // Ctrl+L to focus callsign field
       if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
         e.preventDefault();
         document.getElementById('callsign')?.focus();
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
@@ -233,24 +244,19 @@ export default function NewContactPage() {
       setPreviousContacts([]);
       return;
     }
-
     setPreviousContactsLoading(true);
     setPreviousContactsError('');
-
     try {
-      const response = await fetch(`/api/contacts/previous?callsign=${encodeURIComponent(callsign)}&limit=10`);
-      
+      const response = await fetch(
+        `/api/contacts/previous?callsign=${encodeURIComponent(callsign)}&limit=10`
+      );
       if (response.status === 401) {
-        // User not authenticated, but don't show error for this
         setPreviousContacts([]);
         return;
       }
-
       const data = await response.json();
-
-      if (response.ok) {
-        setPreviousContacts(data.contacts || []);
-      } else {
+      if (response.ok) setPreviousContacts(data.contacts || []);
+      else {
         setPreviousContactsError(data.error || 'Failed to fetch previous contacts');
         setPreviousContacts([]);
       }
@@ -262,175 +268,87 @@ export default function NewContactPage() {
     }
   }, []);
 
-  // Fetch previous contacts when callsign changes - real-time updates
+  // Debounced callsign-driven side effects
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      fetchPreviousContacts(formData.callsign);
-    }, 300); // Reduced debounce for more responsive updates
-
-    return () => clearTimeout(timeoutId);
+    const id = setTimeout(() => fetchPreviousContacts(formData.callsign), 300);
+    return () => clearTimeout(id);
   }, [formData.callsign, fetchPreviousContacts]);
 
-  // Auto-trigger QRZ lookup when callsign changes - real-time updates  
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (formData.callsign.trim()) {
-        handleCallsignLookup();
-      } else {
-        setLookupResult(null);
-      }
-    }, 300); // Same debounce as previous contacts for consistency
-
-    return () => clearTimeout(timeoutId);
+    const id = setTimeout(() => {
+      if (formData.callsign.trim()) handleCallsignLookup();
+      else setLookupResult(null);
+    }, 300);
+    return () => clearTimeout(id);
   }, [formData.callsign, handleCallsignLookup]);
 
-  // Validation functions
+  // Validators (preserved from previous implementation)
   const validateCallsign = (callsign: string): string | null => {
     if (!callsign.trim()) return null;
-    // Basic amateur radio callsign format validation
-    const callsignRegex = /^[A-Z0-9]{1,3}[0-9][A-Z0-9]{0,3}[A-Z]$/i;
-    if (!callsignRegex.test(callsign)) {
-      return 'Invalid callsign format';
-    }
-    return null;
+    return /^[A-Z0-9]{1,3}[0-9][A-Z0-9]{0,3}[A-Z]$/i.test(callsign)
+      ? null
+      : 'Invalid callsign format';
   };
-
   const validateGridLocator = (grid: string): string | null => {
     if (!grid.trim()) return null;
-    // Maidenhead grid locator validation (4 or 6 character format)
-    const gridRegex = /^[A-R]{2}[0-9]{2}([A-X]{2})?$/i;
-    if (!gridRegex.test(grid)) {
-      return 'Invalid grid locator format (e.g., FN31pr)';
-    }
-    return null;
+    return /^[A-R]{2}[0-9]{2}([A-X]{2})?$/i.test(grid)
+      ? null
+      : 'Invalid grid locator format (e.g., FN31pr)';
   };
-
   const validateFrequency = (frequency: string): string | null => {
     if (!frequency.trim()) return null;
     const freq = parseFloat(frequency);
-    if (isNaN(freq) || freq < 0.1 || freq > 300000) {
+    if (Number.isNaN(freq) || freq < 0.1 || freq > 300000)
       return 'Frequency must be between 0.1 and 300000 MHz';
-    }
-    // Check if frequency is in amateur bands
-    const isInBand = (
-      (freq >= 1.8 && freq <= 2.0) ||
-      (freq >= 3.5 && freq <= 4.0) ||
-      (freq >= 5.330 && freq <= 5.408) ||
-      (freq >= 7.0 && freq <= 7.3) ||
-      (freq >= 10.1 && freq <= 10.15) ||
-      (freq >= 14.0 && freq <= 14.35) ||
-      (freq >= 18.068 && freq <= 18.168) ||
-      (freq >= 21.0 && freq <= 21.45) ||
-      (freq >= 24.89 && freq <= 24.99) ||
-      (freq >= 28.0 && freq <= 29.7) ||
-      (freq >= 50.0 && freq <= 54.0) ||
-      (freq >= 144.0 && freq <= 148.0) ||
-      (freq >= 219.0 && freq <= 225.0) ||
-      (freq >= 420.0 && freq <= 450.0) ||
-      (freq >= 902.0 && freq <= 928.0) ||
-      (freq >= 1240.0 && freq <= 1300.0)
-    );
-    if (!isInBand) {
-      return 'Frequency is outside amateur radio bands';
-    }
+    if (!freqToBand(freq)) return 'Frequency is outside amateur radio bands';
     return null;
   };
 
-  // Real-time validation
   const validateField = (name: string, value: string) => {
-    let error: string | null = null;
-    
-    switch (name) {
-      case 'callsign':
-        error = validateCallsign(value);
-        break;
-      case 'gridLocator':
-        error = validateGridLocator(value);
-        break;
-      case 'frequency':
-        error = validateFrequency(value);
-        break;
-    }
-
-    setValidationErrors(prev => ({
-      ...prev,
-      [name]: error || ''
-    }));
+    let err: string | null = null;
+    if (name === 'callsign') err = validateCallsign(value);
+    else if (name === 'gridLocator') err = validateGridLocator(value);
+    else if (name === 'frequency') err = validateFrequency(value);
+    setValidationErrors((prev) => ({ ...prev, [name]: err || '' }));
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Real-time validation
+    setFormData((prev) => ({ ...prev, [name]: value }));
     validateField(name, value);
-    
-    // Clear lookup result when callsign changes - auto-lookup will be triggered by useEffect
-    if (name === 'callsign') {
-      setLookupResult(null);
-    }
+    if (name === 'callsign') setLookupResult(null);
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => {
-      const newData = {
-        ...prev,
-        [name]: value
-      };
-
-      // Auto-adjust RST values based on mode
-      if (name === 'mode') {
-        if (value === 'CW') {
-          newData.rst_sent = '599';
-          newData.rst_received = '599';
-        } else if (['SSB', 'FM', 'AM'].includes(value)) {
-          newData.rst_sent = '59';
-          newData.rst_received = '59';
-        } else if (['FT8', 'FT4', 'PSK31', 'RTTY', 'MFSK', 'OLIVIA', 'CONTESTIA'].includes(value)) {
-          newData.rst_sent = '-10';
-          newData.rst_received = '-10';
-        }
+  const handleSelectMode = (value: string) => {
+    setFormData((prev) => {
+      const next = { ...prev, mode: value };
+      if (value === 'CW') {
+        next.rst_sent = '599';
+        next.rst_received = '599';
+      } else if (['SSB', 'FM', 'AM'].includes(value)) {
+        next.rst_sent = '59';
+        next.rst_received = '59';
+      } else if (['FT8', 'FT4', 'PSK31', 'RTTY', 'MFSK', 'OLIVIA', 'CONTESTIA'].includes(value)) {
+        next.rst_sent = '-10';
+        next.rst_received = '-10';
       }
-
-      return newData;
+      return next;
     });
+  };
+
+  const handleSelectBand = (value: string) => {
+    setFormData((prev) => ({ ...prev, band: value }));
   };
 
   const handleFrequencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    // Real-time validation for frequency
+    setFormData((prev) => ({ ...prev, [name]: value }));
     validateField(name, value);
-
     if (name === 'frequency') {
       const freq = parseFloat(value);
       if (freq) {
-        let band = '';
-        if (freq >= 1.8 && freq <= 2.0) band = '160M';
-        else if (freq >= 3.5 && freq <= 4.0) band = '80M';
-        else if (freq >= 5.330 && freq <= 5.408) band = '60M';
-        else if (freq >= 7.0 && freq <= 7.3) band = '40M';
-        else if (freq >= 10.1 && freq <= 10.15) band = '30M';
-        else if (freq >= 14.0 && freq <= 14.35) band = '20M';
-        else if (freq >= 18.068 && freq <= 18.168) band = '17M';
-        else if (freq >= 21.0 && freq <= 21.45) band = '15M';
-        else if (freq >= 24.89 && freq <= 24.99) band = '12M';
-        else if (freq >= 28.0 && freq <= 29.7) band = '10M';
-        else if (freq >= 50.0 && freq <= 54.0) band = '6M';
-        else if (freq >= 144.0 && freq <= 148.0) band = '2M';
-        else if (freq >= 219.0 && freq <= 225.0) band = '1.25M';
-        else if (freq >= 420.0 && freq <= 450.0) band = '70CM';
-        else if (freq >= 902.0 && freq <= 928.0) band = '33CM';
-        else if (freq >= 1240.0 && freq <= 1300.0) band = '23CM';
-        
-        setFormData(prev => ({ ...prev, band }));
+        const band = freqToBand(freq);
+        if (band) setFormData((prev) => ({ ...prev, band }));
       }
     }
   };
@@ -440,18 +358,13 @@ export default function NewContactPage() {
     setIsLoading(true);
     setError('');
 
-    // Validate all fields before submission
-    const errors: {[key: string]: string} = {};
-    
+    const errors: { [key: string]: string } = {};
     const callsignError = validateCallsign(formData.callsign);
     if (callsignError) errors.callsign = callsignError;
-    
     const frequencyError = validateFrequency(formData.frequency);
     if (frequencyError) errors.frequency = frequencyError;
-    
     const gridError = validateGridLocator(formData.gridLocator);
     if (gridError) errors.gridLocator = gridError;
-
     if (Object.keys(errors).length > 0) {
       setValidationErrors(errors);
       setError('Please fix the validation errors before submitting.');
@@ -462,33 +375,25 @@ export default function NewContactPage() {
     try {
       const response = await fetch('/api/contacts', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           station_id: selectedStationId ? parseInt(selectedStationId) : undefined,
-          grid_locator: formData.gridLocator, // Map camelCase to snake_case
+          grid_locator: formData.gridLocator,
           latitude: formData.latitude,
           longitude: formData.longitude,
           frequency: parseFloat(formData.frequency),
           power: formData.power ? parseFloat(formData.power) : undefined,
-          datetime: new Date(formData.datetime).toISOString()
+          datetime: new Date(formData.datetime).toISOString(),
         }),
       });
-
       if (response.status === 401) {
         router.push('/login');
         return;
       }
-
       const data = await response.json();
-
-      if (response.ok) {
-        router.push('/dashboard');
-      } else {
-        setError(data.error || 'Failed to create contact');
-      }
+      if (response.ok) router.push('/dashboard');
+      else setError(data.error || 'Failed to create contact');
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -496,409 +401,437 @@ export default function NewContactPage() {
     }
   };
 
+  const sentBars = useMemo(
+    () => rstToBars(formData.rst_sent, formData.mode),
+    [formData.rst_sent, formData.mode]
+  );
+  const rcvdBars = useMemo(
+    () => rstToBars(formData.rst_received, formData.mode),
+    [formData.rst_received, formData.mode]
+  );
+
+  const utcStamp = useMemo(() => {
+    const d = new Date(formData.datetime);
+    if (Number.isNaN(d.getTime())) return '—';
+    const hh = String(d.getUTCHours()).padStart(2, '0');
+    const mm = String(d.getUTCMinutes()).padStart(2, '0');
+    return `${hh}:${mm} UTC`;
+  }, [formData.datetime]);
+
+  const station = stations.find((s) => s.id.toString() === selectedStationId);
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar 
-        title="New Contact"
-        actions={
-          <Button variant="ghost" asChild>
-            <Link href="/dashboard">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Link>
-          </Button>
-        }
-      />
+    <div className="min-h-screen">
+      <Navbar />
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left side - Contact Form */}
-            <div className="lg:col-span-2">
-              <Card>
-            <CardHeader>
-              <CardTitle>Log New Contact</CardTitle>
-              <CardDescription>
-                Enter the details for your amateur radio contact
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Station Selection */}
-                {stations.length > 0 && (
-                  <div className="space-y-2">
-                    <Label htmlFor="station">Station *</Label>
-                    <Select value={selectedStationId} onValueChange={setSelectedStationId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a station">
-                          <div className="flex items-center">
-                            <Radio className="h-4 w-4 mr-2" />
-                            {selectedStationId && stations.find(s => s.id.toString() === selectedStationId)?.station_name}
+      <main className="max-w-[1400px] mx-auto px-6 lg:px-8 py-8">
+        <PageHeader
+          title="Log a contact"
+          sub={
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-fg-1">{utcStamp}</span>
+              {station ? (
+                <Chip>
+                  <Dot tone="ok" live />
+                  {station.callsign} · {station.station_name}
+                </Chip>
+              ) : null}
+              <span className="text-fg-3">
+                Auto-lookup enabled · LoTW upload on save
+              </span>
+            </span>
+          }
+          action={
+            <span className="hidden md:flex items-center gap-2 text-sm text-fg-2">
+              Press <Kbd>⏎</Kbd> to save · <Kbd>⎋</Kbd> to cancel
+            </span>
+          }
+        />
+
+        <form onSubmit={handleSubmit}>
+          <div
+            className="grid gap-6"
+            style={{ gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)' }}
+          >
+            {/* LEFT — form */}
+            <div className="flex flex-col gap-5 min-w-0">
+              {/* Callsign hero */}
+              <Card
+                className="p-8 flex flex-col gap-5"
+                style={{
+                  background:
+                    'linear-gradient(180deg, rgba(77,208,255,0.04), transparent 60%), var(--card)',
+                }}
+              >
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="callsign">Their callsign</Label>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-[13px] text-fg-2">Live logging</span>
+                    <Switch
+                      checked={isLiveLogging}
+                      onCheckedChange={setIsLiveLogging}
+                    />
+                  </div>
+                </div>
+                <div className="relative">
+                  <input
+                    id="callsign"
+                    name="callsign"
+                    required
+                    value={formData.callsign}
+                    onChange={handleChange}
+                    placeholder="W1AW"
+                    autoComplete="off"
+                    className={cn(
+                      'w-full bg-transparent border-0 border-b-2 border-line-hi text-fg font-mono text-[56px] font-semibold tracking-[0.04em] py-4 outline-none transition-colors uppercase placeholder:text-fg-3',
+                      'focus:border-accent',
+                      validationErrors.callsign ? 'border-bad' : ''
+                    )}
+                  />
+                  {lookupLoading ? (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin text-fg-2" />
+                  ) : null}
+                </div>
+                {validationErrors.callsign ? (
+                  <p className="text-sm text-bad flex items-center gap-1">
+                    <AlertCircle className="h-4 w-4" />
+                    {validationErrors.callsign}
+                  </p>
+                ) : null}
+                {lookupResult ? (
+                  lookupResult.found ? (
+                    <div
+                      className="grid items-center gap-4 p-4 rounded-[14px] border border-accent-glow"
+                      style={{
+                        gridTemplateColumns: '56px 1fr auto',
+                        background:
+                          'linear-gradient(180deg, var(--accent-soft), transparent), var(--bg-1)',
+                      }}
+                    >
+                      <div
+                        aria-hidden="true"
+                        className="w-14 h-14 rounded-[12px] grid place-items-center text-[#051018] font-mono font-bold text-lg"
+                        style={{
+                          background:
+                            'linear-gradient(135deg, var(--accent), #7a9bff)',
+                        }}
+                      >
+                        {(lookupResult.name ?? formData.callsign).slice(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        {lookupResult.name ? (
+                          <h3 className="text-lg font-semibold truncate">
+                            {lookupResult.name}
+                          </h3>
+                        ) : null}
+                        <div className="font-mono text-sm text-fg-1 truncate">
+                          {[lookupResult.grid_locator, lookupResult.country]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </div>
+                        {lookupResult.qth ? (
+                          <div className="text-[13px] text-fg-2 mt-0.5 truncate">
+                            {lookupResult.qth}
                           </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stations.map(station => (
-                          <SelectItem key={station.id} value={station.id.toString()}>
-                            <div className="flex items-center justify-between w-full">
-                              <div className="flex items-center">
-                                <Radio className="h-4 w-4 mr-2" />
-                                <span className="font-medium">{station.station_name}</span>
-                                <span className="ml-2 text-muted-foreground font-mono">
-                                  ({station.callsign})
-                                </span>
-                              </div>
-                              {station.is_default && (
-                                <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                                  Default
-                                </span>
-                              )}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {stations.length > 1 && (
-                      <p className="text-sm text-muted-foreground">
-                        Contact will be logged to the selected station logbook
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* No stations warning */}
-                {!stationsLoading && stations.length === 0 && (
-                  <div className="bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                    <div className="flex items-start">
-                      <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5 mr-3" />
-                      <div className="flex-1">
-                        <h3 className="font-medium text-yellow-800 dark:text-yellow-200">
-                          No Station Configured
-                        </h3>
-                        <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                          You need to set up at least one station before logging contacts.
-                        </p>
-                        <div className="mt-3">
-                          <Button asChild size="sm" variant="outline">
-                            <Link href="/stations/new">
-                              <Radio className="h-4 w-4 mr-2" />
-                              Add Your First Station
-                            </Link>
-                          </Button>
-                        </div>
+                        ) : null}
                       </div>
+                      <Chip variant="ok">
+                        <Check className="h-3.5 w-3.5" />
+                        Verified
+                      </Chip>
                     </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Basic Contact Information */}
-                  <div className="md:col-span-2">
-                    <h3 className="text-lg font-medium text-foreground mb-4 pb-2 border-b border-border">
-                      Contact Information
-                    </h3>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="callsign">Callsign *</Label>
-                    <div className="relative">
-                      <Input
-                        type="text"
-                        name="callsign"
-                        id="callsign"
-                        required
-                        value={formData.callsign}
-                        onChange={handleChange}
-                        placeholder="e.g., W1AW"
-                        className={`${validationErrors.callsign ? 'border-destructive focus-visible:ring-destructive' : ''} ${lookupLoading ? 'pr-10' : ''}`}
-                      />
-                      {lookupLoading && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        </div>
-                      )}
+                  ) : (
+                    <div className="flex items-center gap-2 text-sm text-warn">
+                      <AlertCircle className="h-4 w-4" />
+                      {lookupResult.error || 'Callsign not found'}
                     </div>
-                    
-                    {/* Validation error */}
-                    {validationErrors.callsign && (
-                      <p className="text-sm text-destructive flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-1" />
-                        {validationErrors.callsign}
-                      </p>
-                    )}
-                    
-                    {/* Lookup result indicator */}
-                    {lookupResult && (
-                      <div className={`flex items-center text-sm ${
-                        lookupResult.found 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : 'text-red-600 dark:text-red-400'
-                      }`}>
-                        {lookupResult.found ? (
-                          <>
-                            <Check className="h-4 w-4 mr-1" />
-                            Callsign found and information auto-filled
-                          </>
-                        ) : (
-                          <>
-                            <AlertCircle className="h-4 w-4 mr-1" />
-                            {lookupResult.error || 'Callsign not found'}
-                          </>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                  )
+                ) : null}
+              </Card>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="frequency">Frequency (MHz) *</Label>
+              {/* Band & Mode */}
+              <Card className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[17px] font-semibold">Band &amp; Mode</h3>
+                  {formData.frequency ? (
+                    <Chip>
+                      <Dot tone="ok" live />
+                      {formData.frequency} MHz
+                    </Chip>
+                  ) : null}
+                </div>
+
+                <Label className="mb-2.5 block">Band</Label>
+                <PillGroup className="mb-5">
+                  {BAND_PILLS.map((b) => (
+                    <Pill
+                      key={b}
+                      active={formData.band === b}
+                      onClick={() => handleSelectBand(b)}
+                    >
+                      {b.toLowerCase()}
+                    </Pill>
+                  ))}
+                </PillGroup>
+
+                <Label className="mb-2.5 block">Mode</Label>
+                <PillGroup className="mb-5">
+                  {MODES.map((m) => (
+                    <Pill
+                      key={m}
+                      active={formData.mode === m}
+                      onClick={() => handleSelectMode(m)}
+                    >
+                      {m}
+                    </Pill>
+                  ))}
+                </PillGroup>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="frequency">Frequency (MHz)</Label>
                     <Input
-                      type="number"
-                      name="frequency"
                       id="frequency"
+                      name="frequency"
+                      type="number"
                       step="0.001"
+                      mono
+                      size="lg"
                       required
                       value={formData.frequency}
                       onChange={handleFrequencyChange}
-                      placeholder="e.g., 14.205"
-                      className={validationErrors.frequency ? 'border-destructive focus-visible:ring-destructive' : ''}
+                      placeholder="14.205"
+                      className={validationErrors.frequency ? 'border-bad' : ''}
                     />
-                    {validationErrors.frequency && (
-                      <p className="text-sm text-destructive flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-1" />
+                    {validationErrors.frequency ? (
+                      <p className="text-sm text-bad flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
                         {validationErrors.frequency}
                       </p>
-                    )}
+                    ) : null}
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="mode">Mode *</Label>
-                    <Select value={formData.mode} onValueChange={(value) => handleSelectChange('mode', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select mode" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {modes.map(mode => (
-                          <SelectItem key={mode} value={mode}>{mode}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="band">Band *</Label>
-                    <Select value={formData.band} onValueChange={(value) => handleSelectChange('band', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select band" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {bands.map(band => (
-                          <SelectItem key={band} value={band}>{band}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Date and Time Section */}
-                  <div className="md:col-span-2 mt-6">
-                    <h3 className="text-lg font-medium text-foreground mb-4 pb-2 border-b border-border">
-                      Date & Time
-                    </h3>
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="datetime">Date & Time *</Label>
-                      <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <Label htmlFor="live-logging" className="text-sm text-muted-foreground">
-                          Live logging
-                        </Label>
-                        <Switch
-                          id="live-logging"
-                          checked={isLiveLogging}
-                          onCheckedChange={setIsLiveLogging}
-                        />
-                      </div>
-                    </div>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="power">Power (W)</Label>
                     <Input
-                      type="datetime-local"
-                      name="datetime"
-                      id="datetime"
-                      step={isLiveLogging ? "1" : undefined}
-                      required
-                      value={formData.datetime}
-                      onChange={handleChange}
-                      disabled={isLiveLogging}
-                      className={isLiveLogging ? "bg-muted" : ""}
-                    />
-                    {isLiveLogging && (
-                      <p className="text-xs text-muted-foreground">
-                        ⏱️ Time updates every second - watch the seconds tick!
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Signal Report Section */}
-                  <div className="md:col-span-2 mt-6">
-                    <h3 className="text-lg font-medium text-foreground mb-4 pb-2 border-b border-border">
-                      Signal Reports
-                    </h3>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="rst_sent">RST Sent</Label>
-                    <Input
-                      type="text"
-                      name="rst_sent"
-                      id="rst_sent"
-                      value={formData.rst_sent}
-                      onChange={handleChange}
-                      placeholder="e.g., 59"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Auto-adjusts based on mode: CW=599, Voice=59, Digital=-10
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="rst_received">RST Received</Label>
-                    <Input
-                      type="text"
-                      name="rst_received"
-                      id="rst_received"
-                      value={formData.rst_received}
-                      onChange={handleChange}
-                      placeholder="e.g., 59"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="power">Power (Watts)</Label>
-                    <Input
-                      type="number"
-                      name="power"
                       id="power"
-                      min="0"
+                      name="power"
+                      type="number"
+                      mono
+                      size="lg"
+                      min={0}
                       value={formData.power}
                       onChange={handleChange}
-                      placeholder="e.g., 100"
+                      placeholder="100"
                     />
                   </div>
-
-                  {/* Station Information Section */}
-                  <div className="md:col-span-2 mt-6">
-                    <h3 className="text-lg font-medium text-foreground mb-4 pb-2 border-b border-border">
-                      Station Information
-                    </h3>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="datetime">Date · time</Label>
+                    <Input
+                      id="datetime"
+                      name="datetime"
+                      type="datetime-local"
+                      mono
+                      size="lg"
+                      step={isLiveLogging ? 1 : undefined}
+                      required
+                      disabled={isLiveLogging}
+                      value={formData.datetime}
+                      onChange={handleChange}
+                    />
                   </div>
+                </div>
+              </Card>
 
-                  <div className="space-y-2">
+              {/* Signal report & details */}
+              <Card className="p-6">
+                <h3 className="text-[17px] font-semibold mb-4">
+                  Signal report &amp; details
+                </h3>
+                <div className="flex gap-4 mb-5">
+                  <div className="flex-1 px-4 py-3.5 rounded-[12px] bg-bg-1 border border-line-hi text-center">
+                    <div className="text-[12px] uppercase tracking-[0.08em] text-fg-2">
+                      RST sent
+                    </div>
+                    <input
+                      name="rst_sent"
+                      value={formData.rst_sent}
+                      onChange={handleChange}
+                      className="w-full bg-transparent border-0 outline-none text-center text-fg font-mono text-[28px] font-semibold mt-1"
+                    />
+                    <div className="flex justify-center gap-1 mt-2">
+                      {[0, 1, 2, 3, 4].map((i) => (
+                        <span
+                          key={i}
+                          className={`block w-1.5 h-3.5 rounded-[1px] ${
+                            i < sentBars
+                              ? 'bg-accent opacity-100'
+                              : 'bg-fg-3 opacity-40'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex-1 px-4 py-3.5 rounded-[12px] bg-bg-1 border border-line-hi text-center">
+                    <div className="text-[12px] uppercase tracking-[0.08em] text-fg-2">
+                      RST received
+                    </div>
+                    <input
+                      name="rst_received"
+                      value={formData.rst_received}
+                      onChange={handleChange}
+                      className="w-full bg-transparent border-0 outline-none text-center text-fg font-mono text-[28px] font-semibold mt-1"
+                    />
+                    <div className="flex justify-center gap-1 mt-2">
+                      {[0, 1, 2, 3, 4].map((i) => (
+                        <span
+                          key={i}
+                          className={`block w-1.5 h-3.5 rounded-[1px] ${
+                            i < rcvdBars
+                              ? 'bg-accent opacity-100'
+                              : 'bg-fg-3 opacity-40'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-2 flex flex-col gap-2">
                     <Label htmlFor="name">Name</Label>
                     <Input
-                      type="text"
-                      name="name"
                       id="name"
+                      name="name"
                       value={formData.name}
                       onChange={handleChange}
                       placeholder="Operator's name"
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="qth">QTH</Label>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="gridLocator">Grid square</Label>
                     <Input
-                      type="text"
-                      name="qth"
-                      id="qth"
-                      value={formData.qth}
-                      onChange={handleChange}
-                      placeholder="Location"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="gridLocator">Grid Locator</Label>
-                    <Input
-                      type="text"
-                      name="gridLocator"
                       id="gridLocator"
+                      name="gridLocator"
+                      mono
                       value={formData.gridLocator}
                       onChange={handleChange}
-                      placeholder="e.g., FN31pr"
-                      className={validationErrors.gridLocator ? 'border-destructive focus-visible:ring-destructive' : ''}
+                      placeholder="FN31pr"
+                      className={
+                        validationErrors.gridLocator ? 'border-bad' : ''
+                      }
                     />
-                    {validationErrors.gridLocator && (
-                      <p className="text-sm text-destructive flex items-center">
-                        <AlertCircle className="h-4 w-4 mr-1" />
+                    {validationErrors.gridLocator ? (
+                      <p className="text-sm text-bad flex items-center gap-1">
+                        <AlertCircle className="h-4 w-4" />
                         {validationErrors.gridLocator}
                       </p>
-                    )}
+                    ) : null}
                   </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    name="notes"
-                    id="notes"
-                    rows={3}
-                    value={formData.notes}
-                    onChange={handleChange}
-                    placeholder="Additional notes about this contact"
-                  />
-                </div>
-
-                {/* Keyboard shortcuts help */}
-                <div className="bg-muted/30 border border-border rounded-md p-3">
-                  <p className="text-sm text-muted-foreground font-medium mb-2">⌨️ Keyboard Shortcuts:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-muted-foreground">
-                    <div><kbd className="px-1 py-0.5 bg-muted border rounded text-xs">Ctrl+Enter</kbd> Save contact</div>
-                    <div><kbd className="px-1 py-0.5 bg-muted border rounded text-xs">Ctrl+L</kbd> Focus callsign</div>
+                  <div className="md:col-span-2 flex flex-col gap-2">
+                    <Label htmlFor="qth">QTH</Label>
+                    <Input
+                      id="qth"
+                      name="qth"
+                      value={formData.qth}
+                      onChange={handleChange}
+                      placeholder="Munich, Germany"
+                    />
                   </div>
-                </div>
-
-                {error && (
-                  <div className="bg-destructive/15 border border-destructive/20 text-destructive px-4 py-3 rounded-md text-sm">
-                    {error}
-                  </div>
-                )}
-
-                <div className="flex justify-end space-x-3">
-                  <Button type="button" variant="outline" asChild>
-                    <Link href="/dashboard">
-                      Cancel
-                    </Link>
-                  </Button>
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Saving...
-                      </>
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="station">Station</Label>
+                    {stations.length > 0 ? (
+                      <Select
+                        value={selectedStationId}
+                        onValueChange={setSelectedStationId}
+                      >
+                        <SelectTrigger id="station">
+                          <SelectValue placeholder="Pick a station">
+                            <span className="flex items-center gap-2">
+                              <Radio className="h-4 w-4 text-accent" />
+                              {station?.callsign ?? 'Pick a station'}
+                            </span>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stations.map((s) => (
+                            <SelectItem key={s.id} value={s.id.toString()}>
+                              {s.station_name}{' '}
+                              <span className="text-fg-2 font-mono ml-2">
+                                {s.callsign}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     ) : (
-                      'Save Contact'
+                      <Button asChild variant="secondary" size="sm">
+                        <Link href="/stations/new">
+                          <Radio className="h-4 w-4" />
+                          Add a station first
+                        </Link>
+                      </Button>
                     )}
-                  </Button>
+                  </div>
+                  <div className="md:col-span-3 flex flex-col gap-2">
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      name="notes"
+                      rows={2}
+                      value={formData.notes}
+                      onChange={handleChange}
+                      placeholder="Anything you want to remember about this contact…"
+                    />
+                  </div>
                 </div>
-              </form>
-            </CardContent>
-          </Card>
+              </Card>
+
+              {error ? (
+                <div className="bg-bad/10 border border-bad/25 text-bad px-4 py-3 rounded-[10px] text-sm">
+                  {error}
+                </div>
+              ) : null}
+
+              <div className="flex items-center gap-3 pt-1">
+                <Button asChild variant="secondary">
+                  <Link href="/dashboard">Cancel</Link>
+                </Button>
+                <div className="flex-1" />
+                <Button type="submit" size="lg" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin" />
+                      Saving…
+                    </>
+                  ) : (
+                    <>
+                      <Plus />
+                      Save QSO
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
 
-            {/* Right side - Map and Recent Contacts */}
-            <div className="space-y-6">
-              {/* Contact Location Map Section - now on top */}
-              <Card>
+            {/* RIGHT — sidebar */}
+            <div className="flex flex-col gap-5 min-w-0">
+              <Card className="overflow-hidden p-0">
                 <CardHeader>
-                  <CardTitle>Contact Location</CardTitle>
-                  <CardDescription>
-                    {formData.callsign.trim()
-                      ? `Geographic location of ${formData.callsign}`
-                      : 'Contact location will be shown here when location data is available'
-                    }
-                  </CardDescription>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <CardTitle>Path</CardTitle>
+                      <CardDescription>
+                        {currentUser?.callsign && formData.callsign
+                          ? `${currentUser.callsign} → ${formData.callsign}`
+                          : 'Map will populate when location data is available'}
+                      </CardDescription>
+                    </div>
+                    {lookupResult?.country ? (
+                      <Chip>{lookupResult.country}</Chip>
+                    ) : null}
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <div className="p-4">
                   <ContactLocationMap
                     contact={{
                       callsign: formData.callsign,
@@ -907,37 +840,91 @@ export default function NewContactPage() {
                       grid_locator: formData.gridLocator,
                       latitude: formData.latitude,
                       longitude: formData.longitude,
-                      country: lookupResult?.country
+                      country: lookupResult?.country,
                     }}
                     user={currentUser}
-                    height="300px"
+                    height="240px"
                   />
-                </CardContent>
+                </div>
               </Card>
 
-              {/* Recent Contacts Section - now below map */}
-              <Card>
+              <Card className="overflow-hidden p-0">
                 <CardHeader>
-                  <CardTitle>Recent Contacts</CardTitle>
+                  <CardTitle>Previous contacts</CardTitle>
                   <CardDescription>
-                    {formData.callsign.trim() 
-                      ? `Previous contacts with ${formData.callsign}`
-                      : 'Previous contacts will appear here when you enter a callsign'
-                    }
+                    {formData.callsign
+                      ? `${previousContacts.length} prior QSO${previousContacts.length === 1 ? '' : 's'} with ${formData.callsign}`
+                      : 'Type a callsign to look it up'}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <PreviousContacts 
-                    contacts={previousContacts}
-                    loading={previousContactsLoading}
-                    error={previousContactsError}
-                    callsign={formData.callsign}
-                  />
-                </CardContent>
+                <PreviousContacts
+                  contacts={previousContacts}
+                  loading={previousContactsLoading}
+                  error={previousContactsError}
+                  callsign={formData.callsign}
+                />
               </Card>
+
+              <Card className="p-6">
+                <h3 className="text-[16px] font-semibold mb-3.5">
+                  This QSO will…
+                </h3>
+                <div className="flex flex-col gap-3 text-[14px]">
+                  <div className="flex items-start gap-2.5">
+                    <Dot tone="ok" className="mt-1.5" />
+                    <span>Save to your logbook on this device.</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <Dot tone={station ? 'ok' : 'muted'} className="mt-1.5" />
+                    <span>
+                      {station
+                        ? `Be logged under station ${station.callsign}.`
+                        : 'Need a station before LoTW/QRZ sync can fire.'}
+                    </span>
+                  </div>
+                  {previousContacts.length > 0 && formData.callsign ? (
+                    <div className="flex items-start gap-2.5">
+                      <Dot tone="info" className="mt-1.5" />
+                      <span>
+                        Be your <strong>#{previousContacts.length + 1}</strong>{' '}
+                        QSO with this operator.
+                      </span>
+                    </div>
+                  ) : null}
+                  {lookupResult?.country ? (
+                    <div className="flex items-start gap-2.5">
+                      <Dot tone="accent" className="mt-1.5" />
+                      <span>
+                        Count toward DXCC for{' '}
+                        <strong>{lookupResult.country}</strong>.
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+              </Card>
+
+              {!stationsLoading && stations.length === 0 ? (
+                <div className="bg-warn/10 border border-warn/20 rounded-[12px] p-4 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-warn shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-medium text-fg mb-1">
+                      No station configured
+                    </h3>
+                    <p className="text-sm text-fg-2 mb-3">
+                      You need at least one station before logging contacts.
+                    </p>
+                    <Button asChild size="sm" variant="secondary">
+                      <Link href="/stations/new">
+                        <Radio className="h-4 w-4" />
+                        Add your first station
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
-        </div>
+        </form>
       </main>
     </div>
   );

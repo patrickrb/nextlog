@@ -384,8 +384,8 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
               <div className="flex items-center justify-between">
                 <Label htmlFor="datetime">Date/Time *</Label>
                 <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <Label htmlFor="live-logging-edit" className="text-sm text-muted-foreground">
+                  <Clock className="h-4 w-4 text-fg-2" />
+                  <Label htmlFor="live-logging-edit" className="text-sm text-fg-2">
                     Live logging
                   </Label>
                   <Switch
@@ -406,7 +406,7 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
                 required
               />
               {isLiveLogging && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-fg-2">
                   ⏱️ Time updates every second - watch the seconds tick!
                 </p>
               )}
@@ -528,14 +528,14 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
 
             {imageSuccess && (
               <Alert className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/50">
-                <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <CheckCircle className="h-4 w-4 text-ok dark:text-green-400" />
                 <AlertDescription className="text-green-800 dark:text-green-200">{imageSuccess}</AlertDescription>
               </Alert>
             )}
 
             {!storageAvailable && (
               <Alert className="border-orange-200 bg-orange-50/50 dark:border-orange-800 dark:bg-orange-950/50">
-                <AlertCircle className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                <AlertCircle className="h-4 w-4 text-warn dark:text-orange-400" />
                 <AlertDescription className="text-orange-800 dark:text-orange-200">
                   File uploads are disabled. Please contact your administrator to configure storage.
                 </AlertDescription>
@@ -570,10 +570,10 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                <ImageIcon className="h-8 w-8 text-fg-2" />
                               )}
                             </div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-xs text-fg-2">
                               <p>{frontImage?.original_filename}</p>
                               <p>{formatFileSize(frontImage?.file_size || 0)}</p>
                             </div>
@@ -593,8 +593,8 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
                           <div className="space-y-2">
                             <div className="aspect-[3/2] bg-muted rounded-lg flex items-center justify-center border-2 border-dashed">
                               <div className="text-center">
-                                <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                <p className="text-sm text-muted-foreground">No front image</p>
+                                <ImageIcon className="h-8 w-8 text-fg-2 mx-auto mb-2" />
+                                <p className="text-sm text-fg-2">No front image</p>
                               </div>
                             </div>
                             <div className="space-y-2">
@@ -661,10 +661,10 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                <ImageIcon className="h-8 w-8 text-fg-2" />
                               )}
                             </div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-xs text-fg-2">
                               <p>{backImage?.original_filename}</p>
                               <p>{formatFileSize(backImage?.file_size || 0)}</p>
                             </div>
@@ -684,8 +684,8 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
                           <div className="space-y-2">
                             <div className="aspect-[3/2] bg-muted rounded-lg flex items-center justify-center border-2 border-dashed">
                               <div className="text-center">
-                                <ImageIcon className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                                <p className="text-sm text-muted-foreground">No back image</p>
+                                <ImageIcon className="h-8 w-8 text-fg-2 mx-auto mb-2" />
+                                <p className="text-sm text-fg-2">No back image</p>
                               </div>
                             </div>
                             <div className="space-y-2">

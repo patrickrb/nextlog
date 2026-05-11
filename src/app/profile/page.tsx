@@ -230,7 +230,7 @@ export default function ProfilePage() {
                       placeholder="e.g., FN31pr"
                       className="md:w-1/2"
                     />
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-fg-2">
                       Your grid locator is used to center the contact map on your QTH
                     </p>
                   </div>
@@ -277,7 +277,7 @@ export default function ProfilePage() {
                         <li>This enables automatic lookup of callsign information when adding contacts</li>
                         <li>Your credentials are stored securely and only used for lookups</li>
                       </ul>
-                      <p className="text-sm text-red-700 dark:text-blue-300 mt-2">
+                      <p className="text-sm text-bad dark:text-blue-300 mt-2">
                         <strong>Note:</strong> QRZ.com subscription may be required for full XML API access.
                       </p>
                     </div>
@@ -305,12 +305,12 @@ export default function ProfilePage() {
                         {qrzValidationResult && (
                           <div className="flex items-center">
                             {qrzValidationResult.valid ? (
-                              <div className="flex items-center text-green-600">
+                              <div className="flex items-center text-ok">
                                 <CheckCircle className="h-4 w-4 mr-1" />
                                 <span className="text-sm">Valid</span>
                               </div>
                             ) : (
-                              <div className="text-red-600 text-sm">
+                              <div className="text-bad text-sm">
                                 {qrzValidationResult.error}
                               </div>
                             )}

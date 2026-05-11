@@ -4,13 +4,15 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const alertVariants = cva(
-  "relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground",
+  "relative w-full rounded-[12px] border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4",
   {
     variants: {
       variant: {
-        default: "bg-background text-foreground",
-        destructive:
-          "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive",
+        default: "bg-card border-line text-fg [&>svg]:text-fg-2",
+        destructive: "bg-bad/10 border-bad/25 text-bad [&>svg]:text-bad",
+        warn: "bg-warn/10 border-warn/25 text-warn [&>svg]:text-warn",
+        info: "bg-info/10 border-info/25 text-info [&>svg]:text-info",
+        ok: "bg-ok/10 border-ok/25 text-ok [&>svg]:text-ok",
       },
     },
     defaultVariants: {
@@ -50,7 +52,7 @@ const AlertDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-sm [&_p]:leading-relaxed", className)}
+    className={cn("text-sm opacity-90 [&_p]:leading-relaxed", className)}
     {...props}
   />
 ))

@@ -2,8 +2,80 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from "next/link";
-import { Loader2, Radio, Search, Download, Globe, Users, BarChart3, Antenna, Map } from 'lucide-react';
+import Link from 'next/link';
+import {
+  Loader2,
+  Globe,
+  Upload,
+  Award,
+  Radio,
+  Antenna,
+  Building2,
+} from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
+import { Dot } from '@/components/ui/dot';
+import { BrandLockup } from '@/components/ui/brand-mark';
+import { WorldBackdrop } from '@/components/ui/world-backdrop';
+
+const FEATURES = [
+  {
+    icon: Globe,
+    title: 'Smart callsign lookup',
+    body: 'Type a call, get name, grid, DXCC, distance and bearing instantly. QRZ and HamQTH in one query.',
+  },
+  {
+    icon: Upload,
+    title: 'LoTW & QRZ sync',
+    body: 'Every QSO auto-uploads in the background. No CSV files, no ADIF wrangling — just confirmed contacts rolling in.',
+  },
+  {
+    icon: Award,
+    title: 'Awards on autopilot',
+    body: 'DXCC, WAS, WAZ — tracked the moment you log a new one. See exactly what you need to work next.',
+  },
+  {
+    icon: Radio,
+    title: 'Cloudlog API compatible',
+    body: 'Drop-in replacement for Cloudlog. Works with N1MM+, JTDX, WSJT-X, Log4OM, and every contest logger you already own.',
+  },
+  {
+    icon: Antenna,
+    title: 'Live propagation',
+    body: 'Solar flux, A/K-index, and band conditions update in the dashboard so you know what to spin up to.',
+  },
+  {
+    icon: Building2,
+    title: 'Stations & portable ops',
+    body: 'Manage multiple stations, club calls, and rover trips. Each QSO knows where it came from.',
+  },
+];
+
+const RECENT_PREVIEW = [
+  { call: 'DL5XYZ', meta: '20m · SSB · 23:14' },
+  { call: 'JA1QRP', meta: '20m · CW · 22:48' },
+  { call: 'VK3FOO', meta: '15m · FT8 · 22:31' },
+  { call: 'ZS6ABC', meta: '17m · SSB · 21:05' },
+  { call: 'EA8/DL4NN', meta: '20m · SSB · 20:22' },
+];
+
+const PREVIEW_PINS = [
+  { x: 14, y: 62, tone: 'ok' as const },
+  { x: 62, y: 42, tone: 'accent' as const },
+  { x: 50, y: 65, tone: 'accent' as const },
+  { x: 72, y: 38, tone: 'accent' as const },
+  { x: 38, y: 28, tone: 'accent' as const },
+  { x: 84, y: 60, tone: 'accent' as const },
+  { x: 28, y: 75, tone: 'accent' as const },
+];
+
+const PREVIEW_ARCS = [
+  { d: 'M 100 300 Q 300 80 600 220' },
+  { d: 'M 100 300 Q 250 400 500 340' },
+  { d: 'M 100 300 Q 400 100 720 200' },
+  { d: 'M 100 300 Q 200 180 360 140' },
+];
 
 export default function Home() {
   const router = useRouter();
@@ -12,30 +84,30 @@ export default function Home() {
   const checkInstallationStatus = useCallback(async () => {
     try {
       const userResponse = await fetch('/api/user');
-      
+
       if (userResponse.status === 500) {
         const errorText = await userResponse.text();
-        
-        if (errorText.includes('relation "users" does not exist') || errorText.includes('42P01')) {
-          router.push('/install');
-          setTimeout(() => {
-            window.location.href = '/install';
-          }, 1000);
-          return;
-        } else {
+        if (
+          errorText.includes('relation "users" does not exist') ||
+          errorText.includes('42P01')
+        ) {
           router.push('/install');
           setTimeout(() => {
             window.location.href = '/install';
           }, 1000);
           return;
         }
+        router.push('/install');
+        setTimeout(() => {
+          window.location.href = '/install';
+        }, 1000);
+        return;
       }
     } catch (error) {
       console.error('Installation check failed:', error);
       router.push('/install');
       return;
     }
-    
     setIsChecking(false);
   }, [router]);
 
@@ -45,164 +117,275 @@ export default function Home() {
 
   if (isChecking) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-muted-foreground">Checking system status...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-accent" />
+          <p className="text-fg-2">Checking system status...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 bg-gradient-to-br from-background via-background to-muted/20 min-h-screen">
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-16 lg:py-24">
-        <div className="text-center">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 bg-primary/10 rounded-full">
-              <Radio className="h-16 w-16 text-primary" />
-            </div>
-          </div>
-          <h1 className="text-5xl lg:text-7xl font-bold text-foreground mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-            Nextlog
-          </h1>
-          <p className="text-2xl lg:text-3xl text-muted-foreground mb-6 font-light">
-            Modern Amateur Radio Logging
-          </p>
-          <p className="text-lg text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
-            Experience the future of amateur radio logging with a powerful, web-based platform. 
-            Built for hams, by hams, with modern technology that works seamlessly across all your devices.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/login"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 border border-primary"
-            >
-              <Users className="w-5 h-5 inline mr-2" />
-              Login
-            </Link>
-            <Link
-              href="/register"
-              className="bg-secondary hover:bg-secondary/80 text-secondary-foreground px-8 py-4 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 border border-border"
-            >
-              <Radio className="w-5 h-5 inline mr-2" />
-              Get Started
-            </Link>
-          </div>
+    <div className="flex-1">
+      {/* Transparent landing topbar */}
+      <header className="flex items-center gap-7 px-10 py-6">
+        <BrandLockup href="/" />
+        <nav className="hidden md:flex items-center gap-1 ml-2">
+          <a
+            href="#features"
+            className="px-3.5 py-2 rounded-[8px] text-[15px] text-fg-1 hover:bg-white/5 hover:text-fg transition-colors"
+          >
+            Features
+          </a>
+          <Link
+            href="/dashboard"
+            className="px-3.5 py-2 rounded-[8px] text-[15px] text-fg-1 hover:bg-white/5 hover:text-fg transition-colors"
+          >
+            Dashboard
+          </Link>
+        </nav>
+        <div className="ml-auto flex items-center gap-3">
+          <Button asChild variant="ghost">
+            <Link href="/login">Sign in</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/register">Get started</Link>
+          </Button>
         </div>
+      </header>
 
-        {/* Features Grid */}
-        <div className="mt-20 lg:mt-28">
-          <h2 className="text-3xl lg:text-4xl font-bold text-center text-foreground mb-4">
-            Everything You Need
-          </h2>
-          <p className="text-lg text-muted-foreground text-center mb-16 max-w-2xl mx-auto">
-            Comprehensive amateur radio logging with all the features modern operators expect
-          </p>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-card rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/20 group">
-              <div className="p-3 bg-primary/10 rounded-lg w-fit mb-6 group-hover:bg-primary/20 transition-colors">
-                <Radio className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-card-foreground mb-4">
-                Contact Logging
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Log contacts with detailed information including frequency, mode, power, RST reports, 
-                QSL status, and comprehensive station data.
-              </p>
+      {/* Hero */}
+      <section className="px-10 pt-20 pb-16 max-w-[1280px] mx-auto text-center">
+        <Chip variant="accent" className="mb-7">
+          <Dot tone="ok" live />
+          Open source · self-host or cloud
+        </Chip>
+        <h1
+          className="font-semibold leading-[1.02] mb-6"
+          style={{
+            fontSize: 'clamp(48px, 7vw, 92px)',
+            letterSpacing: '-0.035em',
+            background: 'linear-gradient(180deg, #ffffff 0%, #98a6bc 100%)',
+            WebkitBackgroundClip: 'text',
+            backgroundClip: 'text',
+            color: 'transparent',
+          }}
+        >
+          Your logbook,
+          <br />
+          <em
+            className="not-italic"
+            style={{
+              background: 'linear-gradient(135deg, var(--accent) 0%, #a78bfa 100%)',
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              color: 'transparent',
+            }}
+          >
+            at the speed of light.
+          </em>
+        </h1>
+        <p
+          className="text-fg-1 mx-auto mb-10 leading-relaxed"
+          style={{
+            fontSize: 'clamp(18px, 2vw, 22px)',
+            maxWidth: 640,
+          }}
+        >
+          Modern amateur radio logging built for hams who actually operate.
+          Log a QSO in three keystrokes, sync to LoTW &amp; QRZ automatically,
+          and watch your contacts light up the world.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+          <Button asChild size="lg">
+            <Link href="/register">Try it free</Link>
+          </Button>
+          <Button asChild variant="secondary" size="lg">
+            <Link href="/dashboard">See live logging</Link>
+          </Button>
+        </div>
+      </section>
+
+      {/* Preview mockup */}
+      <div className="relative max-w-[1280px] mx-auto px-10 pb-24">
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            inset: '-20px -40px 40px',
+            background:
+              'radial-gradient(800px 280px at 50% 0%, rgba(77,208,255,0.22), transparent 60%), radial-gradient(600px 240px at 70% 100%, rgba(167,139,250,0.18), transparent 60%)',
+            zIndex: 0,
+          }}
+        />
+        <div
+          className="relative z-10 rounded-[24px] border border-line-hi bg-card overflow-hidden"
+          style={{
+            boxShadow:
+              '0 1px 0 rgba(255,255,255,0.05) inset, 0 60px 120px -30px rgba(0,0,0,0.7), 0 0 0 1px var(--accent-glow)',
+          }}
+        >
+          <div className="flex items-center gap-4 px-5 py-3.5 border-b border-line bg-bg-1">
+            <div className="flex gap-1.5">
+              <i className="block w-[11px] h-[11px] rounded-full bg-bg-3" />
+              <i className="block w-[11px] h-[11px] rounded-full bg-bg-3" />
+              <i className="block w-[11px] h-[11px] rounded-full bg-bg-3" />
             </div>
-
-            <div className="bg-card rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/20 group">
-              <div className="p-3 bg-primary/10 rounded-lg w-fit mb-6 group-hover:bg-primary/20 transition-colors">
-                <Search className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-card-foreground mb-4">
-                Advanced Search
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Find contacts instantly with powerful filtering by callsign, date ranges, 
-                bands, modes, countries, and custom criteria.
-              </p>
-            </div>
-
-            <div className="bg-card rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/20 group">
-              <div className="p-3 bg-primary/10 rounded-lg w-fit mb-6 group-hover:bg-primary/20 transition-colors">
-                <Download className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-card-foreground mb-4">
-                ADIF Import/Export
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Seamlessly import and export logbook data in ADIF format. 
-                Compatible with all major logging software and contest programs.
-              </p>
-            </div>
-
-            <div className="bg-card rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/20 group">
-              <div className="p-3 bg-primary/10 rounded-lg w-fit mb-6 group-hover:bg-primary/20 transition-colors">
-                <Globe className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-card-foreground mb-4">
-                QRZ.com Integration
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Automatic callsign lookup with QRZ.com integration. Get operator info, 
-                location data, and photos with just a click.
-              </p>
-            </div>
-
-            <div className="bg-card rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/20 group">
-              <div className="p-3 bg-primary/10 rounded-lg w-fit mb-6 group-hover:bg-primary/20 transition-colors">
-                <BarChart3 className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-card-foreground mb-4">
-                Awards Tracking
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Track progress toward DXCC, WAS, and other amateur radio awards. 
-                Visual progress indicators and achievement tracking.
-              </p>
-            </div>
-
-            <div className="bg-card rounded-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-border hover:border-primary/20 group">
-              <div className="p-3 bg-primary/10 rounded-lg w-fit mb-6 group-hover:bg-primary/20 transition-colors">
-                <Map className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold text-card-foreground mb-4">
-                Station Management
-              </h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Manage multiple stations, antennas, and equipment configurations. 
-                Perfect for club stations and portable operations.
-              </p>
+            <span className="text-fg-2 font-mono text-[13px]">
+              nextlog.app/dashboard
+            </span>
+            <div className="ml-auto">
+              <Chip>
+                <Dot tone="ok" live />
+                K4ABC · live
+              </Chip>
             </div>
           </div>
-        </div>
-
-        {/* Call to Action */}
-        <div className="mt-20 lg:mt-28 text-center">
-          <div className="bg-card border border-border rounded-2xl p-8 lg:p-12 shadow-xl">
-            <h2 className="text-3xl lg:text-4xl font-bold text-card-foreground mb-6">
-              Ready to Get Started?
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of amateur radio operators using Nextlog for their logging needs. 
-              Set up your account in minutes and start logging contacts today.
-            </p>
-            <Link
-              href="/register"
-              className="inline-flex items-center bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 text-lg border border-primary"
+          <div className="grid min-h-[460px]" style={{ gridTemplateColumns: '1.6fr 1fr' }}>
+            <WorldBackdrop
+              pins={PREVIEW_PINS}
+              arcs={PREVIEW_ARCS}
+              className="border-r border-line"
             >
-              <Antenna className="w-6 h-6 mr-2" />
-              Start Logging Now
-            </Link>
+              <div className="absolute top-4 left-4 z-10">
+                <Chip>
+                  <Dot tone="ok" live />
+                  487 QSOs · last 30 days
+                </Chip>
+              </div>
+            </WorldBackdrop>
+
+            <div className="p-6 flex flex-col gap-5">
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="rounded-[12px] bg-bg-1 border border-line px-4 py-3.5">
+                  <div className="text-xs uppercase tracking-[0.08em] text-fg-2">
+                    Total QSOs
+                  </div>
+                  <div className="font-mono text-2xl font-semibold mt-1">
+                    12,847
+                  </div>
+                </div>
+                <div className="rounded-[12px] bg-bg-1 border border-line px-4 py-3.5">
+                  <div className="text-xs uppercase tracking-[0.08em] text-fg-2">
+                    DXCC
+                  </div>
+                  <div className="font-mono text-2xl font-semibold mt-1">
+                    214 <span className="text-sm text-fg-2">/340</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="text-xs uppercase tracking-[0.08em] text-fg-2 mb-2.5">
+                  Recent contacts
+                </div>
+                <div className="flex flex-col gap-2">
+                  {RECENT_PREVIEW.map((c) => (
+                    <div
+                      key={c.call}
+                      className="flex justify-between items-center px-3.5 py-2.5 rounded-[10px] bg-bg-1 border border-line text-sm"
+                    >
+                      <span className="font-mono font-semibold">{c.call}</span>
+                      <span className="text-xs text-fg-2 font-mono">
+                        {c.meta}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Features */}
+      <section
+        id="features"
+        className="max-w-[1280px] mx-auto px-10 py-20"
+      >
+        <div className="text-[13px] font-mono text-accent uppercase tracking-[0.12em] mb-3.5">
+          Built for operators
+        </div>
+        <h2
+          className="font-semibold leading-[1.05] mb-4 text-fg"
+          style={{
+            fontSize: 'clamp(32px, 4vw, 56px)',
+            letterSpacing: '-0.025em',
+            maxWidth: 900,
+          }}
+        >
+          Everything between you and the next contact, gone.
+        </h2>
+        <p className="text-lg text-fg-2 max-w-[600px] mb-12">
+          Auto-lookup, auto-grid, auto-DXCC, auto-upload. You type the callsign
+          and hit enter — Nextlog handles the rest.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {FEATURES.map(({ icon: Icon, title, body }) => (
+            <div
+              key={title}
+              className="group p-7 rounded-[18px] bg-card border border-line transition-all hover:border-line-hi hover:-translate-y-0.5"
+            >
+              <div className="w-11 h-11 rounded-[11px] bg-accent-soft border border-accent-glow grid place-items-center text-accent mb-5">
+                <Icon className="h-[22px] w-[22px]" />
+              </div>
+              <h3 className="text-[19px] font-semibold mb-2 text-fg">
+                {title}
+              </h3>
+              <p className="text-[15px] text-fg-2 leading-relaxed">{body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section
+        className="relative mx-10 mb-20 rounded-[28px] overflow-hidden border border-line-hi text-center"
+        style={{
+          padding: '80px 40px',
+          background:
+            'radial-gradient(800px 400px at 50% 100%, rgba(77,208,255,0.18), transparent 60%), radial-gradient(600px 300px at 50% 0%, rgba(167,139,250,0.12), transparent 60%), linear-gradient(180deg, #131923, #0e131c)',
+        }}
+      >
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'repeating-linear-gradient(0deg, transparent 0 39px, rgba(255,255,255,0.02) 39px 40px), repeating-linear-gradient(90deg, transparent 0 39px, rgba(255,255,255,0.02) 39px 40px)',
+          }}
+        />
+        <div className="relative">
+          <h2
+            className="font-semibold leading-[1.05] mb-4"
+            style={{
+              fontSize: 'clamp(36px, 5vw, 64px)',
+              letterSpacing: '-0.025em',
+            }}
+          >
+            Get on the air.
+            <br />
+            We&rsquo;ll keep the log.
+          </h2>
+          <p className="text-lg text-fg-1 mb-8">
+            Free to self-host. Open source. Ready when you are.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <Button asChild size="lg">
+              <Link href="/register">Start logging</Link>
+            </Button>
+            <Button asChild variant="secondary" size="lg">
+              <a
+                href="https://github.com/patrickrb/nextlog"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View on GitHub
+              </a>
+            </Button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

@@ -122,11 +122,11 @@ export default function LotwSyncIndicator({
   // Determine upload status
   const getUploadStatus = () => {
     if (lotwQslSent === 'Y') {
-      return { status: 'uploaded', color: 'text-green-600', icon: Upload, tooltip: 'Uploaded to LoTW' };
+      return { status: 'uploaded', color: 'text-ok', icon: Upload, tooltip: 'Uploaded to LoTW' };
     } else if (lotwQslSent === 'R') {
-      return { status: 'requested', color: 'text-orange-500', icon: Clock, tooltip: 'Upload requested' };
+      return { status: 'requested', color: 'text-warn', icon: Clock, tooltip: 'Upload requested' };
     } else {
-      return { status: 'not-uploaded', color: 'text-red-500', icon: Upload, tooltip: 'Not uploaded to LoTW' };
+      return { status: 'not-uploaded', color: 'text-bad', icon: Upload, tooltip: 'Not uploaded to LoTW' };
     }
   };
 
@@ -140,9 +140,9 @@ export default function LotwSyncIndicator({
       const dateText = qslLotwDate ? 
         ` on ${new Date(qslLotwDate).toLocaleDateString()}` : '';
       
-      const color = lotwMatchStatus === 'mismatch' ? 'text-orange-500' :
-                   lotwMatchStatus === 'partial' ? 'text-yellow-600' :
-                   'text-green-600';
+      const color = lotwMatchStatus === 'mismatch' ? 'text-warn' :
+                   lotwMatchStatus === 'partial' ? 'text-warn' :
+                   'text-ok';
       
       const icon = lotwMatchStatus === 'mismatch' ? AlertCircle : CheckCircle;
       
@@ -155,7 +155,7 @@ export default function LotwSyncIndicator({
     } else {
       return { 
         status: 'not-confirmed', 
-        color: 'text-red-500', 
+        color: 'text-bad', 
         icon: Download, 
         tooltip: 'No LoTW confirmation' 
       };
@@ -181,13 +181,13 @@ export default function LotwSyncIndicator({
           onClick={canUpload ? handleUploadClick : undefined}
         >
           {uploadLoading ? (
-            <Loader2 className={`${iconSize} animate-spin text-blue-500`} />
+            <Loader2 className={`${iconSize} animate-spin text-accent`} />
           ) : (
             <uploadStatus.icon
               className={`${iconSize} ${uploadStatus.color}`}
             />
           )}
-          {showLabels && <span className="text-muted-foreground">Up</span>}
+          {showLabels && <span className="text-fg-2">Up</span>}
         </div>
 
         <div
@@ -196,13 +196,13 @@ export default function LotwSyncIndicator({
           onClick={canDownload ? handleDownloadClick : undefined}
         >
           {downloadLoading ? (
-            <Loader2 className={`${iconSize} animate-spin text-blue-500`} />
+            <Loader2 className={`${iconSize} animate-spin text-accent`} />
           ) : (
             <downloadStatus.icon
               className={`${iconSize} ${downloadStatus.color}`}
             />
           )}
-          {showLabels && <span className="text-muted-foreground">Down</span>}
+          {showLabels && <span className="text-fg-2">Down</span>}
         </div>
       </div>
     );
@@ -217,7 +217,7 @@ export default function LotwSyncIndicator({
         onClick={canUpload ? handleUploadClick : undefined}
       >
         {uploadLoading ? (
-          <Loader2 className={`${iconSize} animate-spin text-blue-500`} />
+          <Loader2 className={`${iconSize} animate-spin text-accent`} />
         ) : (
           <uploadStatus.icon
             className={`${iconSize} ${uploadStatus.color}`}
@@ -230,7 +230,7 @@ export default function LotwSyncIndicator({
         onClick={canDownload ? handleDownloadClick : undefined}
       >
         {downloadLoading ? (
-          <Loader2 className={`${iconSize} animate-spin text-blue-500`} />
+          <Loader2 className={`${iconSize} animate-spin text-accent`} />
         ) : (
           <downloadStatus.icon
             className={`${iconSize} ${downloadStatus.color}`}

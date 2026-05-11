@@ -9,7 +9,7 @@ export default function SearchDemoPage() {
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-6">
               <span className="text-xl font-semibold">Nextlog</span>
-              <span className="mx-2 text-muted-foreground">/</span>
+              <span className="mx-2 text-fg-2">/</span>
               <h1 className="text-xl font-semibold">Search Demo</h1>
             </div>
             
@@ -35,7 +35,7 @@ export default function SearchDemoPage() {
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-card border rounded-lg p-8 text-center">
             <h1 className="text-3xl font-bold mb-4">Navbar Search Feature Demo</h1>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-fg-2 mb-6">
               This demonstrates the new callsign search functionality in the navbar.
             </p>
             

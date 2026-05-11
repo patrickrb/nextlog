@@ -476,7 +476,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Station Not Found</h2>
-          <p className="text-muted-foreground mb-4">The requested station could not be found.</p>
+          <p className="text-fg-2 mb-4">The requested station could not be found.</p>
           <Button asChild>
             <Link href="/stations">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -693,13 +693,13 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                     placeholder="e.g., FN20XR"
                     className="font-mono"
                   />
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-fg-2">
                     Find your grid locator at{' '}
                     <a 
                       href="https://zone-check.eu/?m=loc" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                      className="text-accent hover:text-blue-800 hover:underline"
                     >
                       zone-check.eu
                     </a>
@@ -718,7 +718,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                       onChange={(e) => handleInputChange('itu_zone', e.target.value)}
                       placeholder="1-90"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-fg-2">
                       Auto-populated when state/province is selected
                     </p>
                   </div>
@@ -733,7 +733,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                       onChange={(e) => handleInputChange('cq_zone', e.target.value)}
                       placeholder="1-40"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-fg-2">
                       Auto-populated when state/province is selected
                     </p>
                   </div>
@@ -834,8 +834,8 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                   {qrzValidation && (
                     <div className={`flex items-center space-x-2 text-sm ${
                       qrzValidation.valid 
-                        ? 'text-green-600' 
-                        : 'text-red-600'
+                        ? 'text-ok' 
+                        : 'text-bad'
                     }`}>
                       {qrzValidation.valid ? (
                         <CheckCircle className="h-4 w-4" />
@@ -846,7 +846,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                     </div>
                   )}
                   
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-fg-2">
                     Get your API key from{' '}
                     <a 
                       href="https://www.qrz.com/page/current_spec.html" 
@@ -916,7 +916,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                         )}
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-fg-2">
                       Leave blank to keep existing password
                     </p>
                   </div>
@@ -937,7 +937,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                           handleSetActiveCertificate(certId);
                         }}
                         disabled={settingActive}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-fg-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <option value="">Select a certificate</option>
                         {certificates.map((cert) => (
@@ -946,7 +946,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                           </option>
                         ))}
                       </select>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-fg-2">
                         {certificates.length} certificate{certificates.length !== 1 ? 's' : ''} uploaded.
                         The selected certificate will be used for LoTW uploads.
                       </p>
@@ -967,7 +967,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                         onChange={(e) => setCertName(e.target.value)}
                         placeholder="e.g., Main LoTW Cert, Backup Cert"
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-fg-2">
                         Give this certificate a name to identify it later
                       </p>
                     </div>
@@ -1007,7 +1007,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                           )}
                         </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-fg-2">
                         Required to sign uploads. Stored encrypted; never sent back to the browser.
                         TQSL exports without a password are accepted (leave this empty).
                       </p>

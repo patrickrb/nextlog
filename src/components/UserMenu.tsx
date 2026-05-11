@@ -39,36 +39,36 @@ export default function UserMenu({ user }: UserMenuProps) {
     }
   };
 
-  // Generate user initials for avatar fallback
-  const getInitials = (name: string) => {
-    return name
+  const getInitials = (name: string) =>
+    name
       .split(' ')
-      .map(word => word[0])
+      .map((word) => word[0])
       .join('')
       .toUpperCase()
       .slice(0, 2);
-  };
 
-  // Check if user is admin
   const isAdmin = user.role === 'admin';
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center space-x-2 rounded-full p-1 hover:bg-accent hover:text-accent-foreground transition-colors">
-          <Avatar className="h-8 w-8">
+        <button
+          className="flex items-center rounded-full p-0.5 hover:opacity-90 transition-opacity cursor-pointer"
+          aria-label="User menu"
+        >
+          <Avatar className="h-9 w-9 border border-line-hi">
             <AvatarImage src="" alt={user.name} />
-            <AvatarFallback className="text-sm font-medium bg-primary/10 text-primary">
+            <AvatarFallback className="text-sm font-mono font-semibold bg-accent-soft text-accent-hi">
               {getInitials(user.name)}
             </AvatarFallback>
           </Avatar>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56" style={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))' }}>
+      <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">{user.name}</p>
-            <p className="text-xs leading-none text-muted-foreground">
+            <p className="text-sm font-medium leading-none text-fg">{user.name}</p>
+            <p className="text-xs leading-none text-fg-2">
               {user.callsign || user.email}
             </p>
           </div>
@@ -77,7 +77,7 @@ export default function UserMenu({ user }: UserMenuProps) {
         {isAdmin && (
           <>
             <DropdownMenuItem asChild>
-              <Link href="/admin" className="cursor-pointer">
+              <Link href="/admin">
                 <Shield className="mr-2 h-4 w-4" />
                 <span>Admin Panel</span>
               </Link>
@@ -86,19 +86,19 @@ export default function UserMenu({ user }: UserMenuProps) {
           </>
         )}
         <DropdownMenuItem asChild>
-          <Link href="/stations" className="cursor-pointer">
+          <Link href="/stations">
             <Radio className="mr-2 h-4 w-4" />
             <span>Stations</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="cursor-pointer">
+          <Link href="/profile">
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+        <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Sign out</span>
         </DropdownMenuItem>

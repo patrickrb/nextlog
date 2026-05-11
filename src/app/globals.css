@@ -1,95 +1,239 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
-@layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-  }
+/* Class-based dark mode — preserves all existing dark: utilities. */
+@custom-variant dark (&:where(.dark, .dark *));
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-  }
+/* ──────────────────────────────────────────────────────────────
+   Design tokens (Tailwind v4 @theme → utilities)
+   Surfaces / text / brand / semantic — exposed as both the new
+   design names (bg, fg, accent…) and the shadcn semantic names
+   (background, foreground, card…) so every existing component
+   resolves automatically.
+   ────────────────────────────────────────────────────────────── */
+@theme {
+  /* shadcn-compatible names */
+  --color-background: var(--bg);
+  --color-foreground: var(--fg);
+  --color-card: var(--card);
+  --color-card-foreground: var(--fg);
+  --color-popover: var(--card);
+  --color-popover-foreground: var(--fg);
+  --color-primary: var(--accent);
+  --color-primary-foreground: #051018;
+  --color-secondary: var(--bg-2);
+  --color-secondary-foreground: var(--fg);
+  --color-muted: var(--bg-2);
+  --color-muted-foreground: var(--fg-2);
+  --color-accent: var(--accent);
+  --color-accent-foreground: #051018;
+  --color-destructive: var(--bad);
+  --color-destructive-foreground: #051018;
+  --color-border: var(--line);
+  --color-input: var(--line-hi);
+  --color-ring: var(--accent);
+
+  /* Design surface ladder */
+  --color-bg: var(--bg);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-bg-3: var(--bg-3);
+  --color-card-hi: var(--card-hi);
+  --color-line: var(--line);
+  --color-line-hi: var(--line-hi);
+
+  /* Text ladder */
+  --color-fg: var(--fg);
+  --color-fg-1: var(--fg-1);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+
+  /* Brand */
+  --color-accent-hi: var(--accent-hi);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-glow: var(--accent-glow);
+
+  /* Semantic */
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-info: var(--info);
+
+  /* Recharts palette via shadcn chart-N tokens */
+  --color-chart-1: var(--accent);
+  --color-chart-2: var(--info);
+  --color-chart-3: var(--ok);
+  --color-chart-4: var(--warn);
+  --color-chart-5: var(--bad);
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-2xl: 28px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 8px 30px -12px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 0 1px var(--accent-glow), 0 12px 40px -10px var(--accent-glow);
+  --shadow-primary: 0 6px 24px -6px var(--accent-glow);
+
+  /* Fonts (variable names come from next/font in layout.tsx) */
+  --font-sans: var(--font-space-grotesk), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "JetBrains Mono", monospace;
+
+  /* Accordion (Radix) */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
 }
 
+@keyframes accordion-down {
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
+}
+@keyframes accordion-up {
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
+}
+@keyframes pulse-dot {
+  0% { box-shadow: 0 0 0 0 rgba(94, 234, 212, 0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(94, 234, 212, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(94, 234, 212, 0); }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Theme variables — :root is light, .dark overrides for dark.
+   App defaults to .dark via the inline script in layout.tsx.
+   ────────────────────────────────────────────────────────────── */
+:root {
+  /* Light variant (derived from the dark palette) */
+  --bg: #fafbfc;
+  --bg-1: #ffffff;
+  --bg-2: #f3f5f8;
+  --bg-3: #e7eaf0;
+  --card: #ffffff;
+  --card-hi: #f8fafb;
+  --line: rgba(15, 23, 42, 0.08);
+  --line-hi: rgba(15, 23, 42, 0.14);
+
+  --fg: #0a0d12;
+  --fg-1: #2a3340;
+  --fg-2: #525c6e;
+  --fg-3: #7c8597;
+
+  --accent: #0bb1eb;
+  --accent-hi: #0891c4;
+  --accent-glow: rgba(11, 177, 235, 0.18);
+  --accent-soft: rgba(11, 177, 235, 0.08);
+
+  --ok: #0d9488;
+  --warn: #d97706;
+  --bad: #e11d48;
+  --info: #7c3aed;
+}
+
+.dark {
+  /* Canonical dark palette from new-design/styles.css */
+  --bg: #0a0d12;
+  --bg-1: #0e131b;
+  --bg-2: #141a24;
+  --bg-3: #1b222e;
+  --card: #11161f;
+  --card-hi: #161d28;
+  --line: rgba(255, 255, 255, 0.07);
+  --line-hi: rgba(255, 255, 255, 0.14);
+
+  --fg: #e8edf5;
+  --fg-1: #b8c2d1;
+  --fg-2: #7c8597;
+  --fg-3: #525c6e;
+
+  --accent: #4dd0ff;
+  --accent-hi: #7fdfff;
+  --accent-glow: rgba(77, 208, 255, 0.18);
+  --accent-soft: rgba(77, 208, 255, 0.08);
+
+  --ok: #5eead4;
+  --warn: #fbbf24;
+  --bad: #fb7185;
+  --info: #a78bfa;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Base styles
+   ────────────────────────────────────────────────────────────── */
 @layer base {
   * {
-    border-color: hsl(var(--border));
+    border-color: var(--line);
+    box-sizing: border-box;
   }
-  
+
   html {
-    /* Ensure theme colors are inherited properly */
     color-scheme: light;
   }
-  
   html.dark {
     color-scheme: dark;
   }
-  
+
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-feature-settings: "rlig" 1, "calt" 1;
-    /* Prevent any default browser styles from interfering */
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100vh;
     transition: background-color 0.2s ease, color 0.2s ease;
   }
-  
-  /* Ensure all components respect theme variables */
-  .bg-background {
-    background-color: hsl(var(--background)) !important;
+
+  html.dark body {
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(77, 208, 255, 0.07), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(167, 139, 250, 0.05), transparent 60%),
+      var(--bg);
   }
-  
-  .text-foreground {
-    color: hsl(var(--foreground)) !important;
+
+  html:not(.dark) body {
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(11, 177, 235, 0.04), transparent 60%),
+      var(--bg);
   }
-  
-  .text-muted-foreground {
-    color: hsl(var(--muted-foreground)) !important;
+
+  a {
+    color: inherit;
+    text-decoration: none;
   }
+
+  button {
+    font-family: inherit;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   Utilities
+   ────────────────────────────────────────────────────────────── */
+.font-mono,
+.mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "ss01", "cv11";
+  letter-spacing: -0.01em;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-hi);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--line-hi);
+  filter: brightness(1.4);
 }
