@@ -533,9 +533,14 @@ async function getDXCCStatistics(userId: number, stationId?: number) {
   
   const rarest = rarestResult.rows[0] || { name: 'None', contact_count: 0 };
 
+  // Minimal award tracking: DXCC Basic requires 100+ confirmed entities.
+  // total_dxcc_awards is the count of DXCC award tiers we currently track
+  // (just Basic); expand when adding 150/200/.../350 tiers, by-band, by-mode.
+  const dxccBasicEarned = totalEntitiesConfirmed >= 100 ? 1 : 0;
+
   return {
-    total_dxcc_awards: 0, // TODO: Calculate completed awards
-    completed_awards: 0, // TODO: Calculate completed awards
+    total_dxcc_awards: 1,
+    completed_awards: dxccBasicEarned,
     entities_worked_total: totalEntitiesWorked,
     entities_confirmed_total: totalEntitiesConfirmed,
     most_worked_continent: {

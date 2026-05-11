@@ -610,18 +610,10 @@ export default function SearchPage() {
       const data = await response.json();
       
       if (response.ok) {
-        // Refresh the contacts to get updated sync status
+        // Refresh the contacts; the sync indicators on each row reflect the
+        // per-contact result. (No toast system yet; visual refresh is the feedback.)
         await performSearch(filters, pagination.page);
         setSelectedContacts(new Set());
-        
-        // Show success message
-        const { successful, failed, skipped } = data.summary;
-        const messages = [];
-        if (successful > 0) messages.push(`${successful} contact(s) synced successfully`);
-        if (skipped > 0) messages.push(`${skipped} contact(s) skipped (already synced)`);
-        if (failed > 0) messages.push(`${failed} contact(s) failed to sync`);
-        
-        // TODO: surface QRZ sync results via toast notification
       } else {
         setError(data.error || 'Failed to sync contacts to QRZ');
       }

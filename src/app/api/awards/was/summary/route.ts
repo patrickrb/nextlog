@@ -443,9 +443,14 @@ async function getWASStatistics(userId: number, stationId?: number) {
   const mostWorked = statsResult.rows[0] || { state: 'None', contact_count: 0 };
   const leastWorked = statsResult.rows[statsResult.rows.length - 1] || { state: 'None', contact_count: 0 };
 
+  // Minimal award tracking: WAS Basic requires all 50 US states confirmed.
+  // total_was_awards is the count of WAS award tiers we currently track (just
+  // Basic); expand when adding 5-Band/Triple Play/etc.
+  const wasBasicEarned = totalStatesConfirmed >= 50 ? 1 : 0;
+
   return {
-    total_was_awards: 0, // TODO: Calculate completed awards
-    completed_awards: 0, // TODO: Calculate completed awards
+    total_was_awards: 1,
+    completed_awards: wasBasicEarned,
     states_worked_total: totalStatesWorked,
     states_confirmed_total: totalStatesConfirmed,
     most_worked_state: {
