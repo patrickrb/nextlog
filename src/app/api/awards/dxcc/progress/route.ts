@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     console.error('DXCC progress error:', error);
     const response: DXCCProgressResponse = {
       success: false,
-      error: error instanceof Error ? error.message : 'Internal server error'
+      error: 'Internal server error'
     };
     return NextResponse.json(response, { status: 500 });
   }
@@ -240,7 +240,7 @@ export async function POST(request: NextRequest) {
     console.error('DXCC progress POST error:', error);
     const response: DXCCProgressResponse = {
       success: false,
-      error: error instanceof Error ? error.message : 'Internal server error'
+      error: 'Internal server error'
     };
     return NextResponse.json(response, { status: 500 });
   }

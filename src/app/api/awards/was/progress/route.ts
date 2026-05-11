@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     console.error('WAS progress error:', error);
     const response: WASProgressResponse = {
       success: false,
-      error: error instanceof Error ? error.message : 'Internal server error'
+      error: 'Internal server error'
     };
     return NextResponse.json(response, { status: 500 });
   }
@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
     console.error('WAS progress POST error:', error);
     const response: WASProgressResponse = {
       success: false,
-      error: error instanceof Error ? error.message : 'Internal server error'
+      error: 'Internal server error'
     };
     return NextResponse.json(response, { status: 500 });
   }
