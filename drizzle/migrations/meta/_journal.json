@@ -15,6 +15,13 @@
       "when": 1778508127603,
       "tag": "0001_seed_reference_data",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778524800000,
+      "tag": "0002_add_propagation_tables",
+      "breakpoints": true
     }
   ]
 }
