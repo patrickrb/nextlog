@@ -100,6 +100,10 @@ The canonical schema lives in TypeScript at `drizzle/schema.ts`. To evolve it:
 - The baseline doesn't include the reference data INSERTs (DXCC entities, states/provinces) that `install-database.sql` ships. Fresh installs that *only* run the migrator will have empty `dxcc_entities` and `states_provinces` tables. A future migration should seed these.
 - Local dev DBs bootstrapped via the old `postgres-init.sql` (deleted in #195) need to be wiped and re-installed via the in-app installer for parity. The dev-only `api_key_usage_logs` table is intentionally not canonical.
 
+## Ham radio domain notes
+
+- **DXCC entities are not countries.** The US is split across three: **291** (contiguous + DC, ~49 state rows), **110** (Hawaii, 1 row), **6** (Alaska, 1 row). `states_provinces.dxcc_entity` holds the ADIF DXCC number — querying "US states" means `dxcc_entity IN (291, 110, 6)`, not `dxcc_entity = 6`.
+
 ## Scripts (run from repo root)
 
 - `npm run dev` — Next dev server (Turbopack)
