@@ -853,7 +853,7 @@ INSERT INTO dxcc_entities (adif, name, prefix, cq_zone, itu_zone, continent, lon
 ,(198, 'Papua Terr', 'VK9/P', NULL, NULL, NULL, NULL, NULL, FALSE)
 ,(132, 'Paraguay', 'ZP', NULL, NULL, NULL, NULL, NULL, FALSE)
 ,(493, 'Penguin Islands', 'ZS0', NULL, NULL, NULL, NULL, NULL, FALSE)
-,(243, 'People's Dem Rep Of Yemen', 'VS9A', NULL, NULL, NULL, NULL, NULL, FALSE)
+,(243, 'People''s Dem Rep Of Yemen', 'VS9A', NULL, NULL, NULL, NULL, NULL, FALSE)
 ,(136, 'Peru', 'OA', NULL, NULL, NULL, NULL, NULL, FALSE)
 ,(199, 'Peter 1 Island', '3Y/P', NULL, NULL, NULL, NULL, NULL, FALSE)
 ,(375, 'Philippines', 'DU', NULL, NULL, NULL, NULL, NULL, FALSE)
