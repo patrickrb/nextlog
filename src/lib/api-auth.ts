@@ -167,6 +167,61 @@ function isValidApiKeyFormat(key: string): boolean {
 }
 
 /**
+ * Verify an API key passed as a raw string (e.g. from a URL path segment, as
+ * wavelog's GET /api/auth/<key> expects). Skips rate-limit accounting and
+ * usage logging — meant for non-mutating auth-check endpoints.
+ */
+export async function verifyApiKeyValue(rawKey: string): Promise<ApiAuthResult> {
+  try {
+    if (!rawKey || !isValidApiKeyFormat(rawKey)) {
+      return { success: false, error: 'Invalid API key format', statusCode: 401 };
+    }
+
+    const keyResult = await query(`
+      SELECT
+        ak.id,
+        ak.user_id,
+        ak.station_id,
+        ak.key_name,
+        ak.is_active,
+        ak.read_only,
+        ak.rate_limit_per_hour,
+        ak.expires_at
+      FROM api_keys ak
+      WHERE ak.api_key = $1
+    `, [rawKey]);
+
+    if (keyResult.rows.length === 0) {
+      return { success: false, error: 'Invalid API key', statusCode: 401 };
+    }
+
+    const keyRecord = keyResult.rows[0];
+
+    if (!keyRecord.is_active) {
+      return { success: false, error: 'API key is disabled', statusCode: 401 };
+    }
+    if (keyRecord.expires_at && new Date(keyRecord.expires_at) < new Date()) {
+      return { success: false, error: 'API key has expired', statusCode: 401 };
+    }
+
+    return {
+      success: true,
+      auth: {
+        userId: keyRecord.user_id,
+        stationId: keyRecord.station_id,
+        keyId: keyRecord.id,
+        keyName: keyRecord.key_name,
+        isReadOnly: keyRecord.read_only,
+        rateLimitPerHour: keyRecord.rate_limit_per_hour,
+      },
+    };
+  } catch (error) {
+    console.error('API key value verification error:', error);
+    return { success: false, error: 'Internal server error', statusCode: 500 };
+  }
+}
+
+/**
  * Check rate limiting for an API key
  */
 async function checkRateLimit(keyId: number, limitPerHour: number): Promise<{ allowed: boolean; remaining: number }> {

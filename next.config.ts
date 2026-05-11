@@ -33,7 +33,16 @@ const nextConfig: NextConfig = {
         allowedOrigins: ['localhost:3000', '127.0.0.1:3000']
       }
     }
-  })
+  }),
+
+  // Map wavelog's legacy /index.php/api/* URL form onto the canonical /api/*
+  // routes. Some older ham radio software hardcodes the index.php prefix
+  // because wavelog/cloudlog ships without URL rewriting by default.
+  async rewrites() {
+    return [
+      { source: '/index.php/api/:path*', destination: '/api/:path*' },
+    ];
+  },
 };
 
 export default nextConfig;
