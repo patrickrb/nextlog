@@ -69,17 +69,7 @@ export default function StatsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-      fetchStations();
-    }
-  }, [user, loading, router]);
-
-  const fetchStations = async () => {
+  const fetchStations = useCallback(async () => {
     try {
       const response = await fetch('/api/stations');
       if (response.ok) {
@@ -89,7 +79,17 @@ export default function StatsPage() {
     } catch (error) {
       console.error('Error fetching stations:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      fetchStations();
+    }
+  }, [user, loading, router, fetchStations]);
 
   const fetchStats = useCallback(async () => {
     if (!user) return;

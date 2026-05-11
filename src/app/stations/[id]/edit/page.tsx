@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -156,24 +156,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
     });
   }, [params]);
 
-  useEffect(() => {
-    if (stationId) {
-      fetchStation();
-      fetchDxccEntities();
-      fetchCertificates();
-    }
-  }, [stationId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (selectedDxcc) {
-      fetchStatesProvinces(selectedDxcc);
-    } else {
-      setStatesProvinces([]);
-      setSelectedState('');
-    }
-  }, [selectedDxcc]);
-
-  const fetchStation = async () => {
+  const fetchStation = useCallback(async () => {
     try {
       const response = await fetch(`/api/stations/${stationId}`);
       if (response.status === 401) {
@@ -229,9 +212,9 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
     } finally {
       setLoading(false);
     }
-  };
+  }, [stationId, router]);
 
-  const fetchDxccEntities = async () => {
+  const fetchDxccEntities = useCallback(async () => {
     try {
       const response = await fetch('/api/dxcc');
       if (response.ok) {
@@ -241,9 +224,9 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
     } catch (error) {
       console.error('Error fetching DXCC entities:', error);
     }
-  };
+  }, []);
 
-  const fetchStatesProvinces = async (dxccCode: string) => {
+  const fetchStatesProvinces = useCallback(async (dxccCode: string) => {
     try {
       const response = await fetch(`/api/states?dxcc=${dxccCode}`);
       if (response.ok) {
@@ -253,9 +236,9 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
     } catch (error) {
       console.error('Error fetching states/provinces:', error);
     }
-  };
+  }, []);
 
-  const fetchCertificates = async () => {
+  const fetchCertificates = useCallback(async () => {
     try {
       const response = await fetch(`/api/lotw/certificate?station_id=${stationId}`);
       if (response.ok) {
@@ -271,7 +254,24 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
     } catch (error) {
       console.error('Error fetching certificates:', error);
     }
-  };
+  }, [stationId]);
+
+  useEffect(() => {
+    if (stationId) {
+      fetchStation();
+      fetchDxccEntities();
+      fetchCertificates();
+    }
+  }, [stationId, fetchStation, fetchDxccEntities, fetchCertificates]);
+
+  useEffect(() => {
+    if (selectedDxcc) {
+      fetchStatesProvinces(selectedDxcc);
+    } else {
+      setStatesProvinces([]);
+      setSelectedState('');
+    }
+  }, [selectedDxcc, fetchStatesProvinces]);
 
   const handleInputChange = (field: keyof StationFormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));

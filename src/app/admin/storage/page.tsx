@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
 import Navbar from '@/components/Navbar';
@@ -49,29 +49,12 @@ export default function StorageConfigPage() {
     is_enabled: false
   });
 
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/login');
-        return;
-      }
-      
-      if (user.role !== 'admin') {
-        router.push('/dashboard');
-        return;
-      }
-      
-      setIsAuthorized(true);
-      fetchConfigs();
-    }
-  }, [user, loading, router]);
-
-  const fetchConfigs = async () => {
+  const fetchConfigs = useCallback(async () => {
     try {
       setError('');
       const response = await fetch('/api/admin/storage');
       const data = await response.json();
-      
+
       if (response.ok) {
         setConfigs(data.configs || []);
       } else {
@@ -82,7 +65,24 @@ export default function StorageConfigPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+
+      if (user.role !== 'admin') {
+        router.push('/dashboard');
+        return;
+      }
+
+      setIsAuthorized(true);
+      fetchConfigs();
+    }
+  }, [user, loading, router, fetchConfigs]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

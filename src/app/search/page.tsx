@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -245,7 +245,7 @@ export default function SearchPage() {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [exportLoading, setExportLoading] = useState(false);
   const [dxccEntities, setDxccEntities] = useState<DXCCEntity[]>([]);
   const [dxccLoading, setDxccLoading] = useState(false);
@@ -305,6 +305,59 @@ export default function SearchPage() {
     }
   }, [router]);
 
+  const performSearch = useCallback(async (searchFilters: SearchFilters, page = 1) => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pagination.limit.toString(),
+        ...Object.fromEntries(
+          Object.entries(searchFilters).filter(([, value]) => value.trim() !== '')
+        )
+      });
+
+      const response = await fetch(`/api/contacts/search?${params}`);
+
+      if (response.status === 401) {
+        router.push('/login');
+        return;
+      }
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setContacts(data.contacts || []);
+        setPagination({
+          page: data.pagination.page,
+          limit: data.pagination.limit,
+          total: data.pagination.total,
+          pages: data.pagination.pages
+        });
+      } else {
+        setError(data.error || 'Failed to search contacts');
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.limit, router]);
+
+  // Debounced search function. Holds the timer in a ref so the callback's
+  // identity stays stable across renders (otherwise React 19's compiler flags
+  // it as un-memoizable because the state dep recreates it on every tick).
+  const debouncedSearch = useCallback((searchFilters: SearchFilters, page = 1) => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      performSearch(searchFilters, page);
+    }, 300);
+  }, [performSearch]);
+
   // Load DXCC entities on mount
   useEffect(() => {
     fetchDxccEntities();
@@ -331,67 +384,13 @@ export default function SearchPage() {
       label: entity.name,
       secondary: entity.prefix
     }));
-    
+
     // Add "All DXCC entities" option at the beginning
     return [
       { value: 'all', label: 'All DXCC entities', secondary: undefined },
       ...options
     ];
   }, [dxccEntities]);
-
-  const performSearch = useCallback(async (searchFilters: SearchFilters, page = 1) => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: pagination.limit.toString(),
-        ...Object.fromEntries(
-          Object.entries(searchFilters).filter(([, value]) => value.trim() !== '')
-        )
-      });
-
-      const response = await fetch(`/api/contacts/search?${params}`);
-      
-      if (response.status === 401) {
-        router.push('/login');
-        return;
-      }
-      
-      const data = await response.json();
-      
-      if (response.ok) {
-        setContacts(data.contacts || []);
-        setPagination({
-          page: data.pagination.page,
-          limit: data.pagination.limit,
-          total: data.pagination.total,
-          pages: data.pagination.pages
-        });
-      } else {
-        setError(data.error || 'Failed to search contacts');
-      }
-    } catch (error) {
-      console.error('Search error:', error);
-      setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, [pagination.limit, router]);
-
-  // Debounced search function
-  const debouncedSearch = useCallback((searchFilters: SearchFilters, page = 1) => {
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
-
-    const timeout = setTimeout(() => {
-      performSearch(searchFilters, page);
-    }, 300);
-
-    setSearchTimeout(timeout);
-  }, [searchTimeout, performSearch]);
 
   // Handle filter changes with debouncing
   const handleFilterChange = (key: keyof SearchFilters, value: string) => {

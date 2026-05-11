@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -37,14 +37,26 @@ export default function StationsPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  const fetchStations = async () => {
+  const fetchStationStats = useCallback(async (stationId: number) => {
+    try {
+      const response = await fetch(`/api/stations/${stationId}/stats`);
+      if (response.ok) {
+        const stats = await response.json();
+        setStationStats(prev => ({ ...prev, [stationId]: stats }));
+      }
+    } catch {
+      // Silent error handling for stats
+    }
+  }, []);
+
+  const fetchStations = useCallback(async () => {
     try {
       const response = await fetch('/api/stations');
       if (response.status === 401) {
         router.push('/login');
         return;
       }
-      
+
       const data = await response.json();
       if (response.ok) {
         setStations(data.stations || []);
@@ -60,24 +72,11 @@ export default function StationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router, fetchStationStats]);
 
   useEffect(() => {
     fetchStations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchStationStats = async (stationId: number) => {
-    try {
-      const response = await fetch(`/api/stations/${stationId}/stats`);
-      if (response.ok) {
-        const stats = await response.json();
-        setStationStats(prev => ({ ...prev, [stationId]: stats }));
-      }
-    } catch {
-      // Silent error handling for stats
-    }
-  };
+  }, [fetchStations]);
 
   const handleSetDefault = async (stationId: number) => {
     try {

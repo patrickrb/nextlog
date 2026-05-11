@@ -35,7 +35,7 @@ test.describe('Database Integration Tests', () => {
       // Should handle database errors gracefully (not return 500)
       // May return 401, 403, 404, or other non-500 errors
       if (status) {
-        if (status >= 500) {
+        if (status >= 500 && response) {
           console.log(`Endpoint ${endpoint} returned ${status} status`);
           const body = await response.text();
           console.log(`Response body: ${body.substring(0, 200)}...`);
