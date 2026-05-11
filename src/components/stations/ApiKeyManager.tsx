@@ -271,7 +271,7 @@ export default function ApiKeyManager({ stationId }: { stationId: number }) {
           )}
 
           {apiKeys.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-fg-2">
               <Key className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p className="text-lg font-medium mb-2">No API keys created</p>
               <p className="text-sm mb-4">Create your first API key to enable third-party integrations</p>
@@ -323,7 +323,7 @@ export default function ApiKeyManager({ stationId }: { stationId: number }) {
 
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                      <Label className="text-xs font-medium text-muted-foreground">API Key:</Label>
+                      <Label className="text-xs font-medium text-fg-2">API Key:</Label>
                       <code className="flex-1 px-2 py-1 bg-muted rounded text-sm font-mono">
                         {formatApiKey(apiKey.api_key, visibleKeys.has(apiKey.id))}
                       </code>
@@ -350,7 +350,7 @@ export default function ApiKeyManager({ stationId }: { stationId: number }) {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between text-sm text-fg-2">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-1">
                         <Activity className="h-3 w-3" />
@@ -444,11 +444,11 @@ export default function ApiKeyManager({ stationId }: { stationId: number }) {
           <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center">
-                <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                <CheckCircle className="h-5 w-5 mr-2 text-ok" />
                 API Key Created Successfully
               </DialogTitle>
               <DialogDescription>
-                <CheckCircle className="h-4 w-4 inline mr-2 text-green-500" />
+                <CheckCircle className="h-4 w-4 inline mr-2 text-ok" />
                 Your Cloudlog-compatible API key has been created successfully!
               </DialogDescription>
             </DialogHeader>

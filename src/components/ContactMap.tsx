@@ -221,7 +221,7 @@ export default function ContactMap({ contacts, user, height = '400px' }: Contact
               <Marker position={userLocation} icon={qthIcon}>
                 <Popup>
                   <div className="min-w-[200px]">
-                    <h3 className="font-semibold text-lg text-red-600">🏠 Your QTH</h3>
+                    <h3 className="font-semibold text-lg text-bad">🏠 Your QTH</h3>
                     <div className="mt-2 space-y-1 text-sm">
                       <p><strong>Callsign:</strong> {user.callsign || 'Not set'}</p>
                       <p><strong>Name:</strong> {user.name}</p>
@@ -254,8 +254,8 @@ export default function ContactMap({ contacts, user, height = '400px' }: Contact
             <Marker key={contact.id} position={position} icon={contactIcon}>
               <Popup>
                 <div className="min-w-[200px]">
-                  <h3 className="font-semibold text-lg text-blue-600">📻 {contact.callsign}</h3>
-                  {contact.name && <p className="text-sm text-muted-foreground">{contact.name}</p>}
+                  <h3 className="font-semibold text-lg text-accent">📻 {contact.callsign}</h3>
+                  {contact.name && <p className="text-sm text-fg-2">{contact.name}</p>}
                   <div className="mt-2 space-y-1 text-sm">
                     <p><strong>Date:</strong> {new Date(contact.datetime).toLocaleDateString()}</p>
                     <p><strong>Frequency:</strong> {contact.frequency} MHz</p>

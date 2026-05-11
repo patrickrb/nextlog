@@ -34,21 +34,21 @@ export default function QRZSyncIndicator({
         ` on ${new Date(qrzQslSentDate).toLocaleDateString()}` : '';
       return { 
         status: 'uploaded', 
-        color: 'text-green-600', 
+        color: 'text-ok', 
         icon: Upload, 
         tooltip: `Uploaded to QRZ${dateText}` 
       };
     } else if (qrzQslSent === 'R') {
       return { 
         status: 'error', 
-        color: 'text-red-500', 
+        color: 'text-bad', 
         icon: AlertCircle, 
         tooltip: 'QRZ upload failed' 
       };
     } else {
       return { 
         status: 'not-uploaded', 
-        color: 'text-red-500', 
+        color: 'text-bad', 
         icon: Upload, 
         tooltip: 'Not uploaded to QRZ' 
       };
@@ -63,14 +63,14 @@ export default function QRZSyncIndicator({
       
       return { 
         status: 'confirmed', 
-        color: 'text-green-600', 
+        color: 'text-ok', 
         icon: Download,
         tooltip: `Confirmed via QRZ${dateText}` 
       };
     } else {
       return { 
         status: 'not-confirmed', 
-        color: 'text-red-500', 
+        color: 'text-bad', 
         icon: Download, 
         tooltip: 'No QRZ confirmation' 
       };
@@ -90,14 +90,14 @@ export default function QRZSyncIndicator({
           <uploadStatus.icon 
             className={`${iconSize} ${uploadStatus.color}`}
           />
-          {showLabels && <span className="text-muted-foreground">Up</span>}
+          {showLabels && <span className="text-fg-2">Up</span>}
         </div>
         
         <div className="flex items-center space-x-1" title={downloadStatus.tooltip}>
           <downloadStatus.icon 
             className={`${iconSize} ${downloadStatus.color}`}
           />
-          {showLabels && <span className="text-muted-foreground">Down</span>}
+          {showLabels && <span className="text-fg-2">Down</span>}
         </div>
       </div>
     );

@@ -84,13 +84,13 @@ export default function DXCCEntityList({
   const getStatusIcon = (status: DXCCStatus) => {
     switch (status) {
       case 'confirmed':
-        return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
+        return <CheckCircle className="h-4 w-4 text-ok dark:text-green-400" />;
       case 'worked':
-        return <Target className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />;
+        return <Target className="h-4 w-4 text-warn dark:text-yellow-400" />;
       case 'needed':
-        return <Circle className="h-4 w-4 text-muted-foreground" />;
+        return <Circle className="h-4 w-4 text-fg-2" />;
       default:
-        return <Circle className="h-4 w-4 text-muted-foreground" />;
+        return <Circle className="h-4 w-4 text-fg-2" />;
     }
   };
 
@@ -152,10 +152,10 @@ export default function DXCCEntityList({
           </div>
           {!compact && (
             <div className="flex gap-2">
-              <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300">
+              <Badge variant="outline" className="bg-green-50 text-ok dark:bg-green-900/20 dark:text-green-300">
                 {stats.confirmed} Confirmed
               </Badge>
-              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-300">
+              <Badge variant="outline" className="bg-yellow-50 text-warn dark:bg-yellow-900/20 dark:text-yellow-300">
                 {stats.worked} Worked
               </Badge>
               <Badge variant="outline">
@@ -171,7 +171,7 @@ export default function DXCCEntityList({
           <div className="flex flex-wrap gap-4 mb-6">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-fg-2" />
                 <Input
                   placeholder="Search entities or prefixes..."
                   value={searchTerm}
@@ -261,7 +261,7 @@ export default function DXCCEntityList({
             <TableBody>
               {filteredAndSortedEntities.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={compact ? 4 : 7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={compact ? 4 : 7} className="text-center py-8 text-fg-2">
                     No entities found matching your filters
                   </TableCell>
                 </TableRow>
@@ -273,7 +273,7 @@ export default function DXCCEntityList({
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">{entity.entity_name}</div>
-                      <div className="text-sm text-muted-foreground">ADIF: {entity.adif}</div>
+                      <div className="text-sm text-fg-2">ADIF: {entity.adif}</div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{entity.prefix}</Badge>
@@ -293,13 +293,13 @@ export default function DXCCEntityList({
                                 {new Date(entity.last_worked_date).toLocaleDateString()}
                               </div>
                               {entity.callsign && (
-                                <div className="text-xs text-muted-foreground">
+                                <div className="text-xs text-fg-2">
                                   {entity.callsign}
                                 </div>
                               )}
                             </div>
                           ) : (
-                            <span className="text-muted-foreground">Never</span>
+                            <span className="text-fg-2">Never</span>
                           )}
                         </TableCell>
                         <TableCell>
@@ -327,7 +327,7 @@ export default function DXCCEntityList({
         </div>
 
         {filteredAndSortedEntities.length > 0 && (
-          <div className="mt-4 text-sm text-muted-foreground text-center">
+          <div className="mt-4 text-sm text-fg-2 text-center">
             Showing {filteredAndSortedEntities.length} of {entities.length} entities
           </div>
         )}

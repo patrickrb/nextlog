@@ -105,11 +105,11 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />;
+        return <CheckCircle className="h-4 w-4 text-ok dark:text-green-400" />;
       case 'worked':
-        return <Circle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />;
+        return <Circle className="h-4 w-4 text-warn dark:text-yellow-400" />;
       default:
-        return <Circle className="h-4 w-4 text-muted-foreground" />;
+        return <Circle className="h-4 w-4 text-fg-2" />;
     }
   };
 
@@ -129,7 +129,7 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
       <div className="space-y-6">
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
-            <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <Trophy className="h-12 w-12 text-fg-2 mx-auto mb-4" />
             <p className="text-lg font-medium">Loading WAS Progress...</p>
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
       <Card>
         <CardContent className="pt-6">
           <div className="text-center">
-            <p className="text-red-600">{error}</p>
+            <p className="text-bad">{error}</p>
             <Button onClick={loadWASSummary} className="mt-4">
               Try Again
             </Button>
@@ -157,7 +157,7 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
       <Card>
         <CardContent className="pt-6">
           <div className="text-center">
-            <p className="text-muted-foreground">No WAS data available</p>
+            <p className="text-fg-2">No WAS data available</p>
           </div>
         </CardContent>
       </Card>
@@ -169,8 +169,8 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
       {/* Header Controls */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">WAS Progress</h1>
-          <p className="text-muted-foreground mt-1">Worked All States Award Tracking</p>
+          <h1 className="text-3xl font-bold text-fg">WAS Progress</h1>
+          <p className="text-fg-2 mt-1">Worked All States Award Tracking</p>
         </div>
         
         <div className="flex gap-3">
@@ -201,7 +201,7 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
             <div className="flex items-center">
               <Trophy className="h-8 w-8 text-primary" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Overall Progress</p>
+                <p className="text-sm font-medium text-fg-2">Overall Progress</p>
                 <div className="flex items-center">
                   <p className="text-2xl font-bold">
                     {summary.overall_progress.worked_states}/{summary.overall_progress.total_states}
@@ -222,9 +222,9 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+              <CheckCircle className="h-8 w-8 text-ok dark:text-green-400" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Confirmed</p>
+                <p className="text-sm font-medium text-fg-2">Confirmed</p>
                 <div className="flex items-center">
                   <p className="text-2xl font-bold">
                     {summary.overall_progress.confirmed_states}
@@ -245,13 +245,13 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <Clock className="h-8 w-8 text-yellow-600" />
+              <Clock className="h-8 w-8 text-warn" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Worked</p>
+                <p className="text-sm font-medium text-fg-2">Worked</p>
                 <p className="text-2xl font-bold">
                   {summary.overall_progress.worked_states - summary.overall_progress.confirmed_states}
                 </p>
-                <p className="text-xs text-muted-foreground">Awaiting QSL</p>
+                <p className="text-xs text-fg-2">Awaiting QSL</p>
               </div>
             </div>
           </CardContent>
@@ -260,13 +260,13 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center">
-              <MapPin className="h-8 w-8 text-red-600" />
+              <MapPin className="h-8 w-8 text-bad" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Needed</p>
+                <p className="text-sm font-medium text-fg-2">Needed</p>
                 <p className="text-2xl font-bold">
                   {summary.overall_progress.needed_states}
                 </p>
-                <p className="text-xs text-muted-foreground">States remaining</p>
+                <p className="text-xs text-fg-2">States remaining</p>
               </div>
             </div>
           </CardContent>
@@ -299,7 +299,7 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
                       <span className="font-medium">{progress.worked_states}/{progress.total_states}</span>
                     </div>
                     <Progress value={progress.progress_percentage} className="h-2" />
-                    <div className="flex justify-between text-xs text-muted-foreground">
+                    <div className="flex justify-between text-xs text-fg-2">
                       <span>Confirmed: {progress.confirmed_states}</span>
                       <span>{progress.progress_percentage}%</span>
                     </div>
@@ -327,7 +327,7 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
                       <span className="font-medium">{progress.worked_states}/{progress.total_states}</span>
                     </div>
                     <Progress value={progress.progress_percentage} className="h-2" />
-                    <div className="flex justify-between text-xs text-muted-foreground">
+                    <div className="flex justify-between text-xs text-fg-2">
                       <span>Confirmed: {progress.confirmed_states}</span>
                       <span>{progress.progress_percentage}%</span>
                     </div>
@@ -382,7 +382,7 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
             </CardHeader>
             <CardContent>
               {summary.recent_confirmations.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
+                <p className="text-fg-2 text-center py-8">
                   No recent confirmations found
                 </p>
               ) : (
@@ -390,10 +390,10 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
                   {summary.recent_confirmations.map((confirmation, index) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        <CheckCircle className="h-5 w-5 text-ok dark:text-green-400" />
                         <div>
                           <p className="font-medium">{confirmation.state_code}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-fg-2">
                             {confirmation.mode}
                           </p>
                         </div>
@@ -425,7 +425,7 @@ export default function WASProgressDashboard({ stations }: WASProgressDashboardP
             <div className="text-center py-8">
               <Trophy className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
               <p className="text-lg font-medium">Congratulations!</p>
-              <p className="text-muted-foreground">You have worked all 50 states!</p>
+              <p className="text-fg-2">You have worked all 50 states!</p>
             </div>
           ) : (
             <div className="space-y-4">

@@ -306,7 +306,7 @@ export default function FilterChipsDemoPage() {
           <div className="flex justify-between h-16">
             <div className="flex items-center space-x-6">
               <span className="text-xl font-semibold">Nextlog</span>
-              <span className="mx-2 text-muted-foreground">/</span>
+              <span className="mx-2 text-fg-2">/</span>
               <h1 className="text-xl font-semibold">Filter Chips Demo</h1>
             </div>
           </div>
@@ -318,7 +318,7 @@ export default function FilterChipsDemoPage() {
           {/* Demo Description */}
           <div className="bg-card border rounded-lg p-6">
             <h1 className="text-3xl font-bold mb-4">🏷️ Filter Chips Feature Demo</h1>
-            <p className="text-muted-foreground mb-4">
+            <p className="text-fg-2 mb-4">
               This demonstrates the new filter chips functionality for the contact search page. 
               Users can now see and remove individual active filters at a glance.
             </p>

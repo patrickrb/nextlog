@@ -210,11 +210,11 @@ export default function InstallPage() {
   const getStepIcon = (status: InstallStep['status']) => {
     switch (status) {
       case 'running':
-        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />;
+        return <Loader2 className="h-4 w-4 animate-spin text-accent" />;
       case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-ok" />;
       case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return <AlertCircle className="h-4 w-4 text-bad" />;
       default:
         return <div className="h-4 w-4 rounded-full border-2 border-gray-300" />;
     }
@@ -223,18 +223,18 @@ export default function InstallPage() {
   if (installComplete) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-background text-foreground">
+        <Card className="w-full max-w-md bg-background text-fg">
           <CardHeader className="text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+              <CheckCircle className="h-8 w-8 text-ok dark:text-green-400" />
             </div>
-            <CardTitle className="text-2xl text-green-700 dark:text-green-400">Installation Complete!</CardTitle>
-            <CardDescription className="text-muted-foreground">
+            <CardTitle className="text-2xl text-ok dark:text-green-400">Installation Complete!</CardTitle>
+            <CardDescription className="text-fg-2">
               Nextlog has been successfully installed and configured.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="text-sm text-muted-foreground mb-4">
+            <p className="text-sm text-fg-2 mb-4">
               You will be redirected to the login page in a few seconds...
             </p>
             <Button onClick={() => router.push('/login')} className="w-full">
@@ -248,13 +248,13 @@ export default function InstallPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 flex items-center justify-center p-4">
-      <Card className="w-full max-w-2xl bg-background text-foreground">
+      <Card className="w-full max-w-2xl bg-background text-fg">
         <CardHeader className="text-center">
           <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
-            <Radio className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            <Radio className="h-8 w-8 text-accent dark:text-blue-400" />
           </div>
-          <CardTitle className="text-3xl text-blue-700 dark:text-blue-400">Welcome to Nextlog</CardTitle>
-          <CardDescription className="text-muted-foreground">
+          <CardTitle className="text-3xl text-accent-hi dark:text-blue-400">Welcome to Nextlog</CardTitle>
+          <CardDescription className="text-fg-2">
             Set up your amateur radio logging station by creating your administrator account
           </CardDescription>
         </CardHeader>
@@ -271,76 +271,76 @@ export default function InstallPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-foreground">Full Name *</Label>
+                  <Label htmlFor="name" className="text-fg">Full Name *</Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Your full name"
-                    className="bg-background text-foreground border-border"
+                    className="bg-background text-fg border-border"
                   />
-                  {errors.name && <p className="text-sm text-red-600 dark:text-red-400">{errors.name}</p>}
+                  {errors.name && <p className="text-sm text-bad dark:text-red-400">{errors.name}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-foreground">Email Address *</Label>
+                  <Label htmlFor="email" className="text-fg">Email Address *</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     placeholder="your@email.com"
-                    className="bg-background text-foreground border-border"
+                    className="bg-background text-fg border-border"
                   />
-                  {errors.email && <p className="text-sm text-red-600 dark:text-red-400">{errors.email}</p>}
+                  {errors.email && <p className="text-sm text-bad dark:text-red-400">{errors.email}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-foreground">Password *</Label>
+                  <Label htmlFor="password" className="text-fg">Password *</Label>
                   <Input
                     id="password"
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
                     placeholder="At least 8 characters"
-                    className="bg-background text-foreground border-border"
+                    className="bg-background text-fg border-border"
                   />
-                  {errors.password && <p className="text-sm text-red-600 dark:text-red-400">{errors.password}</p>}
+                  {errors.password && <p className="text-sm text-bad dark:text-red-400">{errors.password}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password *</Label>
+                  <Label htmlFor="confirmPassword" className="text-fg">Confirm Password *</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                     placeholder="Confirm your password"
-                    className="bg-background text-foreground border-border"
+                    className="bg-background text-fg border-border"
                   />
-                  {errors.confirmPassword && <p className="text-sm text-red-600 dark:text-red-400">{errors.confirmPassword}</p>}
+                  {errors.confirmPassword && <p className="text-sm text-bad dark:text-red-400">{errors.confirmPassword}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="callsign" className="text-foreground">Callsign *</Label>
+                  <Label htmlFor="callsign" className="text-fg">Callsign *</Label>
                   <Input
                     id="callsign"
                     value={formData.callsign}
                     onChange={(e) => setFormData(prev => ({ ...prev, callsign: e.target.value.toUpperCase() }))}
                     placeholder="Your amateur radio callsign"
-                    className="bg-background text-foreground border-border"
+                    className="bg-background text-fg border-border"
                   />
-                  {errors.callsign && <p className="text-sm text-red-600 dark:text-red-400">{errors.callsign}</p>}
+                  {errors.callsign && <p className="text-sm text-bad dark:text-red-400">{errors.callsign}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="gridLocator" className="text-foreground">Grid Locator</Label>
+                  <Label htmlFor="gridLocator" className="text-fg">Grid Locator</Label>
                   <Input
                     id="gridLocator"
                     value={formData.gridLocator}
                     onChange={(e) => setFormData(prev => ({ ...prev, gridLocator: e.target.value.toUpperCase() }))}
                     placeholder="e.g., FN20"
-                    className="bg-background text-foreground border-border"
+                    className="bg-background text-fg border-border"
                   />
                 </div>
               </div>
@@ -352,8 +352,8 @@ export default function InstallPage() {
           ) : (
             <div className="space-y-4">
               <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold text-foreground">Installing Nextlog...</h3>
-                <p className="text-sm text-muted-foreground">Please wait while we set up your amateur radio logging station</p>
+                <h3 className="text-lg font-semibold text-fg">Installing Nextlog...</h3>
+                <p className="text-sm text-fg-2">Please wait while we set up your amateur radio logging station</p>
               </div>
 
               {installSteps.map((step, index) => (
@@ -363,12 +363,12 @@ export default function InstallPage() {
                   </div>
                   <div className="flex-grow">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium text-foreground">{step.title}</h4>
-                      <span className="text-xs text-muted-foreground">Step {index + 1} of {installSteps.length}</span>
+                      <h4 className="text-sm font-medium text-fg">{step.title}</h4>
+                      <span className="text-xs text-fg-2">Step {index + 1} of {installSteps.length}</span>
                     </div>
                     {step.message && (
                       <p className={`text-xs mt-1 ${
-                        step.status === 'error' ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'
+                        step.status === 'error' ? 'text-bad dark:text-red-400' : 'text-fg-2'
                       }`}>
                         {step.message}
                       </p>

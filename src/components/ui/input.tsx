@@ -1,18 +1,40 @@
 import * as React from "react"
+import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
-export type InputProps = React.InputHTMLAttributes<HTMLInputElement>
+const inputVariants = cva(
+  "flex w-full rounded-[10px] border border-line-hi bg-bg-1 text-fg placeholder:text-fg-3 transition-all outline-none focus:border-accent focus:bg-bg-2 focus:ring-4 focus:ring-accent-soft disabled:cursor-not-allowed disabled:opacity-50 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-fg",
+  {
+    variants: {
+      size: {
+        default: "h-12 px-4 text-base",
+        sm: "h-10 px-3 text-sm",
+        lg: "px-5 py-[18px] text-[22px] font-semibold tracking-[0.02em]",
+        xl: "px-6 py-5 text-[36px] font-semibold tracking-[0.02em] uppercase",
+      },
+      mono: {
+        true: "font-mono",
+        false: "",
+      },
+    },
+    defaultVariants: {
+      size: "default",
+      mono: false,
+    },
+  }
+)
+
+export interface InputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size">,
+    VariantProps<typeof inputVariants> {}
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, ...props }, ref) => {
+  ({ className, type, size, mono, ...props }, ref) => {
     return (
       <input
         type={type}
-        className={cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          className
-        )}
+        className={cn(inputVariants({ size, mono, className }))}
         ref={ref}
         {...props}
       />
@@ -21,4 +43,4 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 )
 Input.displayName = "Input"
 
-export { Input }
+export { Input, inputVariants }

@@ -282,11 +282,11 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
         <div className="flex items-center justify-center w-full">
           <label htmlFor="auto-adif-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80 border-border">
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
-              <FileText className="w-8 h-8 mb-4 text-muted-foreground" />
-              <p className="mb-2 text-sm text-muted-foreground">
+              <FileText className="w-8 h-8 mb-4 text-fg-2" />
+              <p className="mb-2 text-sm text-fg-2">
                 <span className="font-semibold">Click to upload</span> your ADIF file
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-fg-2">
                 Any size ADIF file (.adi, .adif)
               </p>
             </div>
@@ -337,16 +337,16 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
                 <div key={result.chunkIndex} className="flex items-center justify-between text-sm p-2 bg-muted rounded">
                   <div className="flex items-center">
                     {result.success ? (
-                      <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                      <CheckCircle className="h-4 w-4 text-ok mr-2" />
                     ) : (
-                      <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+                      <AlertCircle className="h-4 w-4 text-bad mr-2" />
                     )}
                     <span>Chunk {result.chunkIndex + 1}</span>
                   </div>
                   <div className="text-xs space-x-2">
-                    <span className="text-green-600">{result.imported} imported</span>
-                    <span className="text-yellow-600">{result.skipped} skipped</span>
-                    <span className="text-red-600">{result.errors} errors</span>
+                    <span className="text-ok">{result.imported} imported</span>
+                    <span className="text-warn">{result.skipped} skipped</span>
+                    <span className="text-bad">{result.errors} errors</span>
                   </div>
                 </div>
               ))}
@@ -356,7 +356,7 @@ export default function AutoImportADIF({ stationId }: { stationId: number }) {
 
         {finalSummary && (
           <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
-            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <CheckCircle className="h-4 w-4 text-ok dark:text-green-400" />
             <AlertDescription className="text-green-800 dark:text-green-200">
               {finalSummary}
             </AlertDescription>

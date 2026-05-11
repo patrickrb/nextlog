@@ -163,9 +163,9 @@ export default function StationsPage() {
             <CardContent>
               {stations.length === 0 ? (
                 <div className="text-center py-8">
-                  <Radio className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                  <Radio className="h-16 w-16 mx-auto text-fg-2 mb-4" />
                   <p className="text-lg font-medium mb-2">No stations configured</p>
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-fg-2 mb-4">
                     Get started by adding your first station location.
                   </p>
                   <Button asChild>
@@ -202,7 +202,7 @@ export default function StationsPage() {
                               <div>
                                 <div className="font-medium">{station.station_name}</div>
                                 {station.operator_name && (
-                                  <div className="text-sm text-muted-foreground">
+                                  <div className="text-sm text-fg-2">
                                     Op: {station.operator_name}
                                   </div>
                                 )}
@@ -225,7 +225,7 @@ export default function StationsPage() {
                             {stats ? (
                               <div className="text-sm">
                                 <div>{stats.totalContacts} QSOs</div>
-                                <div className="text-muted-foreground">
+                                <div className="text-fg-2">
                                   {stats.countries} countries, {stats.modes} modes
                                 </div>
                               </div>

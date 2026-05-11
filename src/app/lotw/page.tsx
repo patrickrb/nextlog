@@ -307,8 +307,8 @@ export default function LotwPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">LoTW Sync</h1>
-              <p className="text-muted-foreground mt-2">
+              <h1 className="text-3xl font-bold text-fg">LoTW Sync</h1>
+              <p className="text-fg-2 mt-2">
                 Upload QSOs to and download confirmations from ARRL Logbook of The World
               </p>
             </div>
@@ -406,7 +406,7 @@ export default function LotwPage() {
               {/* Certificate Upload */}
               <div className="border-t pt-6">
                 <h3 className="text-lg font-medium mb-4">Upload Certificate</h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-fg-2 mb-4">
                   Upload a .p12 certificate file to enable LoTW uploads for the selected station.
                 </p>
                 
@@ -470,7 +470,7 @@ export default function LotwPage() {
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-fg-2">
                     Required to sign uploads. Stored encrypted; never returned to the browser.
                     TQSL exports without a password are accepted (leave blank).
                   </p>
@@ -510,7 +510,7 @@ export default function LotwPage() {
                 <TabsContent value="uploads" className="mt-6">
                   {uploadLogs.length === 0 ? (
                     <div className="text-center py-8">
-                      <p className="text-muted-foreground">No upload history found.</p>
+                      <p className="text-fg-2">No upload history found.</p>
                     </div>
                   ) : (
                     <div className="rounded-md border">
@@ -533,9 +533,9 @@ export default function LotwPage() {
                               <TableCell>{formatDate(log.started_at)}</TableCell>
                               <TableCell>
                                 {log.status === 'completed' ? (
-                                  <span className="text-green-600">{log.success_count} success</span>
+                                  <span className="text-ok">{log.success_count} success</span>
                                 ) : log.error_message ? (
-                                  <span className="text-red-600 text-sm">{log.error_message}</span>
+                                  <span className="text-bad text-sm">{log.error_message}</span>
                                 ) : (
                                   '-'
                                 )}
@@ -551,7 +551,7 @@ export default function LotwPage() {
                 <TabsContent value="downloads" className="mt-6">
                   {downloadLogs.length === 0 ? (
                     <div className="text-center py-8">
-                      <p className="text-muted-foreground">No download history found.</p>
+                      <p className="text-fg-2">No download history found.</p>
                     </div>
                   ) : (
                     <div className="rounded-md border">
@@ -576,9 +576,9 @@ export default function LotwPage() {
                               <TableCell>{formatDate(log.started_at)}</TableCell>
                               <TableCell>
                                 {log.error_message ? (
-                                  <span className="text-red-600 text-sm">{log.error_message}</span>
+                                  <span className="text-bad text-sm">{log.error_message}</span>
                                 ) : log.confirmations_unmatched > 0 ? (
-                                  <span className="text-yellow-600 text-sm">{log.confirmations_unmatched} unmatched</span>
+                                  <span className="text-warn text-sm">{log.confirmations_unmatched} unmatched</span>
                                 ) : (
                                   '-'
                                 )}

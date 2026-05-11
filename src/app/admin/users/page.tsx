@@ -223,7 +223,7 @@ export default function UserManagementPage() {
 
         {success && (
           <Alert className="mb-6 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
-            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <CheckCircle className="h-4 w-4 text-ok dark:text-green-400" />
             <AlertDescription className="text-green-800 dark:text-green-200">{success}</AlertDescription>
           </Alert>
         )}
@@ -350,7 +350,7 @@ export default function UserManagementPage() {
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-3 top-3 h-4 w-4 text-fg-2" />
                 <Input
                   placeholder="Search users..."
                   value={searchTerm}
@@ -383,7 +383,7 @@ export default function UserManagementPage() {
                 </SelectContent>
               </Select>
 
-              <div className="text-sm text-muted-foreground flex items-center">
+              <div className="text-sm text-fg-2 flex items-center">
                 {filteredUsers.length} of {users.length} users
               </div>
             </div>
@@ -397,9 +397,9 @@ export default function UserManagementPage() {
           ) : filteredUsers.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
-                <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <Users className="mx-auto h-12 w-12 text-fg-2 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No users found</h3>
-                <p className="text-muted-foreground mb-4">
+                <p className="text-fg-2 mb-4">
                   {searchTerm || roleFilter || statusFilter ? 'No users match your search criteria.' : 'Create your first user account.'}
                 </p>
                 {!searchTerm && !roleFilter && !statusFilter && (
@@ -418,9 +418,9 @@ export default function UserManagementPage() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
                       <div>
                         <p className="font-medium">{userData.name}</p>
-                        <p className="text-sm text-muted-foreground">{userData.email}</p>
+                        <p className="text-sm text-fg-2">{userData.email}</p>
                         {userData.callsign && (
-                          <p className="text-sm font-mono text-blue-600 dark:text-blue-400">{userData.callsign}</p>
+                          <p className="text-sm font-mono text-accent dark:text-blue-400">{userData.callsign}</p>
                         )}
                       </div>
                       
@@ -428,21 +428,21 @@ export default function UserManagementPage() {
                         <Badge variant={userData.role === 'admin' ? 'default' : userData.role === 'moderator' ? 'secondary' : 'outline'} className="mb-1">
                           {userData.role}
                         </Badge>
-                        <p className="text-sm text-muted-foreground">Role</p>
+                        <p className="text-sm text-fg-2">Role</p>
                       </div>
                       
                       <div>
                         <Badge variant={userData.status === 'active' ? 'default' : userData.status === 'suspended' ? 'destructive' : 'secondary'}>
                           {userData.status}
                         </Badge>
-                        <p className="text-sm text-muted-foreground">Status</p>
+                        <p className="text-sm text-fg-2">Status</p>
                       </div>
                       
                       <div>
                         <p className="text-sm">
                           {userData.last_login ? new Date(userData.last_login).toLocaleDateString() : 'Never'}
                         </p>
-                        <p className="text-sm text-muted-foreground">Last Login</p>
+                        <p className="text-sm text-fg-2">Last Login</p>
                       </div>
                     </div>
                     

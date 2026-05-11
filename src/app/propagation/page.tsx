@@ -103,7 +103,7 @@ export default function PropagationPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold">Propagation Conditions</h1>
-              <p className="text-muted-foreground">
+              <p className="text-fg-2">
                 Real-time HF propagation analysis and band conditions
               </p>
             </div>
@@ -135,7 +135,7 @@ export default function PropagationPage() {
         {data && !data.success && (
           <Card className="border-red-200">
             <CardContent className="p-4">
-              <div className="flex items-center text-red-600">
+              <div className="flex items-center text-bad">
                 <AlertTriangle className="h-5 w-5 mr-2" />
                 <span>{data.error || 'Failed to load propagation data'}</span>
               </div>
@@ -155,37 +155,37 @@ export default function PropagationPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className="text-2xl font-bold text-accent">
                     {(typeof data.solar_activity.solar_flux_index === 'number' 
                       ? data.solar_activity.solar_flux_index 
                       : parseFloat(data.solar_activity.solar_flux_index)).toFixed(1)}
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-fg-2">
                     Solar Flux Index (SFI)
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">
+                  <div className="text-2xl font-bold text-warn">
                     {(typeof data.solar_activity.a_index === 'number' 
                       ? data.solar_activity.a_index 
                       : parseFloat(data.solar_activity.a_index)).toFixed(1)}
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-fg-2">
                     A-Index (Daily)
                   </div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-600">
+                  <div className="text-2xl font-bold text-info">
                     {(typeof data.solar_activity.k_index === 'number' 
                       ? data.solar_activity.k_index 
                       : parseFloat(data.solar_activity.k_index)).toFixed(1)}
                   </div>
-                  <div className="text-sm text-muted-foreground">
+                  <div className="text-sm text-fg-2">
                     K-Index (3-hour)
                   </div>
                 </div>
               </div>
-              <div className="mt-4 text-sm text-muted-foreground text-center">
+              <div className="mt-4 text-sm text-fg-2 text-center">
                 Last updated: {formatTimestamp(data.solar_activity.timestamp)}
               </div>
             </CardContent>
@@ -211,14 +211,14 @@ export default function PropagationPage() {
                     >
                       {band.condition.toUpperCase()}
                     </Badge>
-                    <div className="text-xs text-muted-foreground mt-1">
+                    <div className="text-xs text-fg-2 mt-1">
                       {band.confidence}% confidence
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center text-muted-foreground py-8">
+              <div className="text-center text-fg-2 py-8">
                 No band condition data available
               </div>
             )}
@@ -240,18 +240,18 @@ export default function PropagationPage() {
                     {data.forecast.general_conditions.toUpperCase()} CONDITIONS
                   </Badge>
                   {data.forecast.notes && (
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <p className="text-sm text-fg-2 mt-2">
                       {data.forecast.notes}
                     </p>
                   )}
                   {data.forecast.source === 'Simulated' && (
-                    <p className="text-xs text-yellow-600 mt-2 flex items-center">
+                    <p className="text-xs text-warn mt-2 flex items-center">
                       <AlertTriangle className="h-3 w-3 mr-1" />
                       Using simulated data - NOAA space weather services unavailable
                     </p>
                   )}
                 </div>
-                <div className="text-right text-sm text-muted-foreground">
+                <div className="text-right text-sm text-fg-2">
                   <div>Source: {data.forecast.source}</div>
                   <div>Updated: {formatTimestamp(data.forecast.timestamp)}</div>
                 </div>
@@ -262,7 +262,7 @@ export default function PropagationPage() {
 
         {/* Last Update Info */}
         {lastUpdate && (
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-center text-sm text-fg-2">
             Page last refreshed: {lastUpdate.toLocaleString()}
           </div>
         )}

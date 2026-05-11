@@ -164,7 +164,7 @@ export default function AwardsPage() {
       case 'in_progress':
         return <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300 border-blue-200 dark:border-blue-800">In Progress</Badge>;
       case 'coming_soon':
-        return <Badge variant="outline" className="text-muted-foreground border-muted">Coming Soon</Badge>;
+        return <Badge variant="outline" className="text-fg-2 border-muted">Coming Soon</Badge>;
       default:
         return <Badge variant="secondary">Available</Badge>;
     }
@@ -226,8 +226,8 @@ export default function AwardsPage() {
           {/* Header */}
           <div className="text-center">
             <Trophy className="h-16 w-16 text-primary mx-auto mb-4" />
-            <h1 className="text-4xl font-bold text-foreground mb-2">Amateur Radio Awards</h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <h1 className="text-4xl font-bold text-fg mb-2">Amateur Radio Awards</h1>
+            <p className="text-lg text-fg-2 max-w-2xl mx-auto">
               Track your progress toward prestigious amateur radio awards. Work contacts, 
               confirm QSLs, and earn recognition for your achievements.
             </p>
@@ -242,37 +242,37 @@ export default function AwardsPage() {
                     <p className="text-2xl font-bold text-primary">
                       {wasProgress.overall_progress.worked_states}
                     </p>
-                    <p className="text-sm text-muted-foreground">States Worked</p>
+                    <p className="text-sm text-fg-2">States Worked</p>
                   </div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-300">
+                    <p className="text-2xl font-bold text-ok dark:text-green-300">
                       {wasProgress.overall_progress.confirmed_states}
                     </p>
-                    <p className="text-sm text-muted-foreground">States Confirmed</p>
+                    <p className="text-sm text-fg-2">States Confirmed</p>
                   </div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    <p className="text-2xl font-bold text-info dark:text-purple-400">
                       {wasProgress.statistics.completed_awards}
                     </p>
-                    <p className="text-sm text-muted-foreground">Awards Earned</p>
+                    <p className="text-sm text-fg-2">Awards Earned</p>
                   </div>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                    <p className="text-2xl font-bold text-warn dark:text-orange-400">
                       {awards.filter(a => a.status === 'in_progress').length}
                     </p>
-                    <p className="text-sm text-muted-foreground">In Progress</p>
+                    <p className="text-sm text-fg-2">In Progress</p>
                   </div>
                 </CardContent>
               </Card>
@@ -282,8 +282,8 @@ export default function AwardsPage() {
           {/* Awards Grid */}
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-foreground">Available Awards</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-2xl font-bold text-fg">Available Awards</h2>
+              <p className="text-sm text-fg-2">
                 {awards.filter(a => a.status === 'available' || a.status === 'in_progress').length} awards available
               </p>
             </div>
@@ -301,11 +301,11 @@ export default function AwardsPage() {
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className="text-muted-foreground/70">
+                            <div className="text-fg-2/70">
                               {award.icon}
                             </div>
                             <div>
-                              <CardTitle className="text-lg text-muted-foreground">{award.name}</CardTitle>
+                              <CardTitle className="text-lg text-fg-2">{award.name}</CardTitle>
                             </div>
                           </div>
                           {getStatusBadge(award.status)}
@@ -316,7 +316,7 @@ export default function AwardsPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="text-center py-4">
-                          <p className="text-sm text-muted-foreground/70 font-medium">This award is coming in a future update</p>
+                          <p className="text-sm text-fg-2/70 font-medium">This award is coming in a future update</p>
                         </div>
                       </CardContent>
                     </div>
@@ -325,8 +325,8 @@ export default function AwardsPage() {
                       <CardHeader>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className={award.status === 'completed' ? 'text-green-600 dark:text-green-300' : 
-                                           award.status === 'in_progress' ? 'text-primary' : 'text-muted-foreground'}>
+                            <div className={award.status === 'completed' ? 'text-ok dark:text-green-300' : 
+                                           award.status === 'in_progress' ? 'text-primary' : 'text-fg-2'}>
                               {award.icon}
                             </div>
                             <div>
@@ -356,15 +356,15 @@ export default function AwardsPage() {
                                 style={{ width: `${award.progress.percentage}%` }}
                               />
                             </div>
-                            <div className="flex justify-between text-xs text-muted-foreground">
+                            <div className="flex justify-between text-xs text-fg-2">
                               <span>{award.progress.percentage}% complete</span>
                               <ArrowRight className="h-4 w-4" />
                             </div>
                           </div>
                         ) : (
                           <div className="flex items-center justify-between">
-                            <p className="text-sm text-muted-foreground">Click to start tracking</p>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                            <p className="text-sm text-fg-2">Click to start tracking</p>
+                            <ArrowRight className="h-4 w-4 text-fg-2" />
                           </div>
                         )}
                       </CardContent>
@@ -384,7 +384,7 @@ export default function AwardsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                 <div>
                   <h4 className="font-medium mb-2">How Awards Work</h4>
-                  <ul className="space-y-1 text-muted-foreground">
+                  <ul className="space-y-1 text-fg-2">
                     <li>• Make contacts with required stations/entities</li>
                     <li>• Obtain QSL confirmations as required</li>
                     <li>• Submit application with verification</li>
@@ -393,7 +393,7 @@ export default function AwardsPage() {
                 </div>
                 <div>
                   <h4 className="font-medium mb-2">Nextlog Features</h4>
-                  <ul className="space-y-1 text-muted-foreground">
+                  <ul className="space-y-1 text-fg-2">
                     <li>• Automatic progress tracking</li>
                     <li>• QSL confirmation integration</li>
                     <li>• Export award applications</li>

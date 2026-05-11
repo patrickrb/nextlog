@@ -3,18 +3,35 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Badge maps to the new design's `.chip` pattern: a rounded pill with
+ * optional leading dot, mono font, and tone variants. Backwards-compatible
+ * with the previous shadcn Badge API; new variants `accent`/`ok`/`warn`/`bad`
+ * map directly to the new design.
+ */
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[13px] font-medium font-mono whitespace-nowrap transition-colors",
   {
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+          "bg-bg-2 border-line-hi text-fg-1",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "bg-bg-2 border-line-hi text-fg-1",
+        accent:
+          "bg-accent-soft border-accent-glow text-accent-hi",
+        ok:
+          "bg-ok/10 border-ok/25 text-ok",
+        warn:
+          "bg-warn/10 border-warn/25 text-warn",
+        bad:
+          "bg-bad/10 border-bad/25 text-bad",
+        info:
+          "bg-info/10 border-info/25 text-info",
+        outline:
+          "border-line-hi bg-transparent text-fg",
         destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
+          "bg-bad/10 border-bad/25 text-bad",
       },
     },
     defaultVariants: {

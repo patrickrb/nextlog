@@ -1,20 +1,33 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Loader2, BarChart3, TrendingUp } from 'lucide-react';
+import { Loader2, Plus, Search } from 'lucide-react';
+
+import Navbar from '@/components/Navbar';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import EditContactDialog from '@/components/EditContactDialog';
 import DXpeditionWidget from '@/components/DXpeditionWidget';
-import Pagination from '@/components/Pagination';
-import Navbar from '@/components/Navbar';
 import LotwSyncIndicator from '@/components/LotwSyncIndicator';
 import QRZSyncIndicator from '@/components/QRZSyncIndicator';
+import Pagination from '@/components/Pagination';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { Dot } from '@/components/ui/dot';
+import { PageHeader } from '@/components/ui/page-header';
+import { StatCard } from '@/components/ui/stat-card';
+import { Kbd } from '@/components/ui/kbd';
+import { SegmentedControl } from '@/components/ui/segmented-control';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { useUser } from '@/contexts/UserContext';
 
 interface Contact {
@@ -34,15 +47,13 @@ interface Contact {
   latitude?: number;
   longitude?: number;
   confirmed?: boolean;
-  // LoTW fields
   lotw_qsl_rcvd?: string;
   lotw_qsl_sent?: string;
   qsl_lotw?: boolean;
   qsl_lotw_date?: string;
   lotw_match_status?: 'confirmed' | 'partial' | 'mismatch' | null;
-  // QRZ QSL fields
-  qrz_qsl_sent?: string; // Y, N, R, Q or null
-  qrz_qsl_rcvd?: string; // Y, N, R, Q or null
+  qrz_qsl_sent?: string;
+  qrz_qsl_rcvd?: string;
   qrz_qsl_sent_date?: string;
   qrz_qsl_rcvd_date?: string;
 }
@@ -52,6 +63,70 @@ interface PaginationInfo {
   limit: number;
   total: number;
   pages: number;
+}
+
+interface DashboardStats {
+  total: number;
+  dxcc: number;
+  confirmed: number;
+  last30: number;
+}
+
+const BAND_ORDER = ['160m', '80m', '60m', '40m', '30m', '20m', '17m', '15m', '12m', '10m', '6m', '2m'] as const;
+const BAND_FREQ_LABEL: Record<string, string> = {
+  '160m': '1.8',
+  '80m': '3.5',
+  '60m': '5.3',
+  '40m': '7.0',
+  '30m': '10.1',
+  '20m': '14.0',
+  '17m': '18.1',
+  '15m': '21.0',
+  '12m': '24.9',
+  '10m': '28.0',
+  '6m': '50',
+  '2m': '144',
+};
+
+const BAND_RANGES = [
+  { value: '24h' as const, label: '24h' },
+  { value: '7d' as const, label: '7d' },
+  { value: '30d' as const, label: '30d' },
+  { value: 'all' as const, label: 'all' },
+];
+
+type BandRange = (typeof BAND_RANGES)[number]['value'];
+
+const TABLE_FILTERS = [
+  { value: 'all' as const, label: 'All' },
+  { value: '20m' as const, label: '20m' },
+  { value: 'SSB' as const, label: 'SSB' },
+  { value: 'FT8' as const, label: 'FT8' },
+];
+
+type TableFilter = (typeof TABLE_FILTERS)[number]['value'];
+
+function greeting(now = new Date()) {
+  const h = now.getUTCHours();
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
+function formatRelativeTime(date: string) {
+  const ms = Date.now() - new Date(date).getTime();
+  const minutes = Math.round(ms / 60_000);
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
+}
+
+function formatUtc(date: string) {
+  const d = new Date(date);
+  return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC`;
 }
 
 export default function DashboardPage() {
@@ -65,321 +140,490 @@ export default function DashboardPage() {
     page: 1,
     limit: 20,
     total: 0,
-    pages: 0
+    pages: 0,
   });
-  const [recentContactsCount, setRecentContactsCount] = useState<number>(0);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [bandActivity, setBandActivity] = useState<Record<string, number>>({});
+  const [bandRange, setBandRange] = useState<BandRange>('24h');
+  const [tableFilter, setTableFilter] = useState<TableFilter>('all');
+  const [tableSearch, setTableSearch] = useState('');
   const { user } = useUser();
   const router = useRouter();
 
-  const fetchContacts = useCallback(async (page = pagination.page, limit = pagination.limit) => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/contacts?page=${page}&limit=${limit}`);
-      if (response.status === 401) {
-        router.push('/login');
-        return;
+  const fetchContacts = useCallback(
+    async (page = pagination.page, limit = pagination.limit) => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/contacts?page=${page}&limit=${limit}`);
+        if (response.status === 401) {
+          router.push('/login');
+          return;
+        }
+        const data = await response.json();
+        if (response.ok) {
+          setContacts(data.contacts || []);
+          setPagination({
+            page: data.pagination.page,
+            limit: data.pagination.limit,
+            total: data.pagination.total,
+            pages: data.pagination.pages,
+          });
+        } else {
+          setError(data.error || 'Failed to fetch contacts');
+        }
+      } catch {
+        setError('Network error. Please try again.');
+      } finally {
+        setLoading(false);
+        setInitialLoading(false);
       }
-      
-      const data = await response.json();
-      if (response.ok) {
-        setContacts(data.contacts || []);
-        setPagination({
-          page: data.pagination.page,
-          limit: data.pagination.limit,
-          total: data.pagination.total,
-          pages: data.pagination.pages
-        });
-      } else {
-        setError(data.error || 'Failed to fetch contacts');
-      }
-    } catch {
-      setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-      setInitialLoading(false);
-    }
-  }, [pagination.page, pagination.limit, router]);
+    },
+    [pagination.page, pagination.limit, router]
+  );
 
-  const fetchRecentContactsCount = useCallback(async () => {
+  const fetchStats = useCallback(async () => {
     try {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      
-      const response = await fetch(`/api/contacts?since=${thirtyDaysAgo.toISOString()}&countOnly=true`);
+      const response = await fetch('/api/dashboard/stats');
+      if (response.ok) {
+        setStats(await response.json());
+      }
+    } catch (e) {
+      console.error('Error fetching dashboard stats:', e);
+    }
+  }, []);
+
+  const fetchBandActivity = useCallback(async (range: BandRange) => {
+    try {
+      const response = await fetch(`/api/contacts/band-activity?range=${range}`);
       if (response.ok) {
         const data = await response.json();
-        setRecentContactsCount(data.count || 0);
+        setBandActivity(data.activity ?? {});
       }
-    } catch (error) {
-      console.error('Error fetching recent contacts count:', error);
+    } catch (e) {
+      console.error('Error fetching band activity:', e);
     }
   }, []);
 
   useEffect(() => {
-    fetchContacts(1, 20); // Initial load with default pagination
-    fetchRecentContactsCount(); // Load recent contacts count
+    fetchContacts(1, 20);
+    fetchStats();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run on mount
+  }, []);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  useEffect(() => {
+    fetchBandActivity(bandRange);
+  }, [bandRange, fetchBandActivity]);
+
+  const filteredContacts = useMemo(() => {
+    let list = contacts;
+    if (tableFilter !== 'all') {
+      list = list.filter(
+        (c) => c.band === tableFilter || c.mode === tableFilter
+      );
+    }
+    if (tableSearch.trim()) {
+      const q = tableSearch.trim().toLowerCase();
+      list = list.filter((c) =>
+        `${c.callsign} ${c.name ?? ''} ${c.qth ?? ''} ${c.grid_locator ?? ''} ${c.frequency}`
+          .toLowerCase()
+          .includes(q)
+      );
+    }
+    return list;
+  }, [contacts, tableFilter, tableSearch]);
+
+  const maxBandCount = useMemo(
+    () => Math.max(1, ...Object.values(bandActivity)),
+    [bandActivity]
+  );
+
+  const activityBars = (count: number) => {
+    if (count <= 0) return 0;
+    const ratio = count / maxBandCount;
+    if (ratio < 0.25) return 1;
+    if (ratio < 0.5) return 2;
+    if (ratio < 0.75) return 3;
+    return 4;
   };
 
   const handleContactClick = (contact: Contact) => {
     setSelectedContact(contact);
     setIsEditDialogOpen(true);
   };
-
   const handleContactSave = (updatedContact: Contact) => {
-    setContacts(prevContacts => 
-      prevContacts.map(contact => 
-        contact.id === updatedContact.id ? updatedContact : contact
-      )
+    setContacts((prev) =>
+      prev.map((c) => (c.id === updatedContact.id ? updatedContact : c))
     );
   };
-
-  const handleContactDelete = (deletedContactId: number) => {
-    setContacts(prevContacts => 
-      prevContacts.filter(contact => contact.id !== deletedContactId)
-    );
-    // Update pagination total count
-    setPagination(prev => ({
-      ...prev,
-      total: prev.total - 1
-    }));
+  const handleContactDelete = (id: number) => {
+    setContacts((prev) => prev.filter((c) => c.id !== id));
+    setPagination((prev) => ({ ...prev, total: prev.total - 1 }));
   };
-
   const handleDialogClose = () => {
     setIsEditDialogOpen(false);
     setSelectedContact(null);
   };
 
-  const handlePageChange = (page: number) => {
-    fetchContacts(page, pagination.limit);
-  };
-
-  const handlePageSizeChange = (limit: number) => {
-    fetchContacts(1, limit); // Reset to first page when changing page size
-  };
-
   if (initialLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span className="text-lg">Loading...</span>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center gap-2 text-fg-2">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Loading...</span>
         </div>
       </div>
     );
   }
 
+  const greetName = user?.name?.split(' ')[0] ?? 'operator';
+  const userCallsign = user?.callsign;
+
+  const qslChip = (contact: Contact) => {
+    const lotwOk = contact.qsl_lotw === true || contact.lotw_qsl_rcvd === 'Y';
+    const qrzOk = contact.qrz_qsl_rcvd === 'Y';
+    if (lotwOk) return <Chip variant="ok" size="sm">✓ LoTW</Chip>;
+    if (qrzOk) return <Chip variant="ok" size="sm">✓ QRZ</Chip>;
+    return <Chip variant="warn" size="sm"><Dot tone="warn" /> pending</Chip>;
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar title="Dashboard" />
+    <div className="min-h-screen">
+      <Navbar />
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0 space-y-6">
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total QSOs</p>
-                    <p className="text-2xl font-bold">{pagination.total.toLocaleString()}</p>
-                  </div>
-                  <TrendingUp className="h-8 w-8 text-blue-600" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">Recent Activity</p>
-                    <p className="text-2xl font-bold">{recentContactsCount.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">contacts in last 30 days</p>
-                  </div>
-                  <BarChart3 className="h-8 w-8 text-green-600" />
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">View Detailed</p>
-                  <p className="text-sm text-muted-foreground">Statistics & Analysis</p>
-                </div>
-                <Button asChild>
-                  <Link href="/stats">
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    Statistics
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+      <main className="max-w-[1400px] mx-auto px-6 lg:px-8 py-8">
+        <PageHeader
+          title={
+            <>
+              {greeting()},{' '}
+              <span className="text-accent">{greetName}</span>.
+            </>
+          }
+          sub={
+            <>
+              {pagination.total.toLocaleString()} QSOs logged
+              {userCallsign ? <> · operating as <span className="font-mono">{userCallsign}</span></> : null}
+            </>
+          }
+          action={
+            <Button asChild size="lg">
+              <Link href="/new-contact">
+                <Plus />
+                Log new QSO
+              </Link>
+            </Button>
+          }
+        />
 
-          {/* Main Content Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            {/* Left side - Map and Contacts Table */}
-            <div className="lg:col-span-3 space-y-6">
-              {/* Contact Map */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Contact Map</CardTitle>
-                  <CardDescription>
-                    Geographic view of your contacts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {error && (
-                    <div className="bg-destructive/15 border border-destructive/20 text-destructive px-4 py-3 rounded-md text-sm mb-4">
-                      {error}
-                    </div>
-                  )}
+        {/* Stat grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <StatCard
+            label="Total QSOs"
+            value={(stats?.total ?? pagination.total).toLocaleString()}
+            delta={stats?.last30 ? `↑ ${stats.last30.toLocaleString()} last 30 days` : undefined}
+          />
+          <StatCard
+            label="DXCC Worked"
+            value={(stats?.dxcc ?? 0).toLocaleString()}
+            fraction="340"
+            delta="entities confirmed"
+            deltaTone="muted"
+          />
+          <StatCard
+            label="QSL Confirmed"
+            value={(stats?.confirmed ?? 0).toLocaleString()}
+            delta="via LoTW & QRZ"
+            deltaTone="muted"
+          />
+          <StatCard
+            label="Last 30 Days"
+            value={(stats?.last30 ?? 0).toLocaleString()}
+            delta="contacts logged"
+            deltaTone="muted"
+          />
+        </div>
 
-                  <DynamicContactMap contacts={contacts} user={user} height="400px" />
-                </CardContent>
-              </Card>
-
-              {/* Recent Contacts Table */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Contacts</CardTitle>
-                  <CardDescription>
-                    Your amateur radio contact log ({pagination.total} total contacts)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-              {pagination.total === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    No contacts logged yet. Start by{' '}
-                    <Link
-                      href="/new-contact"
-                      className="text-primary hover:underline"
-                    >
-                      adding your first contact
-                    </Link>
-                    .
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Callsign</TableHead>
-                          <TableHead>Date/Time</TableHead>
-                          <TableHead>Frequency</TableHead>
-                          <TableHead>Mode</TableHead>
-                          <TableHead>Band</TableHead>
-                          <TableHead>RST</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>LoTW</TableHead>
-                          <TableHead>QRZ</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {loading ? (
-                          <TableRow>
-                            <TableCell colSpan={8} className="text-center py-8">
-                              <div className="flex items-center justify-center space-x-2">
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>Loading contacts...</span>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          contacts.map((contact) => (
-                            <TableRow 
-                              key={contact.id} 
-                              className="cursor-pointer hover:bg-muted/50 transition-colors"
-                              onClick={() => handleContactClick(contact)}
-                            >
-                              <TableCell className="font-medium">
-                                {contact.callsign}
-                              </TableCell>
-                              <TableCell>
-                                {formatDate(contact.datetime)}
-                              </TableCell>
-                              <TableCell>
-                                {contact.frequency} MHz
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="secondary">{contact.mode}</Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline">{contact.band}</Badge>
-                              </TableCell>
-                              <TableCell>
-                                {contact.rst_sent}/{contact.rst_received}
-                              </TableCell>
-                              <TableCell>
-                                {contact.name || '-'}
-                              </TableCell>
-                              <TableCell>
-                                <LotwSyncIndicator
-                                  lotwQslSent={contact.lotw_qsl_sent}
-                                  lotwQslRcvd={contact.lotw_qsl_rcvd}
-                                  qslLotw={contact.qsl_lotw}
-                                  qslLotwDate={contact.qsl_lotw_date}
-                                  lotwMatchStatus={contact.lotw_match_status}
-                                  contactId={contact.id}
-                                  stationId={contact.station_id}
-                                  onStatusChange={() => fetchContacts()}
-                                  size="sm"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <QRZSyncIndicator
-                                  qrzQslSent={contact.qrz_qsl_sent}
-                                  qrzQslSentDate={contact.qrz_qsl_sent_date}
-                                  qrzQslRcvd={contact.qrz_qsl_rcvd}
-                                  qrzQslRcvdDate={contact.qrz_qsl_rcvd_date}
-                                  size="sm"
-                                />
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                  
-                  {pagination.pages > 1 && (
-                    <Pagination
-                      currentPage={pagination.page}
-                      totalPages={pagination.pages}
-                      pageSize={pagination.limit}
-                      totalItems={pagination.total}
-                      onPageChange={handlePageChange}
-                      onPageSizeChange={handlePageSizeChange}
-                      pageSizeOptions={[10, 20, 50, 100]}
-                    />
-                  )}
-                </>
-              )}
-                </CardContent>
-              </Card>
-            </div>
-            
-            {/* Right side - DXpeditions Widget */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-6">
-                <DXpeditionWidget limit={8} />
+        {/* Map + Quick Log */}
+        <div
+          className="grid gap-5 mb-6"
+          style={{ gridTemplateColumns: 'minmax(0, 1.55fr) minmax(0, 1fr)' }}
+        >
+          <Card className="overflow-hidden p-0">
+            {error && (
+              <div className="bg-bad/10 border-b border-bad/20 text-bad px-4 py-3 text-sm">
+                {error}
+              </div>
+            )}
+            <div className="relative h-[460px]">
+              <DynamicContactMap contacts={contacts} user={user} height="460px" />
+              <div className="absolute top-4 left-4 flex gap-2 z-[400]">
+                <Chip>
+                  <Dot tone="ok" live />
+                  Worldmap
+                </Chip>
+                {stats?.last30 ? (
+                  <Chip>Last 30 days · {stats.last30.toLocaleString()}</Chip>
+                ) : null}
               </div>
             </div>
+          </Card>
+
+          <Card className="p-7 flex flex-col gap-5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[17px] font-semibold">Quick log</h2>
+              <Chip variant="accent" size="sm">
+                <Dot tone="ok" live />
+                Live
+              </Chip>
+            </div>
+            <p className="text-sm text-fg-2">
+              Need more fields? Open the full new-contact form for callsign
+              lookup, RST defaults by mode, station picker, and notes.
+            </p>
+            <Button asChild size="lg" className="w-full">
+              <Link href="/new-contact">
+                <Plus />
+                Log a QSO
+              </Link>
+            </Button>
+            <div className="flex items-center gap-2 text-xs text-fg-2">
+              Press <Kbd>L</Kbd> on any page to jump straight in.
+            </div>
+            <div className="border-t border-line pt-4">
+              <div className="text-[13px] font-medium uppercase tracking-[0.06em] text-fg-2 mb-3">
+                Recent
+              </div>
+              <div className="flex flex-col gap-2">
+                {contacts.slice(0, 4).map((contact) => (
+                  <button
+                    key={contact.id}
+                    type="button"
+                    onClick={() => handleContactClick(contact)}
+                    className="flex justify-between items-center px-3 py-2 rounded-[10px] bg-bg-1 border border-line text-left hover:border-line-hi transition-colors cursor-pointer"
+                  >
+                    <span className="font-mono font-semibold text-fg">
+                      {contact.callsign}
+                    </span>
+                    <span className="text-xs text-fg-2 font-mono">
+                      {contact.band} · {contact.mode} · {formatUtc(contact.datetime)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Band activity */}
+        <Card className="px-5 py-4 mb-6">
+          <div className="flex items-center justify-between mb-3.5">
+            <div>
+              <div className="text-[17px] font-semibold">Band activity</div>
+              <div className="text-sm text-fg-2">
+                Contacts per band, last {bandRange === 'all' ? 'all-time' : bandRange}
+              </div>
+            </div>
+            <SegmentedControl
+              options={BAND_RANGES}
+              value={bandRange}
+              onChange={setBandRange}
+            />
+          </div>
+          <div className="flex gap-1.5 p-3 bg-bg-1 border border-line rounded-[12px]">
+            {BAND_ORDER.map((band) => {
+              const count = bandActivity[band] ?? 0;
+              const filled = activityBars(count);
+              const isActive = filled > 0;
+              return (
+                <div
+                  key={band}
+                  className={[
+                    'flex-1 text-center px-2 py-3 rounded-[8px] border font-mono text-[13px] transition-colors cursor-default',
+                    isActive
+                      ? 'border-accent bg-accent-soft text-accent-hi'
+                      : 'border-transparent bg-white/[0.015] text-fg-2 hover:bg-white/[0.04] hover:text-fg',
+                  ].join(' ')}
+                  title={`${count} contact${count === 1 ? '' : 's'}`}
+                >
+                  <div>{band}</div>
+                  <div className="text-[11px] opacity-60">{BAND_FREQ_LABEL[band]}</div>
+                  <div className="mt-1 flex justify-center gap-0.5">
+                    {[0, 1, 2, 3].map((i) => (
+                      <span
+                        key={i}
+                        className={`block w-1 h-2 rounded-[1px] ${
+                          i < filled ? 'bg-accent opacity-100' : 'bg-fg-3 opacity-40'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* Log + DXpeditions */}
+        <div
+          className="grid gap-5"
+          style={{ gridTemplateColumns: 'minmax(0, 1fr) 340px' }}
+        >
+          <Card className="overflow-hidden p-0">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
+              <div className="flex-1 flex items-center gap-2.5 px-3.5 py-2 bg-bg-1 border border-line-hi rounded-[10px]">
+                <Search className="h-4 w-4 text-fg-2" />
+                <input
+                  value={tableSearch}
+                  onChange={(e) => setTableSearch(e.target.value)}
+                  placeholder="Search callsign, name, grid, frequency…"
+                  className="flex-1 bg-transparent border-0 outline-none text-fg text-[15px] placeholder:text-fg-3"
+                />
+                <Kbd>/</Kbd>
+              </div>
+              <SegmentedControl
+                options={TABLE_FILTERS}
+                value={tableFilter}
+                onChange={setTableFilter}
+              />
+            </div>
+
+            {pagination.total === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-fg-2">
+                  No contacts logged yet.{' '}
+                  <Link href="/new-contact" className="text-accent hover:underline">
+                    Add your first.
+                  </Link>
+                </p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Callsign</TableHead>
+                    <TableHead>When</TableHead>
+                    <TableHead>Band / Mode</TableHead>
+                    <TableHead>Freq</TableHead>
+                    <TableHead>RST</TableHead>
+                    <TableHead>Operator</TableHead>
+                    <TableHead>QSL</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-10">
+                        <div className="flex items-center justify-center gap-2 text-fg-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Loading contacts…
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredContacts.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-10 text-fg-2">
+                        No contacts match those filters.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredContacts.map((contact) => (
+                      <TableRow
+                        key={contact.id}
+                        className="cursor-pointer"
+                        onClick={() => handleContactClick(contact)}
+                      >
+                        <TableCell>
+                          <span className="font-mono font-semibold text-fg text-[16px]">
+                            {contact.callsign}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {formatUtc(contact.datetime)}
+                          <br />
+                          <span className="text-[13px] text-fg-2">
+                            {formatRelativeTime(contact.datetime)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1.5 flex-wrap">
+                            <Chip size="sm">{contact.band}</Chip>
+                            <Chip size="sm">{contact.mode}</Chip>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-mono text-fg-1">
+                            {contact.frequency}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-mono text-fg-1">
+                            {contact.rst_sent ?? '-'} / {contact.rst_received ?? '-'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {contact.name ?? '—'}
+                          {contact.qth ? (
+                            <span className="text-[13px] text-fg-2"> · {contact.qth}</span>
+                          ) : null}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            {qslChip(contact)}
+                            <span className="hidden xl:flex items-center gap-1.5">
+                              <LotwSyncIndicator
+                                lotwQslSent={contact.lotw_qsl_sent}
+                                lotwQslRcvd={contact.lotw_qsl_rcvd}
+                                qslLotw={contact.qsl_lotw}
+                                qslLotwDate={contact.qsl_lotw_date}
+                                lotwMatchStatus={contact.lotw_match_status}
+                                contactId={contact.id}
+                                stationId={contact.station_id}
+                                onStatusChange={() => fetchContacts()}
+                                size="sm"
+                              />
+                              <QRZSyncIndicator
+                                qrzQslSent={contact.qrz_qsl_sent}
+                                qrzQslSentDate={contact.qrz_qsl_sent_date}
+                                qrzQslRcvd={contact.qrz_qsl_rcvd}
+                                qrzQslRcvdDate={contact.qrz_qsl_rcvd_date}
+                                size="sm"
+                              />
+                            </span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+
+            {pagination.pages > 1 && (
+              <div className="border-t border-line">
+                <Pagination
+                  currentPage={pagination.page}
+                  totalPages={pagination.pages}
+                  pageSize={pagination.limit}
+                  totalItems={pagination.total}
+                  onPageChange={(p) => fetchContacts(p, pagination.limit)}
+                  onPageSizeChange={(l) => fetchContacts(1, l)}
+                  pageSizeOptions={[10, 20, 50, 100]}
+                />
+              </div>
+            )}
+            {pagination.total > 0 && pagination.pages <= 1 && (
+              <div className="flex items-center justify-between px-5 py-4 border-t border-line text-sm">
+                <span className="text-fg-2">
+                  Showing {filteredContacts.length} of {pagination.total} contacts
+                </span>
+                <Link href="/search" className="text-accent hover:underline">
+                  View full log →
+                </Link>
+              </div>
+            )}
+          </Card>
+
+          <div className="flex flex-col gap-5">
+            <DXpeditionWidget limit={6} />
           </div>
         </div>
       </main>

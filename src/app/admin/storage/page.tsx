@@ -226,7 +226,7 @@ export default function StorageConfigPage() {
 
         {success && (
           <Alert className="mb-6 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
-            <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <CheckCircle className="h-4 w-4 text-ok dark:text-green-400" />
             <AlertDescription className="text-green-800 dark:text-green-200">{success}</AlertDescription>
           </Alert>
         )}
@@ -258,7 +258,7 @@ export default function StorageConfigPage() {
                     </SelectContent>
                   </Select>
                   {editingConfig && (
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm text-fg-2 mt-1">
                       Storage type cannot be changed after creation
                     </p>
                   )}
@@ -274,7 +274,7 @@ export default function StorageConfigPage() {
                       placeholder="uploads"
                       required
                     />
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <p className="text-sm text-fg-2 mt-1">
                       Files will be stored in public/{formData.container_name || 'uploads'}/
                     </p>
                   </div>
@@ -373,9 +373,9 @@ export default function StorageConfigPage() {
           ) : configs.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
-                <Database className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <Database className="mx-auto h-12 w-12 text-fg-2 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No storage configurations</h3>
-                <p className="text-muted-foreground mb-4">
+                <p className="text-fg-2 mb-4">
                   Add your first storage configuration to enable file uploads and backups.
                 </p>
                 <Button onClick={() => setShowForm(true)}>
@@ -407,24 +407,24 @@ export default function StorageConfigPage() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-muted-foreground">Account Name:</p>
+                      <p className="text-fg-2">Account Name:</p>
                       <p className="font-medium">{config.account_name}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Container:</p>
+                      <p className="text-fg-2">Container:</p>
                       <p className="font-medium">{config.container_name}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Account Key:</p>
+                      <p className="text-fg-2">Account Key:</p>
                       <p className="font-medium">{config.account_key}</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Created By:</p>
+                      <p className="text-fg-2">Created By:</p>
                       <p className="font-medium">{config.created_by_name || 'Unknown'}</p>
                     </div>
                     {config.endpoint_url && (
                       <div className="md:col-span-2">
-                        <p className="text-muted-foreground">Custom Endpoint:</p>
+                        <p className="text-fg-2">Custom Endpoint:</p>
                         <p className="font-medium break-all">{config.endpoint_url}</p>
                       </div>
                     )}

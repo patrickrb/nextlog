@@ -199,15 +199,15 @@ export default function DXpeditionsPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-foreground flex items-center">
+              <h1 className="text-3xl font-bold text-fg flex items-center">
                 <Radio className="mr-3 h-8 w-8" />
                 DXpeditions
               </h1>
-              <p className="text-muted-foreground mt-2">
+              <p className="text-fg-2 mt-2">
                 Current and upcoming amateur radio DX operations
               </p>
               {data?.lastUpdated && (
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-fg-2 mt-1">
                   Last updated: {formatDateTime(data.lastUpdated)}
                 </p>
               )}
@@ -238,10 +238,10 @@ export default function DXpeditionsPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Active Now</p>
-                    <p className="text-2xl font-bold text-green-600">{activeDXpeditions.length}</p>
+                    <p className="text-sm font-medium text-fg-2">Active Now</p>
+                    <p className="text-2xl font-bold text-ok">{activeDXpeditions.length}</p>
                   </div>
-                  <Radio className="h-8 w-8 text-green-600" />
+                  <Radio className="h-8 w-8 text-ok" />
                 </div>
               </CardContent>
             </Card>
@@ -250,10 +250,10 @@ export default function DXpeditionsPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Upcoming</p>
-                    <p className="text-2xl font-bold text-blue-600">{upcomingDXpeditions.length}</p>
+                    <p className="text-sm font-medium text-fg-2">Upcoming</p>
+                    <p className="text-2xl font-bold text-accent">{upcomingDXpeditions.length}</p>
                   </div>
-                  <CalendarDays className="h-8 w-8 text-blue-600" />
+                  <CalendarDays className="h-8 w-8 text-accent" />
                 </div>
               </CardContent>
             </Card>
@@ -262,10 +262,10 @@ export default function DXpeditionsPage() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Total Listed</p>
+                    <p className="text-sm font-medium text-fg-2">Total Listed</p>
                     <p className="text-2xl font-bold">{allDXpeditions.length}</p>
                   </div>
-                  <Radio className="h-8 w-8 text-muted-foreground" />
+                  <Radio className="h-8 w-8 text-fg-2" />
                 </div>
               </CardContent>
             </Card>
@@ -282,7 +282,7 @@ export default function DXpeditionsPage() {
                   href="https://ng3k.com/misc/adxo.html"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline hover:text-foreground"
+                  className="underline hover:text-fg"
                 >
                   NG3K
                 </a>
@@ -320,7 +320,7 @@ export default function DXpeditionsPage() {
     if (dxpeditions.length === 0) {
       return (
         <div className="text-center py-8">
-          <p className="text-muted-foreground">No DXpeditions found for this category.</p>
+          <p className="text-fg-2">No DXpeditions found for this category.</p>
         </div>
       );
     }
@@ -350,7 +350,7 @@ export default function DXpeditionsPage() {
                     {formatDate(dx.startDate)} - {formatDate(dx.endDate)}
                   </div>
                   {new Date(dx.startDate) > new Date() && (
-                    <div className="text-xs text-muted-foreground mt-1">
+                    <div className="text-xs text-fg-2 mt-1">
                       in {getDaysUntil(dx.startDate)}
                     </div>
                   )}

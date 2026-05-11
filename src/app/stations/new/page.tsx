@@ -417,7 +417,7 @@ export default function NewStationPage() {
                       />
                     )}
                     {formData.dxcc_entity_code && statesProvinces.length === 0 && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-fg-2">
                         No predefined states/provinces for this DXCC entity
                       </p>
                     )}
@@ -454,13 +454,13 @@ export default function NewStationPage() {
                     placeholder="e.g., FN20XR"
                     className="font-mono"
                   />
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-fg-2">
                     Find your grid locator at{' '}
                     <a 
                       href="https://zone-check.eu/?m=loc" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 hover:underline"
+                      className="text-accent hover:text-blue-800 hover:underline"
                     >
                       zone-check.eu
                     </a>
@@ -489,7 +489,7 @@ export default function NewStationPage() {
                       onChange={(e) => handleInputChange('itu_zone', e.target.value)}
                       placeholder="1-90"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-fg-2">
                       Auto-populated when state/province is selected
                     </p>
                   </div>
@@ -504,7 +504,7 @@ export default function NewStationPage() {
                       onChange={(e) => handleInputChange('cq_zone', e.target.value)}
                       placeholder="1-40"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-fg-2">
                       Auto-populated when state/province is selected
                     </p>
                   </div>
@@ -585,7 +585,7 @@ export default function NewStationPage() {
                     onChange={(e) => handleInputChange('qrz_api_key', e.target.value)}
                     placeholder="Your QRZ.com API key"
                   />
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-fg-2">
                     Get your API key from{' '}
                     <a 
                       href="https://www.qrz.com/page/current_spec.html" 

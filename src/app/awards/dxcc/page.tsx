@@ -93,9 +93,9 @@ export default function DXCCPage() {
           <div className="px-4 py-6 sm:px-0">
             <Card>
               <CardContent className="p-6 text-center">
-                <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <Globe className="h-12 w-12 text-fg-2 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">Unable to Load DXCC Data</h3>
-                <p className="text-muted-foreground mb-4">
+                <p className="text-fg-2 mb-4">
                   {error || 'There was a problem loading your DXCC progress.'}
                 </p>
                 <Button onClick={fetchDXCCSummary}>
@@ -160,25 +160,25 @@ export default function DXCCPage() {
                   <div className="text-2xl font-bold text-primary">
                     {overallProgress.total_entities}
                   </div>
-                  <div className="text-sm text-muted-foreground">Total Entities</div>
+                  <div className="text-sm text-fg-2">Total Entities</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                  <div className="text-2xl font-bold text-warn dark:text-yellow-400">
                     {overallProgress.worked_entities}
                   </div>
-                  <div className="text-sm text-muted-foreground">Worked</div>
+                  <div className="text-sm text-fg-2">Worked</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  <div className="text-2xl font-bold text-ok dark:text-green-400">
                     {overallProgress.confirmed_entities}
                   </div>
-                  <div className="text-sm text-muted-foreground">Confirmed</div>
+                  <div className="text-sm text-fg-2">Confirmed</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-gray-600">
                     {overallProgress.needed_entities}
                   </div>
-                  <div className="text-sm text-muted-foreground">Needed</div>
+                  <div className="text-sm text-fg-2">Needed</div>
                 </div>
               </div>
             </CardContent>
@@ -288,7 +288,7 @@ export default function DXCCPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               <Badge variant="secondary" className="text-xs">{confirmation.mode}</Badge>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-fg-2">
                                 {confirmation.confirmed_date ? new Date(confirmation.confirmed_date).toLocaleDateString() : ''}
                               </span>
                             </div>

@@ -234,7 +234,7 @@ export default function AuditLogsPage() {
                 />
               </div>
 
-              <div className="text-sm text-muted-foreground flex items-center">
+              <div className="text-sm text-fg-2 flex items-center">
                 {pagination.total} total entries
               </div>
             </div>
@@ -248,9 +248,9 @@ export default function AuditLogsPage() {
           ) : auditLogs.length === 0 ? (
             <Card>
               <CardContent className="text-center py-8">
-                <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <FileText className="mx-auto h-12 w-12 text-fg-2 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No audit logs found</h3>
-                <p className="text-muted-foreground mb-4">
+                <p className="text-fg-2 mb-4">
                   No administrative actions match your search criteria.
                 </p>
                 <Button onClick={clearFilters}>
@@ -273,7 +273,7 @@ export default function AuditLogsPage() {
                             {log.target_type.replace('_', ' ')}
                           </Badge>
                         )}
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm text-fg-2">
                           {formatDate(log.created_at)}
                         </span>
                       </div>
@@ -281,19 +281,19 @@ export default function AuditLogsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                         <div>
                           <div className="flex items-center mb-1">
-                            <User className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <User className="mr-2 h-4 w-4 text-fg-2" />
                             <span className="font-medium">Admin User</span>
                           </div>
                           <p>{log.admin_name}</p>
-                          <p className="text-muted-foreground">{log.admin_email}</p>
+                          <p className="text-fg-2">{log.admin_email}</p>
                           {log.admin_callsign && (
-                            <p className="font-mono text-blue-600 dark:text-blue-400">{log.admin_callsign}</p>
+                            <p className="font-mono text-accent dark:text-blue-400">{log.admin_callsign}</p>
                           )}
                         </div>
 
                         <div>
                           <div className="flex items-center mb-1">
-                            <Activity className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <Activity className="mr-2 h-4 w-4 text-fg-2" />
                             <span className="font-medium">Details</span>
                           </div>
                           {log.target_id && (
@@ -308,12 +308,12 @@ export default function AuditLogsPage() {
                           {(log.old_values || log.new_values) && (
                             <>
                               <div className="flex items-center mb-1">
-                                <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
+                                <FileText className="mr-2 h-4 w-4 text-fg-2" />
                                 <span className="font-medium">Changes</span>
                               </div>
                               {log.old_values && (
                                 <details className="mb-2">
-                                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                                  <summary className="cursor-pointer text-fg-2 hover:text-fg">
                                     Old Values
                                   </summary>
                                   <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto">
@@ -323,7 +323,7 @@ export default function AuditLogsPage() {
                               )}
                               {log.new_values && (
                                 <details>
-                                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                                  <summary className="cursor-pointer text-fg-2 hover:text-fg">
                                     New Values
                                   </summary>
                                   <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto">
@@ -346,7 +346,7 @@ export default function AuditLogsPage() {
         {/* Pagination */}
         {pagination.totalPages > 1 && (
           <div className="flex items-center justify-between mt-6">
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-fg-2">
               Page {pagination.page} of {pagination.totalPages} ({pagination.total} total entries)
             </div>
             <div className="flex items-center space-x-2">
