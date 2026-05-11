@@ -5,7 +5,7 @@ Conventions and guidance for working in this repo. Keep this file short — it l
 ## Stack
 
 - Next.js 16 (App Router), React 19, TypeScript 5.8
-- PostgreSQL via raw `pg` (no ORM). Migrations are hand-written SQL in `/migrations/`.
+- PostgreSQL via raw `pg` for runtime queries. **Drizzle Kit** owns schema-as-code and migration generation; the ORM (`drizzle-orm`) is intentionally not used at runtime — keep queries on `pg`. Schema lives at `drizzle/schema.ts`; migrations at `drizzle/migrations/`.
 - Playwright for e2e tests; ESLint 9 for linting; no Prettier.
 
 ## Naming convention: `snake_case` end-to-end
@@ -78,6 +78,20 @@ The `details:` field used by some install/cron routes (`{ error, details }`) is 
 - `/migrations/` — hand-written SQL migrations. Root-level `*.sql` files are install/seed schema.
 - `/tests/` — Playwright specs.
 
+## Schema changes
+
+The canonical schema lives in TypeScript at `drizzle/schema.ts`. To evolve it:
+
+1. Edit `drizzle/schema.ts` (or pull from a running DB with `npm run db:pull` to re-sync).
+2. Run `npm run db:generate` — Drizzle Kit diffs `schema.ts` against the previous snapshot and emits a new SQL migration in `drizzle/migrations/`.
+3. Review the generated SQL, commit it alongside the `schema.ts` change.
+4. Apply with `npm run db:migrate` (uses `DATABASE_URL`).
+
+**Current state (deliberate limitations):**
+- The runtime install path (`/api/install/database`, `/api/install/migrate-schema`) and the legacy SQL files (`install-database.sql`, `postgres-init.sql`, `propagation-schema.sql`, `postgres-lotw-migration.sql`, `migrations/*.sql`) are still in place. They haven't been switched to `drizzle-kit migrate` yet — that's a follow-up PR that needs careful coordination with existing production installs.
+- The baseline migration `drizzle/migrations/0000_thankful_penance.sql` is generated from a dev-DB introspection and is wrapped in a `/* ... */` block (Drizzle's safety default). It represents the state at adoption; future migrations build on top.
+- The dev DB used for introspection had a subset of tables (no `dxcc_entities`, `states_provinces`, `qsl_images`, propagation tables, etc.). Before the runtime switchover, `schema.ts` needs to be reconciled against a fully-installed canonical DB.
+
 ## Scripts (run from repo root)
 
 - `npm run dev` — Next dev server (Turbopack)
@@ -85,6 +99,10 @@ The `details:` field used by some install/cron routes (`{ error, details }`) is 
 - `npm run lint` — ESLint
 - `npm run typecheck` — `tsc --noEmit`
 - `npm test` — Playwright e2e
+- `npm run db:pull` — introspect `DATABASE_URL` and regenerate `drizzle/schema.ts`
+- `npm run db:generate` — diff `schema.ts` against last snapshot, emit a migration SQL
+- `npm run db:migrate` — apply pending migrations to `DATABASE_URL`
+- `npm run db:studio` — open Drizzle Studio (DB browser UI)
 
 ## Pre-commit checklist
 
