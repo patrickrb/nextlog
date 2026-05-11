@@ -22,6 +22,13 @@
       "when": 1778524800000,
       "tag": "0002_add_propagation_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1778530000000,
+      "tag": "0003_add_lotw_credentials_name",
+      "breakpoints": true
     }
   ]
 }
