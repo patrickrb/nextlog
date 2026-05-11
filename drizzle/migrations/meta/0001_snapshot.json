@@ -1,6 +1,6 @@
 {
-  "id": "dc283ca3-bf3d-499f-b74e-8dedba591652",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "52544972-aacc-4dee-9e1d-63810e342007",
+  "prevId": "dc283ca3-bf3d-499f-b74e-8dedba591652",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1070,7 +1070,15 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "dxcc_entities_adif_key": {
+          "name": "dxcc_entities_adif_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "adif"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -2607,7 +2615,16 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "states_provinces_dxcc_entity_code_key": {
+          "name": "states_provinces_dxcc_entity_code_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "dxcc_entity",
+            "code"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

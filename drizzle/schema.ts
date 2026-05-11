@@ -103,7 +103,9 @@ export const dxccEntities = pgTable("dxcc_entities", {
 	latitude: numeric(),
 	deleted: boolean().default(false),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => [
+	unique("dxcc_entities_adif_key").on(table.adif),
+]);
 
 export const statesProvinces = pgTable("states_provinces", {
 	id: serial().primaryKey().notNull(),
@@ -114,7 +116,9 @@ export const statesProvinces = pgTable("states_provinces", {
 	cqZone: text("cq_zone"),
 	ituZone: text("itu_zone"),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => [
+	unique("states_provinces_dxcc_entity_code_key").on(table.dxccEntity, table.code),
+]);
 
 export const storageConfig = pgTable("storage_config", {
 	id: serial().primaryKey().notNull(),
@@ -192,7 +196,8 @@ export const adminAuditLog = pgTable("admin_audit_log", {
 	index("idx_audit_log_action").using("btree", table.action.asc().nullsLast().op("text_ops")),
 	index("idx_audit_log_admin_user").using("btree", table.adminUserId.asc().nullsLast().op("int4_ops")),
 	index("idx_audit_log_created_at").using("btree", table.createdAt.desc().nullsFirst().op("timestamp_ops")),
-	index("idx_audit_log_target").using("btree", table.targetType.asc().nullsLast().op("int4_ops"), table.targetId.asc().nullsLast().op("text_ops")),
+	// drizzle-kit pull swapped the opclasses (target_type is varchar, target_id is integer).
+	index("idx_audit_log_target").using("btree", table.targetType.asc().nullsLast().op("text_ops"), table.targetId.asc().nullsLast().op("int4_ops")),
 	foreignKey({
 			columns: [table.adminUserId],
 			foreignColumns: [users.id],

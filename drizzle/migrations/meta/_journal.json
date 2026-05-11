@@ -8,6 +8,13 @@
       "when": 1778465274389,
       "tag": "0000_baseline_canonical_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778508127603,
+      "tag": "0001_seed_reference_data",
+      "breakpoints": true
     }
   ]
 }
