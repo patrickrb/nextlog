@@ -94,7 +94,11 @@ export default function ProfilePage() {
 
       const response = await fetch('/api/user/qrz/validate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          qrz_username: formData.qrz_username,
+          qrz_password: formData.qrz_password,
+        }),
       });
 
       const data = await response.json();
