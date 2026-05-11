@@ -103,7 +103,9 @@ export const dxccEntities = pgTable("dxcc_entities", {
 	latitude: numeric(),
 	deleted: boolean().default(false),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => [
+	unique("dxcc_entities_adif_key").on(table.adif),
+]);
 
 export const statesProvinces = pgTable("states_provinces", {
 	id: serial().primaryKey().notNull(),
@@ -114,7 +116,9 @@ export const statesProvinces = pgTable("states_provinces", {
 	cqZone: text("cq_zone"),
 	ituZone: text("itu_zone"),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => [
+	unique("states_provinces_dxcc_entity_code_key").on(table.dxccEntity, table.code),
+]);
 
 export const storageConfig = pgTable("storage_config", {
 	id: serial().primaryKey().notNull(),
