@@ -463,53 +463,52 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
             />
           </div>
 
-              <DialogFooter className="flex justify-between">
-                <div>
-                  {onDelete && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button 
-                          type="button" 
-                          variant="destructive" 
-                          disabled={loading || deleteLoading}
+              <DialogFooter className="gap-2 sm:gap-0 sm:justify-between">
+                {onDelete && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        disabled={loading || deleteLoading}
+                        className="w-full sm:w-auto"
+                      >
+                        {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Delete QSO
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this QSO with {contact?.callsign}? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      {deleteError && (
+                        <Alert className="border-destructive/20 bg-destructive/10">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription className="text-destructive">{deleteError}</AlertDescription>
+                        </Alert>
+                      )}
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDelete}
+                          disabled={deleteLoading}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
                           {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                           Delete QSO
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to delete this QSO with {contact?.callsign}? This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        {deleteError && (
-                          <Alert className="border-destructive/20 bg-destructive/10">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertDescription className="text-destructive">{deleteError}</AlertDescription>
-                          </Alert>
-                        )}
-                        <AlertDialogFooter>
-                          <AlertDialogCancel disabled={deleteLoading}>Cancel</AlertDialogCancel>
-                          <AlertDialogAction 
-                            onClick={handleDelete}
-                            disabled={deleteLoading}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                          >
-                            {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Delete QSO
-                          </AlertDialogAction>
-                        </AlertDialogFooter>  
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                </div>
-                <div className="flex space-x-2">
-                  <Button type="button" variant="outline" onClick={onClose}>
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+                <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0 sm:space-x-2 sm:ml-auto">
+                  <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={loading}>
+                  <Button type="submit" disabled={loading} className="w-full sm:w-auto">
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save Changes
                   </Button>
