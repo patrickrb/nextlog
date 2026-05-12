@@ -345,10 +345,16 @@ function parseP12(buf: Buffer, password: string): ParsedP12 {
 
 // Format a frequency in MHz the way TQSL does — trim trailing zeros,
 // no exponent, no thousands separator. Avoids JS scientific notation.
-function freqToMhz(freqHz: number): string {
-  // Hz → MHz; use toFixed(6) then trim trailing zeros and dangling dot.
-  const mhz = freqHz / 1_000_000;
-  return mhz.toFixed(6).replace(/\.?0+$/, '');
+//
+// IMPORTANT: input is MHz, not Hz. contacts.frequency is numeric(10,6),
+// whose precision physically can't hold Hz for HF (14.205 MHz in Hz is
+// 14205000 — 8 integer digits, the column allows 4). The form, ADIF
+// import, and QRZ download all write MHz. An earlier version of this
+// function divided by 1_000_000 thinking the value was Hz; that turned
+// 14.205 MHz into 0.000014 MHz in the .tq8 and LoTW silently dropped
+// every QSO whose signature otherwise verified.
+function formatFreqMhz(freqMhz: number): string {
+  return freqMhz.toFixed(6).replace(/\.?0+$/, '');
 }
 
 // Format a Date as YYYY-MM-DD in UTC.
@@ -436,9 +442,9 @@ function buildCanonicalSignString(station: LotwStationProfile, qso: LotwQso): st
   // CALL
   if (qso.call) s += qso.call;
   // FREQ (MHz)
-  if (qso.freq != null && qso.freq > 0) s += freqToMhz(qso.freq);
+  if (qso.freq != null && qso.freq > 0) s += formatFreqMhz(qso.freq);
   // FREQ_RX (MHz)
-  if (qso.freq_rx != null && qso.freq_rx > 0) s += freqToMhz(qso.freq_rx);
+  if (qso.freq_rx != null && qso.freq_rx > 0) s += formatFreqMhz(qso.freq_rx);
   // MODE
   if (qso.mode) s += qso.mode;
   // PROP_MODE
@@ -551,10 +557,10 @@ function renderContactRecord(
   out += lenPrefix('BAND', qso.band.toUpperCase()) + '\n';
   out += lenPrefix('MODE', qso.mode.toUpperCase()) + '\n';
   if (qso.freq != null && qso.freq > 0) {
-    out += lenPrefix('FREQ', freqToMhz(qso.freq)) + '\n';
+    out += lenPrefix('FREQ', formatFreqMhz(qso.freq)) + '\n';
   }
   if (qso.freq_rx != null && qso.freq_rx > 0) {
-    out += lenPrefix('FREQ_RX', freqToMhz(qso.freq_rx)) + '\n';
+    out += lenPrefix('FREQ_RX', formatFreqMhz(qso.freq_rx)) + '\n';
   }
   if (qso.prop_mode) out += lenPrefix('PROP_MODE', qso.prop_mode.toUpperCase()) + '\n';
   if (qso.sat_name) out += lenPrefix('SAT_NAME', qso.sat_name.toUpperCase()) + '\n';

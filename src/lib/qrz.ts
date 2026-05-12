@@ -224,7 +224,10 @@ export function contactToQRZFormat(contact: {
     time_on,
     band: contact.band,
     mode: contact.mode,
-    freq: contact.frequency ? (contact.frequency / 1000000).toString() : undefined, // Convert Hz to MHz
+    // contacts.frequency is numeric(10,6) and stores MHz directly (not Hz). An
+    // earlier version divided by 1_000_000 thinking the value was Hz; that emitted
+    // a frequency like 0.000014 MHz to QRZ for a 14.205 MHz QSO.
+    freq: contact.frequency ? Number(contact.frequency).toString() : undefined,
     rst_sent: contact.rst_sent,
     rst_rcvd: contact.rst_received,
     gridsquare: contact.grid_locator,

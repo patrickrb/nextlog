@@ -247,10 +247,8 @@ export async function POST(request: NextRequest) {
         band: c.band || '',
         band_rx: c.band_rx,
         mode: c.mode || '',
-        // contacts.frequency is stored in MHz already (DECIMAL(10,6)), but the
-        // LotwQso interface expects MHz frequencies multiplied... re-check:
-        // Looking at QRZ contactToQRZFormat (qrz.ts:225): freq = frequency / 1_000_000
-        // → frequency is stored in Hz. So convert: c.frequency is in Hz here.
+        // contacts.frequency is numeric(10,6) and stores MHz directly. pg returns
+        // numeric as a string by default, so coerce to Number for the LotwQso type.
         freq: c.frequency ? Number(c.frequency) : undefined,
         freq_rx: c.freq_rx ? Number(c.freq_rx) : undefined,
         prop_mode: c.prop_mode,
