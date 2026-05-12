@@ -300,11 +300,19 @@ function parseP12(buf: Buffer, password: string): ParsedP12 {
   const privateKeyPem = forge.pki.privateKeyToPem(keyBag.key);
   const certPem = forge.pki.certificateToPem(certBag.cert);
 
-  // Strip exactly the BEGIN/END markers; keep internal newlines unchanged
-  // (LoTW's parser expects multi-line PEM bodies).
+  // Strip exactly the BEGIN/END markers, keep internal newlines, and normalize
+  // CRLF to LF. node-forge emits PEM with \r\n (pem.js, util.js encode64), but
+  // wavelog's reference .tq8 is produced from PHP's openssl_x509_export which
+  // uses \n only. LoTW silently rejects the QSOs in a file whose tCERT body
+  // doesn't match TQSL's expected line-ending convention (the file is still
+  // queued for processing — the "<!-- .UPL. accepted -->" marker just means
+  // the multipart POST was received — but the processor drops everything
+  // before the "Last upload" timestamp moves).
   const certPemBody = certPem
     .replace(/-----BEGIN CERTIFICATE-----\s*/g, '')
     .replace(/-----END CERTIFICATE-----\s*/g, '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
     .trim();
 
   // ARRL embeds DXCC entity ID in a private extension (PrintableString).
