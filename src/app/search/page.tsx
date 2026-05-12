@@ -803,6 +803,7 @@ export default function SearchPage() {
                   <Label htmlFor="callsign">Callsign</Label>
                   <Input
                     id="callsign"
+                    type="search"
                     placeholder="e.g., W1AW"
                     value={filters.callsign}
                     onChange={(e) => handleFilterChange('callsign', e.target.value)}
@@ -812,6 +813,7 @@ export default function SearchPage() {
                   <Label htmlFor="name">Name</Label>
                   <Input
                     id="name"
+                    type="search"
                     placeholder="Operator name"
                     value={filters.name}
                     onChange={(e) => handleFilterChange('name', e.target.value)}
@@ -821,6 +823,7 @@ export default function SearchPage() {
                   <Label htmlFor="qth">QTH</Label>
                   <Input
                     id="qth"
+                    type="search"
                     placeholder="Location"
                     value={filters.qth}
                     onChange={(e) => handleFilterChange('qth', e.target.value)}
@@ -895,6 +898,7 @@ export default function SearchPage() {
                         <Label htmlFor="gridLocator">Grid Locator</Label>
                         <Input
                           id="gridLocator"
+                          type="search"
                           placeholder="e.g., FN31pr"
                           value={filters.gridLocator}
                           onChange={(e) => handleFilterChange('gridLocator', e.target.value)}
