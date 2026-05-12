@@ -424,7 +424,7 @@ export default function NewContactPage() {
     <div className="min-h-screen">
       <Navbar />
 
-      <main className="max-w-[1400px] mx-auto px-6 lg:px-8 py-8">
+      <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <PageHeader
           title="Log a contact"
           sub={
@@ -449,15 +449,12 @@ export default function NewContactPage() {
         />
 
         <form onSubmit={handleSubmit}>
-          <div
-            className="grid gap-6"
-            style={{ gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)' }}
-          >
+          <div className="grid gap-6 grid-cols-1 xl:[grid-template-columns:minmax(0,1.4fr)_minmax(0,1fr)]">
             {/* LEFT — form */}
             <div className="flex flex-col gap-5 min-w-0">
               {/* Callsign hero */}
               <Card
-                className="p-8 flex flex-col gap-5"
+                className="p-5 sm:p-8 flex flex-col gap-5"
                 style={{
                   background:
                     'linear-gradient(180deg, rgba(77,208,255,0.04), transparent 60%), var(--card)',
@@ -483,7 +480,7 @@ export default function NewContactPage() {
                     placeholder="W1AW"
                     autoComplete="off"
                     className={cn(
-                      'w-full bg-transparent border-0 border-b-2 border-line-hi text-fg font-mono text-[56px] font-semibold tracking-[0.04em] py-4 outline-none transition-colors uppercase placeholder:text-fg-3',
+                      'w-full bg-transparent border-0 border-b-2 border-line-hi text-fg font-mono text-[32px] sm:text-[56px] font-semibold tracking-[0.04em] py-3 sm:py-4 outline-none transition-colors uppercase placeholder:text-fg-3',
                       'focus:border-accent',
                       validationErrors.callsign ? 'border-bad' : ''
                     )}
@@ -501,16 +498,15 @@ export default function NewContactPage() {
                 {lookupResult ? (
                   lookupResult.found ? (
                     <div
-                      className="grid items-center gap-4 p-4 rounded-[14px] border border-accent-glow"
+                      className="grid items-center gap-4 p-4 rounded-[14px] border border-accent-glow [grid-template-columns:48px_1fr] sm:[grid-template-columns:56px_1fr_auto]"
                       style={{
-                        gridTemplateColumns: '56px 1fr auto',
                         background:
                           'linear-gradient(180deg, var(--accent-soft), transparent), var(--bg-1)',
                       }}
                     >
                       <div
                         aria-hidden="true"
-                        className="w-14 h-14 rounded-[12px] grid place-items-center text-[#051018] font-mono font-bold text-lg"
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-[12px] grid place-items-center text-[#051018] font-mono font-bold text-lg"
                         style={{
                           background:
                             'linear-gradient(135deg, var(--accent), #7a9bff)',
@@ -535,7 +531,7 @@ export default function NewContactPage() {
                           </div>
                         ) : null}
                       </div>
-                      <Chip variant="ok">
+                      <Chip variant="ok" className="col-span-2 sm:col-span-1 justify-self-start sm:justify-self-auto">
                         <Check className="h-3.5 w-3.5" />
                         Verified
                       </Chip>
@@ -550,7 +546,7 @@ export default function NewContactPage() {
               </Card>
 
               {/* Band & Mode */}
-              <Card className="p-6">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-[17px] font-semibold">Band &amp; Mode</h3>
                   {formData.frequency ? (
@@ -643,7 +639,7 @@ export default function NewContactPage() {
               </Card>
 
               {/* Signal report & details */}
-              <Card className="p-6">
+              <Card className="p-4 sm:p-6">
                 <h3 className="text-[17px] font-semibold mb-4">
                   Signal report &amp; details
                 </h3>
@@ -792,12 +788,12 @@ export default function NewContactPage() {
                 </div>
               ) : null}
 
-              <div className="flex items-center gap-3 pt-1">
-                <Button asChild variant="secondary">
+              <div className="flex flex-col-reverse sm:flex-row sm:items-center gap-3 pt-1">
+                <Button asChild variant="secondary" className="w-full sm:w-auto">
                   <Link href="/dashboard">Cancel</Link>
                 </Button>
-                <div className="flex-1" />
-                <Button type="submit" size="lg" disabled={isLoading}>
+                <div className="hidden sm:block sm:flex-1" />
+                <Button type="submit" size="lg" disabled={isLoading} className="w-full sm:w-auto">
                   {isLoading ? (
                     <>
                       <Loader2 className="animate-spin" />
