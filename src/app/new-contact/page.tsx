@@ -9,6 +9,8 @@ import {
   AlertCircle,
   Radio,
   Plus,
+  ExternalLink,
+  MapPin,
 } from 'lucide-react';
 
 import Navbar from '@/components/Navbar';
@@ -80,6 +82,55 @@ function freqToBand(freq: number): string {
   return '';
 }
 
+// QRZ XML license-class codes — used to give the chip a human-readable label.
+const LICENSE_CLASS_LABELS: Record<string, string> = {
+  E: 'Extra',
+  A: 'Advanced',
+  G: 'General',
+  P: 'Tech Plus',
+  T: 'Tech',
+  N: 'Novice',
+  C: 'Club',
+};
+
+function CallsignAvatar({
+  image,
+  fallback,
+}: {
+  image?: string;
+  fallback: string;
+}) {
+  const [errored, setErrored] = useState(false);
+  const showImage = image && !errored;
+  return (
+    <div
+      aria-hidden="true"
+      className="w-16 h-16 sm:w-20 sm:h-20 rounded-[12px] overflow-hidden grid place-items-center text-[#051018] font-mono font-bold text-xl shrink-0"
+      style={
+        showImage
+          ? undefined
+          : {
+              background:
+                'linear-gradient(135deg, var(--accent), #7a9bff)',
+            }
+      }
+    >
+      {showImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={image}
+          src={image}
+          alt=""
+          onError={() => setErrored(true)}
+          className="w-full h-full object-cover"
+        />
+      ) : (
+        fallback
+      )}
+    </div>
+  );
+}
+
 function rstToBars(rst: string | undefined, mode: string): number {
   if (!rst) return 0;
   // Voice/CW RST values like 59, 599, 57 — readability is the first digit (1-5)
@@ -125,11 +176,21 @@ export default function NewContactPage() {
   const [lookupResult, setLookupResult] = useState<{
     found: boolean;
     name?: string;
+    nickname?: string;
+    aliases?: string;
     qth?: string;
+    city?: string;
+    state?: string;
     grid_locator?: string;
     latitude?: number;
     longitude?: number;
     country?: string;
+    class?: string;
+    lotw?: boolean;
+    eqsl?: boolean;
+    image?: string;
+    qslmgr?: string;
+    url?: string;
     error?: string;
   } | null>(null);
 
@@ -204,11 +265,14 @@ export default function NewContactPage() {
       if (response.ok) {
         setLookupResult(data);
         if (data.found) {
+          // Replace lookup-derived fields outright. Falling back to `prev` here
+          // would leave stale grid/coords/QTH on the form when the new callsign
+          // resolves but doesn't carry one of those fields.
           setFormData((prev) => ({
             ...prev,
-            name: data.name || prev.name,
-            qth: data.qth || prev.qth,
-            gridLocator: data.grid_locator || prev.gridLocator,
+            name: data.name || '',
+            qth: data.qth || '',
+            gridLocator: data.grid_locator || '',
             latitude: data.latitude,
             longitude: data.longitude,
           }));
@@ -314,9 +378,24 @@ export default function NewContactPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === 'callsign') {
+      // Reset lookup-derived state alongside the callsign so the path map and
+      // grid input don't continue showing the previous operator's data while
+      // the next lookup is in flight.
+      setFormData((prev) => ({
+        ...prev,
+        callsign: value,
+        name: '',
+        qth: '',
+        gridLocator: '',
+        latitude: undefined,
+        longitude: undefined,
+      }));
+      setLookupResult(null);
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
     validateField(name, value);
-    if (name === 'callsign') setLookupResult(null);
   };
 
   const handleSelectMode = (value: string) => {
@@ -498,43 +577,86 @@ export default function NewContactPage() {
                 {lookupResult ? (
                   lookupResult.found ? (
                     <div
-                      className="grid items-center gap-4 p-4 rounded-[14px] border border-accent-glow [grid-template-columns:48px_1fr] sm:[grid-template-columns:56px_1fr_auto]"
+                      className="p-4 rounded-[14px] border border-accent-glow"
                       style={{
                         background:
                           'linear-gradient(180deg, var(--accent-soft), transparent), var(--bg-1)',
                       }}
                     >
-                      <div
-                        aria-hidden="true"
-                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-[12px] grid place-items-center text-[#051018] font-mono font-bold text-lg"
-                        style={{
-                          background:
-                            'linear-gradient(135deg, var(--accent), #7a9bff)',
-                        }}
-                      >
-                        {(lookupResult.name ?? formData.callsign).slice(0, 2).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        {lookupResult.name ? (
-                          <h3 className="text-lg font-semibold truncate">
-                            {lookupResult.name}
-                          </h3>
-                        ) : null}
-                        <div className="font-mono text-sm text-fg-1 truncate">
-                          {[lookupResult.grid_locator, lookupResult.country]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </div>
-                        {lookupResult.qth ? (
-                          <div className="text-[13px] text-fg-2 mt-0.5 truncate">
-                            {lookupResult.qth}
+                      <div className="flex gap-4 items-start">
+                        <CallsignAvatar
+                          image={lookupResult.image}
+                          fallback={(lookupResult.name ?? formData.callsign)
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <h3 className="text-lg font-semibold truncate">
+                                {lookupResult.name || formData.callsign.toUpperCase()}
+                              </h3>
+                              {lookupResult.nickname &&
+                              lookupResult.nickname !== lookupResult.name ? (
+                                <div className="text-[13px] text-fg-2 truncate">
+                                  &ldquo;{lookupResult.nickname}&rdquo;
+                                </div>
+                              ) : null}
+                            </div>
+                            <Chip variant="ok" size="sm">
+                              <Check className="h-3.5 w-3.5" />
+                              Verified
+                            </Chip>
                           </div>
-                        ) : null}
+                          {(lookupResult.city ||
+                            lookupResult.state ||
+                            lookupResult.country) ? (
+                            <div className="flex items-start gap-1.5 text-[13px] text-fg-2 mt-1">
+                              <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                              <span className="truncate">
+                                {[
+                                  lookupResult.city,
+                                  lookupResult.state,
+                                  lookupResult.country,
+                                ]
+                                  .filter(Boolean)
+                                  .join(', ')}
+                              </span>
+                            </div>
+                          ) : null}
+                          {lookupResult.grid_locator ? (
+                            <div className="font-mono text-[13px] text-fg-1 mt-0.5">
+                              Grid {lookupResult.grid_locator}
+                            </div>
+                          ) : null}
+                          <div className="flex flex-wrap gap-1.5 mt-2.5">
+                            {lookupResult.class &&
+                            LICENSE_CLASS_LABELS[lookupResult.class] ? (
+                              <Chip size="sm" variant="accent">
+                                {LICENSE_CLASS_LABELS[lookupResult.class]}
+                              </Chip>
+                            ) : null}
+                            {lookupResult.lotw ? (
+                              <Chip size="sm" variant="info">LoTW user</Chip>
+                            ) : null}
+                            {lookupResult.eqsl ? (
+                              <Chip size="sm" variant="info">eQSL user</Chip>
+                            ) : null}
+                            {lookupResult.qslmgr ? (
+                              <Chip size="sm">QSL: {lookupResult.qslmgr}</Chip>
+                            ) : null}
+                          </div>
+                          <a
+                            href={`https://www.qrz.com/db/${formData.callsign.toUpperCase()}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[13px] text-accent hover:underline mt-2"
+                          >
+                            View on QRZ
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
                       </div>
-                      <Chip variant="ok" className="col-span-2 sm:col-span-1 justify-self-start sm:justify-self-auto">
-                        <Check className="h-3.5 w-3.5" />
-                        Verified
-                      </Chip>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 text-sm text-warn">
