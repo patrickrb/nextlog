@@ -241,29 +241,16 @@
 /* ──────────────────────────────────────────────────────────────
    Suppress password-manager autofill icon overlays
    ──────────────────────────────────────────────────────────────
-   LastPass / 1Password / Dashlane inject icon overlays next to
-   text inputs they think are credentials. We set data-lpignore /
-   data-1p-ignore as defaults on the shared Input component, but
-   in practice LP still attaches its icon on some fields. These
-   rules nuke the injected overlay elements for any input that
-   has already opted out via those attributes, plus background-
-   image overrides for the inline-injection variant. */
-input[data-lpignore="true"] + div[data-lastpass-icon-root],
-input[data-lpignore="true"] + div[data-lastpass-root],
-input[data-1p-ignore] + com-1password-button,
-input[data-1p-ignore] + [data-dashlane-rid] {
+   LastPass injects <svg data-lastpass-icon="true"> overlays
+   positioned absolutely over inputs it thinks are credentials,
+   regardless of data-lpignore. Since this app is ham-radio data
+   (callsign, RST, datetime, city, etc.) and not credentials, we
+   hide the in-field icon globally. LP/1P autofill still works on
+   the auth forms via the extension's keyboard shortcut and
+   dropdown — only the in-field icon overlay is hidden. */
+svg[data-lastpass-icon="true"],
+com-1password-button,
+[data-dashlane-rid],
+[data-bitwarden-watching] {
   display: none !important;
-}
-input[data-lpignore="true"],
-input[data-1p-ignore] {
-  background-image: none !important;
-  background-attachment: initial !important;
-}
-input[data-lpignore="true"]::-webkit-credentials-auto-fill-button,
-input[data-1p-ignore]::-webkit-credentials-auto-fill-button {
-  visibility: hidden !important;
-  display: none !important;
-  pointer-events: none !important;
-  position: absolute !important;
-  right: 0 !important;
 }
