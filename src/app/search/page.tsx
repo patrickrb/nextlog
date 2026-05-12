@@ -768,6 +768,16 @@ export default function SearchPage() {
               <FilterChips chips={activeFilterChips} onRemoveFilter={removeFilter} />
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Wrapping the filter fields in a <form> gives LastPass a form
+                  context to bind to, so it respects data-lpignore on the
+                  individual inputs and stops attaching its autofill icon.
+                  Search is debounced on filter change, so the form has no
+                  real submit action — Enter is suppressed via preventDefault. */}
+              <form
+                autoComplete="off"
+                onSubmit={(e) => e.preventDefault()}
+                className="space-y-6"
+              >
               {/* Quick Filters */}
               <div className="space-y-2">
                 <Label>Quick Filters</Label>
@@ -931,6 +941,7 @@ export default function SearchPage() {
                   </div>
                 </>
               )}
+              </form>
             </CardContent>
           </Card>
 
