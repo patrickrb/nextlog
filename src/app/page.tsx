@@ -129,7 +129,7 @@ export default function Home() {
   return (
     <div className="flex-1">
       {/* Transparent landing topbar */}
-      <header className="flex items-center gap-7 px-10 py-6">
+      <header className="flex items-center gap-4 sm:gap-7 px-4 sm:px-6 lg:px-10 py-4 sm:py-6">
         <BrandLockup href="/" />
         <nav className="hidden md:flex items-center gap-1 ml-2">
           <a
@@ -145,8 +145,8 @@ export default function Home() {
             Dashboard
           </Link>
         </nav>
-        <div className="ml-auto flex items-center gap-3">
-          <Button asChild variant="ghost">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          <Button asChild variant="ghost" className="hidden sm:inline-flex">
             <Link href="/login">Sign in</Link>
           </Button>
           <Button asChild>
@@ -156,7 +156,7 @@ export default function Home() {
       </header>
 
       {/* Hero */}
-      <section className="px-10 pt-20 pb-16 max-w-[1280px] mx-auto text-center">
+      <section className="px-4 sm:px-6 lg:px-10 pt-12 sm:pt-20 pb-12 sm:pb-16 max-w-[1280px] mx-auto text-center">
         <Chip variant="accent" className="mb-7">
           <Dot tone="ok" live />
           Open source · self-host or cloud
@@ -197,18 +197,18 @@ export default function Home() {
           Log a QSO in three keystrokes, sync to LoTW &amp; QRZ automatically,
           and watch your contacts light up the world.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-          <Button asChild size="lg">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center sm:items-center">
+          <Button asChild size="lg" className="w-full sm:w-auto">
             <Link href="/register">Try it free</Link>
           </Button>
-          <Button asChild variant="secondary" size="lg">
+          <Button asChild variant="secondary" size="lg" className="w-full sm:w-auto">
             <Link href="/dashboard">See live logging</Link>
           </Button>
         </div>
       </section>
 
       {/* Preview mockup */}
-      <div className="relative max-w-[1280px] mx-auto px-10 pb-24">
+      <div className="relative max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 pb-16 sm:pb-24">
         <div
           className="absolute pointer-events-none"
           style={{
@@ -241,11 +241,11 @@ export default function Home() {
               </Chip>
             </div>
           </div>
-          <div className="grid min-h-[460px]" style={{ gridTemplateColumns: '1.6fr 1fr' }}>
+          <div className="grid min-h-[460px] grid-cols-1 lg:[grid-template-columns:1.6fr_1fr]">
             <WorldBackdrop
               pins={PREVIEW_PINS}
               arcs={PREVIEW_ARCS}
-              className="border-r border-line"
+              className="border-b lg:border-b-0 lg:border-r border-line min-h-[260px]"
             >
               <div className="absolute top-4 left-4 z-10">
                 <Chip>
@@ -300,7 +300,7 @@ export default function Home() {
       {/* Features */}
       <section
         id="features"
-        className="max-w-[1280px] mx-auto px-10 py-20"
+        className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 py-12 sm:py-20"
       >
         <div className="text-[13px] font-mono text-accent uppercase tracking-[0.12em] mb-3.5">
           Built for operators
@@ -340,9 +340,8 @@ export default function Home() {
 
       {/* CTA */}
       <section
-        className="relative mx-10 mb-20 rounded-[28px] overflow-hidden border border-line-hi text-center"
+        className="relative mx-4 sm:mx-6 lg:mx-10 mb-12 sm:mb-20 px-5 sm:px-10 py-12 sm:py-20 rounded-[28px] overflow-hidden border border-line-hi text-center"
         style={{
-          padding: '80px 40px',
           background:
             'radial-gradient(800px 400px at 50% 100%, rgba(77,208,255,0.18), transparent 60%), radial-gradient(600px 300px at 50% 0%, rgba(167,139,250,0.12), transparent 60%), linear-gradient(180deg, #131923, #0e131c)',
         }}
@@ -370,11 +369,11 @@ export default function Home() {
           <p className="text-lg text-fg-1 mb-8">
             Free to self-host. Open source. Ready when you are.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <Button asChild size="lg">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center sm:items-center">
+            <Button asChild size="lg" className="w-full sm:w-auto">
               <Link href="/register">Start logging</Link>
             </Button>
-            <Button asChild variant="secondary" size="lg">
+            <Button asChild variant="secondary" size="lg" className="w-full sm:w-auto">
               <a
                 href="https://github.com/patrickrb/nextlog"
                 target="_blank"
