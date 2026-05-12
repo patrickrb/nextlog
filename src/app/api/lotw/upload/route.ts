@@ -8,6 +8,8 @@ import {
   generateAdifHash,
   normalizeCallsign,
   decryptString,
+  readCertMetadata,
+  isQsoWithinCertDateRange,
 } from '@/lib/lotw';
 import {
   LotwUploadRequest,
@@ -156,17 +158,46 @@ export async function POST(request: NextRequest) {
       const contactsResult = await query(contactQuery, queryParams);
       const allContacts: ContactWithLoTW[] = contactsResult.rows;
 
+      // Read the cert's qso_start_date / qso_end_date up front so we can filter
+      // out-of-range QSOs without having to ingest a parse failure mid-signing.
+      // LoTW silently discards QSOs whose date is outside the cert's window
+      // (these are the rejection emails that say "QSO date is outside the
+      // QSL'able date range for this certificate"), so this filter prevents the
+      // upload from "succeeding" while LoTW drops the file on its end.
+      let certMetadata: ReturnType<typeof readCertMetadata> | undefined;
+      try {
+        certMetadata = readCertMetadata(certificate.p12_cert, p12Password);
+      } catch (metaError) {
+        console.error('[LoTW Upload] Failed to read cert metadata:', metaError);
+      }
+      const certWindow = certMetadata
+        ? { start: certMetadata.qsoStartDate, end: certMetadata.qsoEndDate }
+        : { start: undefined, end: undefined };
+
       // Filter out QSOs whose prop_mode LoTW doesn't accept; flag them as 'I' so
-      // they don't keep cycling through future upload passes.
+      // they don't keep cycling through future upload passes. Also filter out
+      // QSOs outside the cert's allowed QSO date window — those would be
+      // silently dropped by LoTW even though our .tq8 is otherwise valid.
       const skipped: ContactWithLoTW[] = [];
+      const outOfRange: ContactWithLoTW[] = [];
       const contacts: ContactWithLoTW[] = [];
       for (const c of allContacts) {
         const propMode = (c.prop_mode || '').toUpperCase();
         if (propMode && LOTW_UNSUPPORTED_PROP_MODES.has(propMode)) {
           skipped.push(c);
-        } else {
-          contacts.push(c);
+          continue;
         }
+        if (
+          !isQsoWithinCertDateRange(
+            new Date(c.datetime),
+            certWindow.start,
+            certWindow.end
+          )
+        ) {
+          outOfRange.push(c);
+          continue;
+        }
+        contacts.push(c);
       }
       if (skipped.length > 0) {
         await query(
@@ -176,22 +207,42 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const formatCertWindow = () => {
+        if (!certWindow.start && !certWindow.end) return 'unknown';
+        const s = certWindow.start
+          ? certWindow.start.toISOString().slice(0, 10)
+          : '−∞';
+        const e = certWindow.end
+          ? certWindow.end.toISOString().slice(0, 10)
+          : '+∞';
+        return `${s} to ${e}`;
+      };
+
       if (contacts.length === 0) {
+        const parts: string[] = [];
+        if (skipped.length > 0)
+          parts.push(`${skipped.length} unsupported prop_mode`);
+        if (outOfRange.length > 0)
+          parts.push(
+            `${outOfRange.length} outside cert's QSO date range (${formatCertWindow()})`
+          );
+        const reason = parts.length
+          ? `No upload-eligible contacts (skipped ${parts.join(', ')})`
+          : 'No contacts found for upload';
+
         await query(
           `UPDATE lotw_upload_logs
            SET status = 'completed', completed_at = NOW(), qso_count = 0,
                error_message = $1
            WHERE id = $2`,
-          [skipped.length > 0
-            ? `No upload-eligible contacts (skipped ${skipped.length} unsupported prop_mode QSOs)`
-            : 'No contacts found for upload', uploadLogId]
+          [reason, uploadLogId]
         );
 
         const response: LotwUploadResponse = {
           success: true,
           upload_log_id: uploadLogId,
           qso_count: 0,
-          error_message: 'No contacts found for upload'
+          error_message: reason,
         };
 
         return NextResponse.json(response);
@@ -326,26 +377,36 @@ export async function POST(request: NextRequest) {
       // Mark contacts as uploaded to LoTW
       const contactIds = contacts.map(c => c.id);
       await query(
-        `UPDATE contacts 
-         SET lotw_qsl_sent = 'Y', updated_at = NOW() 
+        `UPDATE contacts
+         SET lotw_qsl_sent = 'Y', updated_at = NOW()
          WHERE id = ANY($1)`,
         [contactIds]
       );
 
+      // Surface the out-of-range count alongside the success log so it's
+      // visible on the /lotw upload log table — those QSOs aren't on LoTW
+      // and the operator needs to know either to renew the cert or to fix
+      // the QSO dates.
+      const partialNotice = outOfRange.length
+        ? `Skipped ${outOfRange.length} QSO${outOfRange.length === 1 ? '' : 's'} outside cert's QSO date range (${formatCertWindow()})`
+        : null;
+
       // Update upload log as completed
       await query(
-        `UPDATE lotw_upload_logs 
-         SET status = 'completed', completed_at = NOW(), 
-             success_count = $1, lotw_response = $2 
-         WHERE id = $3`,
-        [contacts.length, lotwResponse, uploadLogId]
+        `UPDATE lotw_upload_logs
+         SET status = 'completed', completed_at = NOW(),
+             success_count = $1, lotw_response = $2,
+             error_message = $3
+         WHERE id = $4`,
+        [contacts.length, lotwResponse, partialNotice, uploadLogId]
       );
 
       const response: LotwUploadResponse = {
         success: true,
         upload_log_id: uploadLogId,
         qso_count: contacts.length,
-        lotw_response: lotwResponse
+        lotw_response: lotwResponse,
+        ...(partialNotice ? { error_message: partialNotice } : {}),
       };
 
       return NextResponse.json(response);
