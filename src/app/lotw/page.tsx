@@ -67,55 +67,60 @@ export default function LotwPage() {
   const [certPassword, setCertPassword] = useState('');
   const [showCertPassword, setShowCertPassword] = useState(false);
 
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const router = useRouter();
 
+  // loadData is intentionally dep-free. setSelectedStation uses a functional
+  // updater so we don't need selectedStation in deps, and setLoading flips
+  // are internal — including them in useEffect's deps would create an
+  // infinite refetch loop (page used to hammer /api/stations + /api/lotw/*).
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      
-      // Load stations
+
       const stationsResponse = await fetch('/api/stations');
       if (stationsResponse.ok) {
         const stationsData = await stationsResponse.json();
-        setStations(stationsData.stations || []);
-        
-        // Set default station if none selected
-        if (!selectedStation && stationsData.stations?.length > 0) {
-          const defaultStation = stationsData.stations.find((s: Station) => s.is_default) || stationsData.stations[0];
-          setSelectedStation(defaultStation.id.toString());
-        }
+        const fetchedStations: Station[] = stationsData.stations || [];
+        setStations(fetchedStations);
+
+        // Pick a default station only if one isn't already chosen.
+        setSelectedStation((prev) => {
+          if (prev) return prev;
+          const def = fetchedStations.find((s) => s.is_default) || fetchedStations[0];
+          return def ? def.id.toString() : '';
+        });
       }
 
-      // Load upload logs
       const uploadResponse = await fetch('/api/lotw/upload');
       if (uploadResponse.ok) {
         const uploadData = await uploadResponse.json();
         setUploadLogs(uploadData.upload_logs || []);
       }
 
-      // Load download logs
       const downloadResponse = await fetch('/api/lotw/download');
       if (downloadResponse.ok) {
         const downloadData = await downloadResponse.json();
         setDownloadLogs(downloadData.download_logs || []);
       }
-
     } catch (error) {
       console.error('Failed to load data:', error);
       setMessage({ type: 'error', text: 'Failed to load LoTW data' });
     } finally {
       setLoading(false);
     }
-  }, [selectedStation]);
+  }, []);
 
   useEffect(() => {
-    if (!user && !loading) {
+    // Wait for the auth context to finish its initial /api/user check before
+    // deciding anything — user is null both pre-resolve and when unauthed.
+    if (userLoading) return;
+    if (!user) {
       router.push('/login');
       return;
     }
     loadData();
-  }, [user, router, loading, loadData]);
+  }, [user, userLoading, router, loadData]);
 
   const handleUpload = async () => {
     if (!selectedStation) {
