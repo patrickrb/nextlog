@@ -11,6 +11,7 @@ import EditContactDialog from '@/components/EditContactDialog';
 import DXpeditionWidget from '@/components/DXpeditionWidget';
 import QslMatrix from '@/components/QslMatrix';
 import Pagination from '@/components/Pagination';
+import QuickLogCard from '@/components/QuickLogCard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
@@ -366,50 +367,12 @@ export default function DashboardPage() {
             </div>
           </Card>
 
-          <Card className="p-4 sm:p-7 flex flex-col gap-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-[17px] font-semibold">Quick log</h2>
-              <Chip variant="accent" size="sm">
-                <Dot tone="ok" live />
-                Live
-              </Chip>
-            </div>
-            <p className="text-sm text-fg-2">
-              Need more fields? Open the full new-contact form for callsign
-              lookup, RST defaults by mode, station picker, and notes.
-            </p>
-            <Button asChild size="lg" className="w-full">
-              <Link href="/new-contact">
-                <Plus />
-                Log a QSO
-              </Link>
-            </Button>
-            <div className="flex items-center gap-2 text-xs text-fg-2">
-              Press <Kbd>L</Kbd> on any page to jump straight in.
-            </div>
-            <div className="border-t border-line pt-4">
-              <div className="text-[13px] font-medium uppercase tracking-[0.06em] text-fg-2 mb-3">
-                Recent
-              </div>
-              <div className="flex flex-col gap-2">
-                {contacts.slice(0, 4).map((contact) => (
-                  <button
-                    key={contact.id}
-                    type="button"
-                    onClick={() => handleContactClick(contact)}
-                    className="flex justify-between items-center px-3 py-2 rounded-[10px] bg-bg-1 border border-line text-left hover:border-line-hi transition-colors cursor-pointer"
-                  >
-                    <span className="font-mono font-semibold text-fg">
-                      {contact.callsign}
-                    </span>
-                    <span className="text-xs text-fg-2 font-mono">
-                      {contact.band} · {contact.mode} · {formatUtc(contact.datetime)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </Card>
+          <QuickLogCard
+            onSaved={() => {
+              fetchContacts(1, pagination.limit);
+              fetchStats();
+            }}
+          />
         </div>
 
         {/* Band activity */}
