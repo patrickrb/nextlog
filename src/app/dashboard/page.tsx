@@ -9,8 +9,7 @@ import Navbar from '@/components/Navbar';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import EditContactDialog from '@/components/EditContactDialog';
 import DXpeditionWidget from '@/components/DXpeditionWidget';
-import LotwSyncIndicator from '@/components/LotwSyncIndicator';
-import QRZSyncIndicator from '@/components/QRZSyncIndicator';
+import QslMatrix from '@/components/QslMatrix';
 import Pagination from '@/components/Pagination';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -289,14 +288,6 @@ export default function DashboardPage() {
   const greetName = user?.name?.split(' ')[0] ?? 'operator';
   const userCallsign = user?.callsign;
 
-  const qslChip = (contact: Contact) => {
-    const lotwOk = contact.qsl_lotw === true || contact.lotw_qsl_rcvd === 'Y';
-    const qrzOk = contact.qrz_qsl_rcvd === 'Y';
-    if (lotwOk) return <Chip variant="ok" size="sm">✓ LoTW</Chip>;
-    if (qrzOk) return <Chip variant="ok" size="sm">✓ QRZ</Chip>;
-    return <Chip variant="warn" size="sm"><Dot tone="warn" /> pending</Chip>;
-  };
-
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -513,7 +504,7 @@ export default function DashboardPage() {
                         <TableHead>Freq</TableHead>
                         <TableHead>RST</TableHead>
                         <TableHead>Operator</TableHead>
-                        <TableHead>QSL</TableHead>
+                        <TableHead>QSL · LoTW / QRZ</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -574,29 +565,20 @@ export default function DashboardPage() {
                               ) : null}
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                {qslChip(contact)}
-                                <span className="hidden xl:flex items-center gap-1.5">
-                                  <LotwSyncIndicator
-                                    lotwQslSent={contact.lotw_qsl_sent}
-                                    lotwQslRcvd={contact.lotw_qsl_rcvd}
-                                    qslLotw={contact.qsl_lotw}
-                                    qslLotwDate={contact.qsl_lotw_date}
-                                    lotwMatchStatus={contact.lotw_match_status}
-                                    contactId={contact.id}
-                                    stationId={contact.station_id}
-                                    onStatusChange={() => fetchContacts()}
-                                    size="sm"
-                                  />
-                                  <QRZSyncIndicator
-                                    qrzQslSent={contact.qrz_qsl_sent}
-                                    qrzQslSentDate={contact.qrz_qsl_sent_date}
-                                    qrzQslRcvd={contact.qrz_qsl_rcvd}
-                                    qrzQslRcvdDate={contact.qrz_qsl_rcvd_date}
-                                    size="sm"
-                                  />
-                                </span>
-                              </div>
+                              <QslMatrix
+                                lotw_qsl_sent={contact.lotw_qsl_sent}
+                                lotw_qsl_rcvd={contact.lotw_qsl_rcvd}
+                                qsl_lotw={contact.qsl_lotw}
+                                qsl_lotw_date={contact.qsl_lotw_date}
+                                lotw_match_status={contact.lotw_match_status}
+                                qrz_qsl_sent={contact.qrz_qsl_sent}
+                                qrz_qsl_sent_date={contact.qrz_qsl_sent_date}
+                                qrz_qsl_rcvd={contact.qrz_qsl_rcvd}
+                                qrz_qsl_rcvd_date={contact.qrz_qsl_rcvd_date}
+                                contact_id={contact.id}
+                                station_id={contact.station_id}
+                                onStatusChange={() => fetchContacts()}
+                              />
                             </TableCell>
                           </TableRow>
                         ))
@@ -628,7 +610,20 @@ export default function DashboardPage() {
                           <span className="font-mono font-semibold text-fg text-lg">
                             {contact.callsign}
                           </span>
-                          {qslChip(contact)}
+                          <QslMatrix
+                            lotw_qsl_sent={contact.lotw_qsl_sent}
+                            lotw_qsl_rcvd={contact.lotw_qsl_rcvd}
+                            qsl_lotw={contact.qsl_lotw}
+                            qsl_lotw_date={contact.qsl_lotw_date}
+                            lotw_match_status={contact.lotw_match_status}
+                            qrz_qsl_sent={contact.qrz_qsl_sent}
+                            qrz_qsl_sent_date={contact.qrz_qsl_sent_date}
+                            qrz_qsl_rcvd={contact.qrz_qsl_rcvd}
+                            qrz_qsl_rcvd_date={contact.qrz_qsl_rcvd_date}
+                            contact_id={contact.id}
+                            station_id={contact.station_id}
+                            onStatusChange={() => fetchContacts()}
+                          />
                         </div>
                         <MobileCardRow label="When">
                           <span>
