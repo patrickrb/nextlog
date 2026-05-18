@@ -18,9 +18,9 @@ A modern, web-based amateur radio logging application built with Next.js and Pos
 
 ## Technology Stack
 
-- **Frontend**: Next.js 15 with TypeScript
+- **Frontend**: Next.js 16, React 19, TypeScript 5.8
 - **Backend**: Next.js API Routes
-- **Database**: PostgreSQL with native SQL
+- **Database**: PostgreSQL (raw `pg` at runtime); schema-as-code via Drizzle Kit (`drizzle/schema.ts`)
 - **Authentication**: JWT-based authentication
 - **Styling**: Tailwind CSS
 - **Deployment**: Vercel-ready
@@ -29,7 +29,7 @@ A modern, web-based amateur radio logging application built with Next.js and Pos
 
 ### Prerequisites
 
-- Node.js 18+ 
+- Node.js 20.9+ (required by Next.js 16)
 - PostgreSQL 13+ database
 - Docker and Docker Compose (recommended)
 - Git
