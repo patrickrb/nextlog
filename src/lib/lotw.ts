@@ -263,6 +263,10 @@ function parseLoTWDateTime(qsoDate: string, timeOn: string): Date {
 // =====================================================================
 
 const TQSL_IDENT = 'TQSL V2.8.2 Lib: V2.6 Config: V11.34 AllowDupes: false';
+// ARRL's private X.509 extensions in a LoTW certificate.
+// Reference: https://oidref.com/1.3.6.1.4.1.12348.1
+const ARRL_QSO_FIRST_DATE_OID = '1.3.6.1.4.1.12348.1.2';
+const ARRL_QSO_END_DATE_OID = '1.3.6.1.4.1.12348.1.3';
 const ARRL_DXCC_OID = '1.3.6.1.4.1.12348.1.4';
 
 // Internal: the parsed P12 we feed to signing.
@@ -271,8 +275,48 @@ interface ParsedP12 {
   certPem: string;
   certPemBody: string;     // BEGIN/END stripped, internal newlines preserved
   certSerial: string;       // hex, lowercased; for CRL queries
-  certDxcc?: number;        // from ARRL OID 1.3.6.1.4.1.12348.1.4
+  certDxcc?: number;        // from ARRL OID .4
   certNotAfter?: Date;
+  // QSO date range encoded in ARRL OIDs .2 / .3 — LoTW silently rejects any
+  // QSO whose date falls outside this window, even if the cert itself is
+  // within its X.509 validity. Mirrors wavelog's preflight filter.
+  qsoStartDate?: Date;
+  qsoEndDate?: Date;
+}
+
+// Read a PrintableString value out of an ARRL private extension. The forge
+// `value` field for unknown extensions is a binary string holding the raw
+// DER-encoded ASN.1 value; we parse it and pull the inner string.
+function readArrlPrintableExt(
+  certBag: forge.pki.Certificate,
+  oid: string
+): string | undefined {
+  try {
+    type ForgeExtension = { id: string; value?: unknown };
+    const certExts =
+      (certBag as unknown as { extensions?: ForgeExtension[] }).extensions ??
+      [];
+    const ext = certExts.find(e => e?.id === oid);
+    if (!ext || typeof ext.value !== 'string') return undefined;
+    const inner = forge.asn1.fromDer(ext.value);
+    const innerValue = (inner as { value: unknown }).value;
+    return typeof innerValue === 'string' ? innerValue : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// ARRL stores the QSO-date-range bounds as compact strings — historically
+// "YYYYMMDD" but newer certs may use "YYYY-MM-DD". Accept both, return a
+// UTC midnight Date. End-of-day handling (i.e. inclusive end date) lives
+// at the call site, not here.
+function parseArrlDateString(raw: string | undefined): Date | undefined {
+  if (!raw) return undefined;
+  const m = raw.match(/^(\d{4})-?(\d{2})-?(\d{2})/);
+  if (!m) return undefined;
+  const [, y, mm, dd] = m;
+  const d = new Date(Date.UTC(parseInt(y, 10), parseInt(mm, 10) - 1, parseInt(dd, 10)));
+  return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
 function parseP12(buf: Buffer, password: string): ParsedP12 {
@@ -319,23 +363,20 @@ function parseP12(buf: Buffer, password: string): ParsedP12 {
   // forge's getExtension types accept `id: number` only, but X.509 extension
   // OIDs are dotted strings — search the .extensions array directly instead.
   let certDxcc: number | undefined;
-  try {
-    type ForgeExtension = { id: string; value?: unknown };
-    const certExts = (certBag.cert as unknown as { extensions?: ForgeExtension[] }).extensions ?? [];
-    const ext = certExts.find(e => e?.id === ARRL_DXCC_OID);
-    if (ext && typeof ext.value === 'string') {
-      // The extension value is DER-encoded; parse to extract the printable string.
-      const inner = forge.asn1.fromDer(ext.value);
-      const innerValue = (inner as { value: unknown }).value;
-      if (typeof innerValue === 'string') {
-        const n = parseInt(innerValue, 10);
-        if (!Number.isNaN(n)) certDxcc = n;
-      }
-    }
-  } catch {
-    // Best-effort — if we can't read DXCC from the cert, the caller's station
-    // profile DXCC is used. Do not fail the upload over this.
+  const dxccRaw = readArrlPrintableExt(certBag.cert, ARRL_DXCC_OID);
+  if (dxccRaw) {
+    const n = parseInt(dxccRaw, 10);
+    if (!Number.isNaN(n)) certDxcc = n;
   }
+
+  // QSO-date-range bounds from the same ARRL extension family. LoTW silently
+  // discards any QSO whose date is outside [qsoStartDate, qsoEndDate].
+  const qsoStartDate = parseArrlDateString(
+    readArrlPrintableExt(certBag.cert, ARRL_QSO_FIRST_DATE_OID)
+  );
+  const qsoEndDate = parseArrlDateString(
+    readArrlPrintableExt(certBag.cert, ARRL_QSO_END_DATE_OID)
+  );
 
   // Serial as hex (lowercase, no leading zeros) — matches wavelog's CRL format.
   const certSerial = (certBag.cert.serialNumber || '').toLowerCase();
@@ -348,7 +389,16 @@ function parseP12(buf: Buffer, password: string): ParsedP12 {
     certNotAfter = validity.notAfter;
   }
 
-  return { privateKeyPem, certPem, certPemBody, certSerial, certDxcc, certNotAfter };
+  return {
+    privateKeyPem,
+    certPem,
+    certPemBody,
+    certSerial,
+    certDxcc,
+    certNotAfter,
+    qsoStartDate,
+    qsoEndDate,
+  };
 }
 
 // Format a frequency in MHz the way TQSL does — trim trailing zeros,
@@ -624,9 +674,36 @@ export function readCertMetadata(p12: Buffer, password: string): {
   serial: string;
   notAfter?: Date;
   dxcc?: number;
+  qsoStartDate?: Date;
+  qsoEndDate?: Date;
 } {
   const parsed = parseP12(p12, password);
-  return { serial: parsed.certSerial, notAfter: parsed.certNotAfter, dxcc: parsed.certDxcc };
+  return {
+    serial: parsed.certSerial,
+    notAfter: parsed.certNotAfter,
+    dxcc: parsed.certDxcc,
+    qsoStartDate: parsed.qsoStartDate,
+    qsoEndDate: parsed.qsoEndDate,
+  };
+}
+
+// Check whether a QSO datetime falls within the cert's allowed QSO date range.
+// LoTW silently discards out-of-range QSOs server-side, so we filter them
+// before signing and report them back to the caller. End is inclusive through
+// 23:59:59.999 UTC of qsoEndDate (mirroring wavelog's `qso_end_date . ' 23:59:59'`).
+export function isQsoWithinCertDateRange(
+  qsoDatetime: Date,
+  qsoStartDate: Date | undefined,
+  qsoEndDate: Date | undefined
+): boolean {
+  const t = qsoDatetime.getTime();
+  if (qsoStartDate && t < qsoStartDate.getTime()) return false;
+  if (qsoEndDate) {
+    // Inclusive end-of-day in UTC.
+    const endOfDay = qsoEndDate.getTime() + 24 * 60 * 60 * 1000 - 1;
+    if (t > endOfDay) return false;
+  }
+  return true;
 }
 
 // Generate SHA-256 hash of ADIF content for tracking

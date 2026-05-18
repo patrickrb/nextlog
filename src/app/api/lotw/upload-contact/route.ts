@@ -3,7 +3,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/db';
-import { buildSignedTq8, normalizeCallsign, decryptString } from '@/lib/lotw';
+import {
+  buildSignedTq8,
+  normalizeCallsign,
+  decryptString,
+  readCertMetadata,
+  isQsoWithinCertDateRange,
+} from '@/lib/lotw';
 import { ContactWithLoTW, LotwQso, LotwStationProfile } from '@/types/lotw';
 
 const LOTW_UNSUPPORTED_PROP_MODES = new Set(['INTERNET', 'RPT']);
@@ -100,6 +106,37 @@ export async function POST(request: NextRequest) {
     let p12Password = '';
     if (certificate.p12_password) {
       try { p12Password = decryptString(certificate.p12_password); } catch {}
+    }
+
+    // Reject the upload up front if the QSO date isn't covered by this cert's
+    // ARRL qso_first_date / qso_end_date extensions. LoTW would otherwise
+    // queue the file, then silently drop the QSO server-side.
+    try {
+      const meta = readCertMetadata(certificate.p12_cert, p12Password);
+      if (
+        !isQsoWithinCertDateRange(
+          new Date(contact.datetime),
+          meta.qsoStartDate,
+          meta.qsoEndDate
+        )
+      ) {
+        const s = meta.qsoStartDate?.toISOString().slice(0, 10) ?? '−∞';
+        const e = meta.qsoEndDate?.toISOString().slice(0, 10) ?? '+∞';
+        return NextResponse.json(
+          {
+            success: false,
+            error: `QSO date ${new Date(contact.datetime)
+              .toISOString()
+              .slice(0, 10)} is outside this cert's QSO date range (${s} to ${e}). Renew the LoTW certificate or use one whose range covers this date.`,
+          },
+          { status: 400 }
+        );
+      }
+    } catch (metaError) {
+      console.error('[LoTW Upload-Contact] Failed to read cert metadata:', metaError);
+      // Fall through — if we can't read the cert window we let the upload
+      // proceed and rely on LoTW to reject (rare; cert was already validated
+      // by parseP12 on upload).
     }
 
     const stationProfile: LotwStationProfile = {
