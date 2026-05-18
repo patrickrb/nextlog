@@ -2,11 +2,20 @@
 export interface QRZLookupResult {
   callsign: string;
   name?: string;
+  nickname?: string;
+  aliases?: string;
   qth?: string;
+  city?: string;
+  state?: string;
   grid_locator?: string;
   latitude?: number;
   longitude?: number;
   country?: string;
+  // QRZ XML license-class code: A/E/G/P/T/N/C
+  class?: string;
+  lotw?: boolean;
+  eqsl?: boolean;
+  image?: string;
   email?: string;
   url?: string;
   qslmgr?: string;
@@ -175,14 +184,25 @@ export async function lookupCallsign(callsign: string, username: string, passwor
       }
     }
 
+    const lotwField = parseXmlField(lookupXml, 'lotw');
+    const eqslField = parseXmlField(lookupXml, 'eqsl');
+
     return {
       callsign: callsign.toUpperCase(),
       name,
+      nickname: parseXmlField(lookupXml, 'nickname'),
+      aliases: parseXmlField(lookupXml, 'aliases'),
       qth: qth || undefined,
+      city: addr2,
+      state,
       grid_locator: gridLocator,
       latitude,
       longitude,
-      country: parseXmlField(lookupXml, 'country'),
+      country,
+      class: parseXmlField(lookupXml, 'class'),
+      lotw: lotwField ? lotwField === '1' : undefined,
+      eqsl: eqslField ? eqslField === '1' : undefined,
+      image: parseXmlField(lookupXml, 'image'),
       email: parseXmlField(lookupXml, 'email'),
       url: parseXmlField(lookupXml, 'url'),
       qslmgr: parseXmlField(lookupXml, 'qslmgr'),
