@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { hasValidCronSecret } from '@/lib/cron-auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,22 +19,14 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Verify this is a legitimate cron request
-    const authHeader = request.headers.get('authorization');
-    const expectedAuth = `Bearer ${process.env.CRON_SECRET}`;
-    
-    // For Vercel cron jobs, we need to be more flexible with authentication
-    // Vercel cron jobs run in a trusted environment but may not include the auth header
-    const isVercelCron = request.headers.get('user-agent')?.includes('vercel') || 
-                        request.headers.get('x-vercel-id') ||
-                        request.headers.get('host')?.includes('vercel');
-    
-    if (!isVercelCron && authHeader !== expectedAuth) {
-      console.error('Authentication failed:', {
-        hasAuthHeader: !!authHeader,
-        hasCronSecret: !!process.env.CRON_SECRET,
-        isVercelCron
-      });
+    // Verify this is a legitimate cron request. Fail closed when the secret
+    // is missing — Vercel only attaches the Authorization header when
+    // CRON_SECRET is set, and an unset secret must not mean "open endpoint".
+    if (!process.env.CRON_SECRET) {
+      console.error('CRON_SECRET is not configured; refusing cron request');
+      return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
+    }
+    if (!hasValidCronSecret(request)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -79,7 +72,8 @@ export async function GET(request: NextRequest) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-Cron-Job': 'true', // Internal identifier
+            'X-Cron-Job': 'true', // Cron-mode discriminator (grants nothing by itself)
+            'Authorization': `Bearer ${process.env.CRON_SECRET}`,
           },
           body: JSON.stringify({
             station_id: station.id,
