@@ -28,6 +28,7 @@ export interface StationData {
   qrz_username?: string;
   qrz_password?: string;
   qrz_api_key?: string;
+  qrz_last_qsl_rcvd_date?: Date | string;
   club_callsign?: string;
   lotw_username?: string;
   lotw_password?: string;
@@ -223,6 +224,15 @@ export class Station {
     } finally {
       client.release();
     }
+  }
+
+  // Advance the incremental QRZ download cursor after a successful
+  // confirmation fetch (used as MODSINCE on the next run).
+  static async updateQrzLastQslRcvdDate(stationId: number): Promise<void> {
+    await query(
+      'UPDATE stations SET qrz_last_qsl_rcvd_date = CURRENT_DATE, updated_at = CURRENT_TIMESTAMP WHERE id = $1',
+      [stationId]
+    );
   }
 
   static async getActiveStations(userId: number): Promise<StationData[]> {

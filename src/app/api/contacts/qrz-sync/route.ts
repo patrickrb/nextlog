@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { User } from '@/models/User';
 import { Contact } from '@/models/Contact';
-import { Station } from '@/models/Station';
-import { uploadQSOToQRZWithApiKey, contactToQRZFormat } from '@/lib/qrz';
+import { Station, StationData } from '@/models/Station';
+import { syncContactToQrz } from '@/lib/qrz-sync-service';
+
+interface BulkSyncResult {
+  contactId: number;
+  success: boolean;
+  skipped?: boolean;
+  already_existed?: boolean;
+  message?: string;
+  error?: string;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,7 +36,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const results = [];
+    const results: BulkSyncResult[] = [];
+    const stationCache = new Map<number, StationData | null>();
 
     // Process each contact
     for (const contactId of contactIds) {
@@ -43,30 +53,6 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Skip if already sent to QRZ
-        if (contact.qrz_qsl_sent === 'Y') {
-          results.push({
-            contactId,
-            success: true,
-            skipped: true,
-            message: 'Already sent to QRZ'
-          });
-          continue;
-        }
-
-        // If we've received confirmation from QRZ, mark as sent too (it exists in QRZ)
-        if (contact.qrz_qsl_rcvd === 'Y') {
-          await Contact.updateQrzQsl(contactId, 'Y');
-          results.push({
-            contactId,
-            success: true,
-            skipped: true,
-            message: 'Already confirmed by QRZ (marked as sent)'
-          });
-          continue;
-        }
-
-        // Get the station for this contact to get QRZ API key
         if (!contact.station_id) {
           results.push({
             contactId,
@@ -76,7 +62,13 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        const station = await Station.findByUserIdAndId(decoded.userId, contact.station_id);
+        if (!stationCache.has(contact.station_id)) {
+          stationCache.set(
+            contact.station_id,
+            await Station.findByUserIdAndId(decoded.userId, contact.station_id)
+          );
+        }
+        const station = stationCache.get(contact.station_id) ?? null;
         if (!station) {
           results.push({
             contactId,
@@ -86,52 +78,26 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        if (!station.qrz_api_key) {
+        const outcome = await syncContactToQrz(contact, station);
+
+        if (outcome.status === 'failed') {
           results.push({
             contactId,
             success: false,
-            error: 'No QRZ API key configured for this station. Please add your QRZ API key in station settings.'
+            error: outcome.error
           });
-          continue;
-        }
-
-        // Convert contact to QRZ format and upload
-        const qrzData = contactToQRZFormat(contact);
-        const uploadResult = await uploadQSOToQRZWithApiKey(qrzData, station.qrz_api_key);
-
-        if (uploadResult.success) {
-          if (uploadResult.already_exists) {
-            // Mark as both sent AND received since it exists in QRZ (it's confirmed!)
-            await Contact.updateQrzQsl(contactId, 'Y', 'Y');
-            results.push({
-              contactId,
-              success: true,
-              already_existed: true,
-              message: 'QSO already exists in QRZ logbook (marked as sent and confirmed)'
-            });
-          } else {
-            // Mark as sent to QRZ (but not yet confirmed)
-            await Contact.updateQrzQsl(contactId, 'Y');
-            results.push({
-              contactId,
-              success: true,
-              message: 'Successfully sent to QRZ'
-            });
-          }
         } else {
-          // Mark as request failed
-          await Contact.updateQrzQsl(contactId, 'R');
           results.push({
             contactId,
-            success: false,
-            error: uploadResult.error
+            success: true,
+            ...(outcome.status === 'skipped' ? { skipped: true } : {}),
+            ...(outcome.status === 'confirmed' ? { already_existed: true } : {}),
+            message: outcome.message
           });
         }
 
       } catch (error) {
-        // Mark as error
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        await Contact.updateQrzQsl(contactId, 'R');
         results.push({
           contactId,
           success: false,

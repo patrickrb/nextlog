@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { Contact } from '@/models/Contact';
 import { verifyToken } from '@/lib/auth';
-import { backgroundAutoSync } from '@/lib/qrz-auto-sync';
+import { autoSyncContactToQRZ } from '@/lib/qrz-auto-sync';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -57,11 +57,23 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    // Trigger auto-sync in background if enabled
-    // Reset sync status when contact is updated so it can be re-synced
-    if (data.callsign || data.datetime || data.frequency || data.mode || data.band) {
-      await Contact.updateQrzSyncStatus(parseInt(id), 'not_synced');
-      backgroundAutoSync(parseInt(id), parseInt(user.userId, 10));
+    // Core QSO fields changed: flag already-uploaded copies for re-upload
+    // ('Y' → 'M', wavelog's modified marker) and auto-sync after the response.
+    // Compare payload values against the stored row — the edit form sends the
+    // core fields on every PUT, so mere presence (or truthiness) would flag
+    // unmodified QSOs and miss updates that clear a field.
+    const strChanged = (key: 'callsign' | 'mode' | 'band') =>
+      key in data && String(data[key] ?? '') !== String(existingContact[key] ?? '');
+    const freqChanged =
+      'frequency' in data &&
+      Number(data.frequency ?? 0) !== Number(existingContact.frequency ?? 0);
+    const datetimeChanged =
+      'datetime' in data &&
+      new Date(data.datetime).getTime() !== new Date(existingContact.datetime).getTime();
+    if (strChanged('callsign') || strChanged('mode') || strChanged('band') || freqChanged || datetimeChanged) {
+      await Contact.flagForReupload(parseInt(id));
+      const userId = parseInt(user.userId, 10);
+      after(() => autoSyncContactToQRZ(parseInt(id), userId));
     }
 
     return NextResponse.json(contact);
