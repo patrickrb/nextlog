@@ -44,6 +44,7 @@ const MORE_LINKS = [
   { href: '/qsl-cards', label: 'QSL Cards' },
   { href: '/adif', label: 'ADIF Import/Export' },
   { href: '/lotw', label: 'LoTW' },
+  { href: '/sync', label: 'Sync Activity' },
 ];
 
 export default function Navbar({ actions }: NavbarProps) {

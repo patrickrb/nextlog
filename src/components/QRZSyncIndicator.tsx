@@ -4,7 +4,7 @@ import { Upload, Download, AlertCircle } from 'lucide-react';
 
 interface QRZSyncIndicatorProps {
   // Upload status
-  qrzQslSent?: string; // 'Y', 'N', 'R' (Yes, No, Request failed)
+  qrzQslSent?: string; // 'Y', 'N', 'R', 'M', 'I' (Yes, No, Request failed, Modified, Ignored)
   qrzQslSentDate?: Date | string; // Date when sent to QRZ
   
   // Download/confirmation status  
@@ -39,11 +39,25 @@ export default function QRZSyncIndicator({
         tooltip: `Uploaded to QRZ${dateText}` 
       };
     } else if (qrzQslSent === 'R') {
-      return { 
-        status: 'error', 
-        color: 'text-bad', 
-        icon: AlertCircle, 
-        tooltip: 'QRZ upload failed' 
+      return {
+        status: 'error',
+        color: 'text-bad',
+        icon: AlertCircle,
+        tooltip: 'QRZ upload failed'
+      };
+    } else if (qrzQslSent === 'M') {
+      return {
+        status: 'modified',
+        color: 'text-warn',
+        icon: Upload,
+        tooltip: 'Modified — pending re-upload to QRZ'
+      };
+    } else if (qrzQslSent === 'I') {
+      return {
+        status: 'ignored',
+        color: 'text-fg-2',
+        icon: Upload,
+        tooltip: 'Excluded from QRZ sync'
       };
     } else {
       return { 

@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '@/models/User';
 import { Contact } from '@/models/Contact';
 import { Station, StationData } from '@/models/Station';
-import { syncContactToQrz } from '@/lib/qrz-sync-service';
+import { syncContactToQrz, writeSyncLog } from '@/lib/qrz-sync-service';
 
 interface BulkSyncResult {
   contactId: number;
@@ -111,6 +111,19 @@ export async function POST(request: NextRequest) {
     const failed = results.filter(r => !r.success).length;
     const skipped = results.filter(r => r.skipped).length;
     const alreadyExisted = results.filter(r => r.already_existed).length;
+
+    const firstError = results.find(r => !r.success)?.error;
+    await writeSyncLog({
+      user_id: decoded.userId,
+      service: 'qrz',
+      direction: 'upload',
+      trigger: 'manual',
+      status: failed > 0 ? 'failed' : 'completed',
+      qso_count: contactIds.length,
+      success_count: successful,
+      error_message: firstError,
+      details: { skipped, already_existed: alreadyExisted, failed },
+    });
 
     return NextResponse.json({
       results,

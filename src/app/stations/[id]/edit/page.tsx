@@ -807,7 +807,7 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="qrz_api_key">QRZ.com API Key</Label>
+                  <Label htmlFor="qrz_api_key">QRZ.com Logbook API Key</Label>
                   <div className="flex space-x-2">
                     <Input
                       id="qrz_api_key"
@@ -856,7 +856,8 @@ export default function EditStationPage({ params }: { params: Promise<{ id: stri
                     >
                       QRZ.com API documentation
                     </a>
-                    . This API key is used for logbook sync operations.
+                    . <strong>Required for QRZ logbook upload/download sync</strong> —
+                    the user-level QRZ username/password only covers callsign lookups.
                   </p>
                 </div>
 

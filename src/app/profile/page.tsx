@@ -39,6 +39,9 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState('');
   const [validatingQrz, setValidatingQrz] = useState(false);
   const [qrzValidationResult, setQrzValidationResult] = useState<{valid?: boolean; error?: string} | null>(null);
+  // null = not yet loaded; auto-sync uploads need at least one station with a
+  // QRZ Logbook API key, so we warn when none has one.
+  const [stationsWithQrzKey, setStationsWithQrzKey] = useState<number | null>(null);
   const router = useRouter();
 
   const fetchUser = useCallback(async () => {
@@ -73,6 +76,22 @@ export default function ProfilePage() {
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
+
+  useEffect(() => {
+    const fetchStations = async () => {
+      try {
+        const response = await fetch('/api/stations');
+        if (response.ok) {
+          const data = await response.json();
+          const stations: Array<{ qrz_api_key?: string | null }> = data.stations || [];
+          setStationsWithQrzKey(stations.filter(s => s.qrz_api_key).length);
+        }
+      } catch {
+        // Non-fatal: the warning simply won't render.
+      }
+    };
+    fetchStations();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -244,7 +263,7 @@ export default function ProfilePage() {
                 <div className="border-t pt-6">
                   <div className="flex items-center mb-4">
                     <Key className="h-5 w-5 mr-2" />
-                    <h3 className="text-lg font-medium">QRZ.com Callsign Lookup</h3>
+                    <h3 className="text-lg font-medium">QRZ.com XML Lookup Credentials</h3>
                   </div>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -279,7 +298,9 @@ export default function ProfilePage() {
                         <li>You need a valid QRZ.com account to use callsign lookup</li>
                         <li>Enter your QRZ.com username and password above</li>
                         <li>This enables automatic lookup of callsign information when adding contacts</li>
-                        <li>Your credentials are stored securely and only used for lookups</li>
+                        <li>These credentials are used for callsign lookups only — logbook
+                          upload/download uses each station&apos;s QRZ Logbook API key
+                          (configured in station settings)</li>
                       </ul>
                       <p className="text-sm text-bad dark:text-blue-300 mt-2">
                         <strong>Note:</strong> QRZ.com subscription may be required for full XML API access.
@@ -340,10 +361,22 @@ export default function ProfilePage() {
                           QRZ Logbook Sync
                         </h4>
                         <p className="text-xs text-blue-800 dark:text-blue-200">
-                          When enabled, new contacts will automatically sync to your QRZ.com logbook. 
+                          When enabled, new contacts will automatically sync to your QRZ.com logbook
+                          using the QRZ Logbook API key configured on each station.
                           You can also manually sync individual contacts or bulk sync from the contacts page.
                         </p>
                       </div>
+
+                      {formData.qrz_auto_sync && stationsWithQrzKey === 0 && (
+                        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-3">
+                          <p className="text-xs text-amber-800 dark:text-amber-200">
+                            <strong>Auto-sync will not upload anything:</strong> no station has a
+                            QRZ Logbook API key configured. Add one under{' '}
+                            <a href="/stations" className="underline">station settings</a> —
+                            the key is issued on the QRZ.com Logbook settings page.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

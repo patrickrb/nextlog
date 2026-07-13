@@ -348,6 +348,43 @@ export const lotwDownloadLogs = pgTable("lotw_download_logs", {
 	check("lotw_download_logs_download_method_check", sql`(download_method)::text = ANY ((ARRAY['manual'::character varying, 'automatic'::character varying, 'scheduled'::character varying])::text[])`),
 ]);
 
+// Unified sync activity log. QRZ writes here today; 'lotw' and 'eqsl' are
+// reserved (LoTW keeps its dedicated lotw_upload_logs / lotw_download_logs;
+// the /api/sync/logs feed merges them into one view).
+export const syncLogs = pgTable("sync_logs", {
+	id: serial().primaryKey().notNull(),
+	userId: integer("user_id").notNull(),
+	stationId: integer("station_id"),
+	service: varchar({ length: 10 }).notNull(),
+	direction: varchar({ length: 10 }).notNull(),
+	trigger: varchar({ length: 10 }).notNull(),
+	status: varchar({ length: 12 }).notNull(),
+	startedAt: timestamp("started_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	completedAt: timestamp("completed_at", { mode: 'string' }),
+	qsoCount: integer("qso_count").default(0),
+	successCount: integer("success_count").default(0),
+	matchedCount: integer("matched_count").default(0),
+	errorMessage: text("error_message"),
+	details: jsonb(),
+}, (table) => [
+	index("idx_sync_logs_user_started").using("btree", table.userId.asc().nullsLast().op("int4_ops"), table.startedAt.desc().nullsFirst().op("timestamp_ops")),
+	index("idx_sync_logs_station_id").using("btree", table.stationId.asc().nullsLast().op("int4_ops")),
+	foreignKey({
+			columns: [table.userId],
+			foreignColumns: [users.id],
+			name: "sync_logs_user_id_fkey"
+		}).onDelete("cascade"),
+	foreignKey({
+			columns: [table.stationId],
+			foreignColumns: [stations.id],
+			name: "sync_logs_station_id_fkey"
+		}).onDelete("cascade"),
+	check("sync_logs_service_check", sql`(service)::text = ANY ((ARRAY['qrz'::character varying, 'lotw'::character varying, 'eqsl'::character varying])::text[])`),
+	check("sync_logs_direction_check", sql`(direction)::text = ANY ((ARRAY['upload'::character varying, 'download'::character varying])::text[])`),
+	check("sync_logs_trigger_check", sql`(trigger)::text = ANY ((ARRAY['manual'::character varying, 'auto'::character varying, 'cron'::character varying])::text[])`),
+	check("sync_logs_status_check", sql`(status)::text = ANY ((ARRAY['completed'::character varying, 'failed'::character varying])::text[])`),
+]);
+
 export const lotwJobQueue = pgTable("lotw_job_queue", {
 	id: serial().primaryKey().notNull(),
 	jobType: varchar("job_type", { length: 20 }).notNull(),

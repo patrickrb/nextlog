@@ -14,6 +14,16 @@ import {
 } from '@/lib/qrz';
 import { query } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { SyncLog, SyncTrigger } from '@/models/SyncLog';
+
+// Record a sync_logs row; never let bookkeeping break the sync itself.
+export async function writeSyncLog(data: Parameters<typeof SyncLog.create>[0]): Promise<void> {
+  try {
+    await SyncLog.create(data);
+  } catch (error) {
+    logger.error('Failed to write sync log', error);
+  }
+}
 
 export interface QrzSyncOutcome {
   status: 'sent' | 'confirmed' | 'skipped' | 'failed';
@@ -103,8 +113,10 @@ export interface QrzUploadSweepResult {
 export async function uploadPendingForStation(
   userId: number,
   station: StationData,
-  limit = 250
+  limit = 250,
+  trigger: SyncTrigger = 'cron'
 ): Promise<QrzUploadSweepResult> {
+  const startedAt = new Date();
   const pending = await Contact.findQrzNotSent(userId, limit, station.id);
   const result: QrzUploadSweepResult = {
     processed: pending.length,
@@ -125,6 +137,23 @@ export async function uploadPendingForStation(
     }
   }
 
+  // Log only runs that had work to do; hourly no-op sweeps would drown the feed.
+  if (result.processed > 0) {
+    await writeSyncLog({
+      user_id: userId,
+      station_id: station.id,
+      service: 'qrz',
+      direction: 'upload',
+      trigger,
+      status: result.failed > 0 ? 'failed' : 'completed',
+      started_at: startedAt,
+      qso_count: result.processed,
+      success_count: result.sent + result.confirmed,
+      error_message: result.first_error,
+      details: { sent: result.sent, confirmed: result.confirmed, skipped: result.skipped, failed: result.failed },
+    });
+  }
+
   return result;
 }
 
@@ -142,8 +171,11 @@ export interface QrzDownloadResult {
 export async function downloadConfirmationsForStation(
   userId: number,
   station: StationData,
-  since?: string
+  since?: string,
+  trigger: SyncTrigger = 'cron'
 ): Promise<QrzDownloadResult> {
+  const startedAt = new Date();
+
   if (!station.qrz_api_key) {
     return {
       success: false,
@@ -161,6 +193,16 @@ export async function downloadConfirmationsForStation(
 
   const downloadResult = await downloadQSOsFromQRZ(station.qrz_api_key, effectiveSince);
   if (!downloadResult.success) {
+    await writeSyncLog({
+      user_id: userId,
+      station_id: station.id,
+      service: 'qrz',
+      direction: 'download',
+      trigger,
+      status: 'failed',
+      started_at: startedAt,
+      error_message: downloadResult.error,
+    });
     return {
       success: false,
       qsos_downloaded: 0,
@@ -211,6 +253,21 @@ export async function downloadConfirmationsForStation(
   // date-granular and inclusive, so today's date never skips later same-day
   // modifications on the next run.
   await Station.updateQrzLastQslRcvdDate(station.id);
+
+  // Log only runs that fetched something; hourly empty fetches would drown the feed.
+  if (downloadResult.qsos.length > 0 || confirmationsFound > 0) {
+    await writeSyncLog({
+      user_id: userId,
+      station_id: station.id,
+      service: 'qrz',
+      direction: 'download',
+      trigger,
+      status: 'completed',
+      started_at: startedAt,
+      qso_count: downloadResult.qsos.length,
+      matched_count: confirmationsFound,
+    });
+  }
 
   return {
     success: true,
