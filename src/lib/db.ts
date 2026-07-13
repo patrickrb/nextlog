@@ -1,4 +1,4 @@
-import { Pool, PoolClient, QueryResult } from 'pg';
+import { Pool, PoolClient, QueryResult, types, defaults } from 'pg';
 import { logger } from './logger';
 
 // Global connection pool
@@ -9,6 +9,21 @@ let pool: Pool;
  */
 function getPool(): Pool {
   if (!pool) {
+    // All `timestamp without time zone` columns store UTC by convention
+    // (contacts.datetime, sync log timestamps, ...). node-pg's default parser
+    // interprets them in the server's local timezone, which silently skews
+    // QRZ/LoTW date/time emission and confirmation matching on self-hosted
+    // installs with TZ != UTC (on Vercel TZ is UTC, so this is a no-op).
+    // OID 1114 = timestamp without time zone.
+    types.setTypeParser(1114, (value: string) => new Date(value.replace(' ', 'T') + 'Z'));
+
+    // The write side must match: node-pg serializes Date params as *local*
+    // time strings by default, and `timestamp` columns ignore the trailing
+    // offset — so on a non-UTC Node process a Date would be stored as local
+    // wall-clock and then misread as UTC by the parser above. This flag makes
+    // pg serialize Date params as UTC (lossless for timestamptz too).
+    defaults.parseInputDatesAsUTC = true;
+
     const sslConfig = process.env.DATABASE_SSL === 'true'
       ? { rejectUnauthorized: false }
       : false;

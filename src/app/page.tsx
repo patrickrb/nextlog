@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Dot } from '@/components/ui/dot';
 import { BrandLockup } from '@/components/ui/brand-mark';
-import { WorldBackdrop } from '@/components/ui/world-backdrop';
+import { WorldBackdrop, projectLonLat } from '@/components/ui/world-backdrop';
 
 const FEATURES = [
   {
@@ -60,22 +60,30 @@ const RECENT_PREVIEW = [
   { call: 'EA8/DL4NN', meta: '20m · SSB · 20:22' },
 ];
 
+// K4ABC's station in the US southeast; the rest match the recent-contacts list.
+const HOME_QTH = projectLonLat(-84.4, 33.7);
+
 const PREVIEW_PINS = [
-  { x: 14, y: 62, tone: 'ok' as const },
-  { x: 62, y: 42, tone: 'accent' as const },
-  { x: 50, y: 65, tone: 'accent' as const },
-  { x: 72, y: 38, tone: 'accent' as const },
-  { x: 38, y: 28, tone: 'accent' as const },
-  { x: 84, y: 60, tone: 'accent' as const },
-  { x: 28, y: 75, tone: 'accent' as const },
+  { ...HOME_QTH, tone: 'ok' as const },
+  { ...projectLonLat(10.0, 51.2), tone: 'accent' as const }, // DL5XYZ
+  { ...projectLonLat(139.7, 35.7), tone: 'accent' as const }, // JA1QRP
+  { ...projectLonLat(144.9, -37.8), tone: 'accent' as const }, // VK3FOO
+  { ...projectLonLat(28.0, -26.2), tone: 'accent' as const }, // ZS6ABC
+  { ...projectLonLat(-15.6, 27.9), tone: 'accent' as const }, // EA8/DL4NN
+  { ...projectLonLat(-46.6, -23.5), tone: 'accent' as const }, // PY2
 ];
 
-const PREVIEW_ARCS = [
-  { d: 'M 100 300 Q 300 80 600 220' },
-  { d: 'M 100 300 Q 250 400 500 340' },
-  { d: 'M 100 300 Q 400 100 720 200' },
-  { d: 'M 100 300 Q 200 180 360 140' },
-];
+// Great-circle-ish arc: quadratic bow toward the pole, deeper for longer hauls.
+function arcFromHome(to: { x: number; y: number }): { d: string } {
+  const lift = Math.max(30, Math.abs(to.x - HOME_QTH.x) * 0.35);
+  const midX = (HOME_QTH.x + to.x) / 2;
+  const midY = (HOME_QTH.y + to.y) / 2 - lift;
+  return {
+    d: `M ${HOME_QTH.x.toFixed(1)} ${HOME_QTH.y.toFixed(1)} Q ${midX.toFixed(1)} ${midY.toFixed(1)} ${to.x.toFixed(1)} ${to.y.toFixed(1)}`,
+  };
+}
+
+const PREVIEW_ARCS = PREVIEW_PINS.slice(1).map(arcFromHome);
 
 export default function Home() {
   const router = useRouter();
@@ -146,10 +154,10 @@ export default function Home() {
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-2 sm:gap-3">
-          <Button asChild variant="ghost" className="hidden sm:inline-flex">
+          <Button asChild variant="ghost" className="px-3 sm:px-4">
             <Link href="/login">Sign in</Link>
           </Button>
-          <Button asChild>
+          <Button asChild className="px-3 sm:px-4">
             <Link href="/register">Get started</Link>
           </Button>
         </div>
