@@ -713,7 +713,6 @@ export async function performLotwDownload(
           params
         );
         matchedCount++;
-        unmatchedCount--;
         appliedQslDates.push(qslDate);
       } catch (applyError) {
         // Isolate per-row failures so one bad row can't discard the batch.
@@ -725,6 +724,8 @@ export async function performLotwDownload(
           applyError
         );
       }
+      // Count this confirmation as matched even if applying it failed; failures are tracked separately.
+      unmatchedCount--;
     }
 
     // Persist the most recent qsl_rcvd_date so the next download can use it
