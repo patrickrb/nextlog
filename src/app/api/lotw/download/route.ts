@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       // For cron jobs, just verify station exists
       stationResult = await query(
         `SELECT s.id, s.callsign, s.lotw_username, s.lotw_password, s.user_id,
-                u.third_party_services
+                s.lotw_last_qsl_rcvd_date, u.third_party_services
          FROM stations s
          JOIN users u ON s.user_id = u.id
          WHERE s.id = $1`,
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       }
       stationResult = await query(
         `SELECT s.id, s.callsign, s.lotw_username, s.lotw_password, s.user_id,
-                u.third_party_services
+                s.lotw_last_qsl_rcvd_date, u.third_party_services
          FROM stations s
          JOIN users u ON s.user_id = u.id
          WHERE s.id = $1 AND s.user_id = $2`,
@@ -132,9 +132,19 @@ export async function POST(request: NextRequest) {
         ['processing', downloadLogId]
       );
 
+      // Incremental fetch for scheduled runs: resume from the newest QSL date
+      // already applied (qso_qslsince filters by QSL date, not QSO date, so
+      // the local contacts query below must stay unfiltered by this date —
+      // confirmations can arrive for arbitrarily old QSOs).
+      let urlDateFrom = date_from;
+      if (!urlDateFrom && download_method !== 'manual' && station.lotw_last_qsl_rcvd_date) {
+        const last = station.lotw_last_qsl_rcvd_date;
+        urlDateFrom = last instanceof Date ? last.toISOString().split('T')[0] : String(last);
+      }
+
       // Build LoTW download URL
       const downloadUrl = buildLoTWDownloadUrl(lotwUsername, lotwPassword, {
-        dateFrom: date_from,
+        dateFrom: urlDateFrom,
         dateTo: date_to,
         ownCallsign: station.callsign,
       });
@@ -236,6 +246,9 @@ export async function POST(request: NextRequest) {
 
       let matchedCount = 0;
       let unmatchedCount = confirmations.length;
+      let failedCount = 0;
+      let firstApplyError: string | null = null;
+      const appliedQslDates: string[] = [];
 
       // Apply each confirmation: set LoTW QSL flags, enrich location fields
       // (state/county/CQZ/ITUZ/DXCC/country/grid/iota), and cross-flag QRZ
@@ -246,7 +259,6 @@ export async function POST(request: NextRequest) {
         // Build a dynamic UPDATE — only set fields LoTW returned non-empty.
         const sets: string[] = [
           'qsl_lotw = true',
-          `qsl_lotw_date = NOW()::date`,
           `lotw_qsl_rcvd = 'Y'`,
           'lotw_match_status = $1',
           'updated_at = NOW()',
@@ -283,28 +295,41 @@ export async function POST(request: NextRequest) {
         if (match.contact.qrz_qsl_sent === 'Y') {
           sets.push(`qrz_qsl_sent = 'M'`);
         }
-        // qsl_rcvd_date from LoTW is YYYY-MM-DD already.
-        if (conf.qsl_rcvd_date) {
-          params.push(conf.qsl_rcvd_date);
-          sets.push(`qsl_lotw_date = $${params.length}::date`);
-        }
+        // qsl_lotw_date is assigned exactly once — Postgres rejects an UPDATE
+        // that sets the same column twice. Prefer LoTW's own QSL date
+        // (YYYY-MM-DD already); fall back to today (UTC) so the applied date
+        // still advances the incremental-download watermark below.
+        const qslDate = conf.qsl_rcvd_date || new Date().toISOString().slice(0, 10);
+        params.push(qslDate);
+        sets.push(`qsl_lotw_date = $${params.length}::date`);
 
         params.push(match.contact.id);
-        await query(
-          `UPDATE contacts SET ${sets.join(', ')} WHERE id = $${params.length}`,
-          params
-        );
-
-        matchedCount++;
-        unmatchedCount--;
+        try {
+          await query(
+            `UPDATE contacts SET ${sets.join(', ')} WHERE id = $${params.length}`,
+            params
+          );
+          matchedCount++;
+          unmatchedCount--;
+          appliedQslDates.push(qslDate);
+        } catch (applyError) {
+          // Isolate per-row failures so one bad row can't discard the batch.
+          failedCount++;
+          const msg = applyError instanceof Error ? applyError.message : 'Unknown error';
+          if (!firstApplyError) firstApplyError = msg;
+          console.error(
+            `[LoTW Download] Failed to apply confirmation to contact ${match.contact.id}:`,
+            applyError
+          );
+        }
       }
 
       // Persist the most recent qsl_rcvd_date so the next download can use it
-      // as qso_qslsince for an incremental fetch.
-      if (matches.length > 0) {
-        const maxDate = matches
-          .map(m => m.confirmation.qsl_rcvd_date)
-          .filter((d): d is string => !!d)
+      // as qso_qslsince for an incremental fetch. Only consider confirmations
+      // that actually applied — advancing past a failed row would skip it on
+      // the next incremental run.
+      if (appliedQslDates.length > 0) {
+        const maxDate = appliedQslDates
           .sort()
           .pop();
         if (maxDate) {
@@ -317,14 +342,20 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Update download log as completed
+      // Update download log as completed; surface partial apply failures so
+      // they are visible in the sync history instead of silently dropped.
+      const applyErrorMessage = failedCount > 0
+        ? `${failedCount} matched confirmation(s) failed to apply: ${firstApplyError}`
+        : null;
+
       await query(
-        `UPDATE lotw_download_logs 
-         SET status = 'completed', completed_at = NOW(), 
-             qso_count = $1, confirmations_found = $2, 
-             confirmations_matched = $3, confirmations_unmatched = $4
-         WHERE id = $5`,
-        [contacts.length, confirmations.length, matchedCount, unmatchedCount, downloadLogId]
+        `UPDATE lotw_download_logs
+         SET status = 'completed', completed_at = NOW(),
+             qso_count = $1, confirmations_found = $2,
+             confirmations_matched = $3, confirmations_unmatched = $4,
+             error_message = $5
+         WHERE id = $6`,
+        [contacts.length, confirmations.length, matchedCount, unmatchedCount, applyErrorMessage, downloadLogId]
       );
 
       const response: LotwDownloadResponse = {
@@ -332,7 +363,8 @@ export async function POST(request: NextRequest) {
         download_log_id: downloadLogId,
         confirmations_found: confirmations.length,
         confirmations_matched: matchedCount,
-        confirmations_unmatched: unmatchedCount
+        confirmations_unmatched: unmatchedCount,
+        ...(applyErrorMessage ? { error_message: applyErrorMessage } : {})
       };
 
       return NextResponse.json(response);
