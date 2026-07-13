@@ -162,20 +162,22 @@ See `/tests/README.md` for detailed testing documentation.
 
 ## Scheduled sync
 
-The cron endpoints (`/api/cron/*`) upload pending QSOs to LoTW and download
-confirmations on a schedule. They require a `CRON_SECRET` environment variable
-and reject every request that does not carry it — if the secret is unset the
-endpoints fail closed with a 500.
+The `/api/cron/sync` endpoint runs the full sync cycle — QRZ upload sweep,
+LoTW upload, QRZ confirmation download, LoTW confirmation download — for every
+eligible station. It requires a `CRON_SECRET` environment variable and rejects
+every request that does not carry it — if the secret is unset the endpoint
+fails closed with a 500. All legs are incremental and idempotent, so any
+cadence is safe.
 
 - **Vercel**: set `CRON_SECRET` in the project's environment variables. Vercel
   automatically attaches `Authorization: Bearer $CRON_SECRET` to the cron
-  invocations defined in `vercel.json`; no other setup is needed.
-- **Self-hosted**: set `CRON_SECRET` in your environment and call the
-  endpoints from your scheduler, e.g. a crontab entry:
+  invocation defined in `vercel.json` (hourly by default); no other setup is
+  needed.
+- **Self-hosted**: set `CRON_SECRET` in your environment and call the endpoint
+  from your scheduler, e.g. a crontab entry:
 
   ```cron
-  0 * * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://your-host/api/cron/lotw-upload
-  30 * * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://your-host/api/cron/lotw-download
+  0 * * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://your-host/api/cron/sync
   ```
 
 ## Cloudlog API Compatibility
