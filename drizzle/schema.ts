@@ -1,6 +1,11 @@
 import { pgTable, index, unique, check, serial, varchar, boolean, timestamp, jsonb, foreignKey, integer, numeric, text, date, inet, time, customType } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
+// Convention: every `timestamp` (without time zone) column stores UTC.
+// src/lib/db.ts registers a pg type parser that reads them back as UTC,
+// so the app behaves identically on Vercel (TZ=UTC) and self-hosted
+// servers with a local timezone.
+
 // Postgres `bytea` — not first-class in drizzle-orm/pg-core, defined here so
 // the p12 cert columns get a real TS type instead of `unknown`.
 const bytea = customType<{ data: Buffer }>({
