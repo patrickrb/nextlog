@@ -424,19 +424,25 @@ export class Contact {
     );
   }
 
-  static async findQrzSentNotConfirmed(userId: number, limit?: number): Promise<ContactData[]> {
+  static async findQrzSentNotConfirmed(userId: number, limit?: number, stationId?: number): Promise<ContactData[]> {
     let sql = `
-      SELECT * FROM contacts 
+      SELECT * FROM contacts
       WHERE user_id = $1 AND qrz_qsl_sent = 'Y' AND (qrz_qsl_rcvd IS NULL OR qrz_qsl_rcvd != 'Y')
-      ORDER BY datetime DESC
     `;
     const params = [userId];
-    
+
+    if (stationId !== undefined) {
+      sql += ` AND station_id = $${params.length + 1}`;
+      params.push(stationId);
+    }
+
+    sql += ` ORDER BY datetime DESC`;
+
     if (limit) {
       sql += ` LIMIT $${params.length + 1}`;
       params.push(limit);
     }
-    
+
     const result = await query(sql, params);
     return result.rows;
   }

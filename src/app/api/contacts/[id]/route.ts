@@ -59,7 +59,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     // Core QSO fields changed: flag already-uploaded copies for re-upload
     // ('Y' → 'M', wavelog's modified marker) and auto-sync after the response.
-    if (data.callsign || data.datetime || data.frequency || data.mode || data.band) {
+    // Compare payload values against the stored row — the edit form sends the
+    // core fields on every PUT, so mere presence (or truthiness) would flag
+    // unmodified QSOs and miss updates that clear a field.
+    const strChanged = (key: 'callsign' | 'mode' | 'band') =>
+      key in data && String(data[key] ?? '') !== String(existingContact[key] ?? '');
+    const freqChanged =
+      'frequency' in data &&
+      Number(data.frequency ?? 0) !== Number(existingContact.frequency ?? 0);
+    const datetimeChanged =
+      'datetime' in data &&
+      new Date(data.datetime).getTime() !== new Date(existingContact.datetime).getTime();
+    if (strChanged('callsign') || strChanged('mode') || strChanged('band') || freqChanged || datetimeChanged) {
       await Contact.flagForReupload(parseInt(id));
       const userId = parseInt(user.userId, 10);
       after(() => autoSyncContactToQRZ(parseInt(id), userId));

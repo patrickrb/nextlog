@@ -103,6 +103,17 @@ async function callLotwRoute(
 
 export async function GET(request: NextRequest) {
   try {
+    // Auth gates first: fail closed when CRON_SECRET is unset and reject bad
+    // tokens before any other checks, so unauthenticated callers can't probe
+    // deployment configuration (and the cheapest check runs first).
+    if (!process.env.CRON_SECRET) {
+      console.error('CRON_SECRET is not configured; refusing cron request');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+    }
+    if (!hasValidCronSecret(request)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'ENCRYPTION_SECRET'];
     const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
     if (missingEnvVars.length > 0) {
@@ -111,14 +122,6 @@ export async function GET(request: NextRequest) {
         error: 'Server configuration error',
         details: `Missing environment variables: ${missingEnvVars.join(', ')}`
       }, { status: 500 });
-    }
-
-    if (!process.env.CRON_SECRET) {
-      console.error('CRON_SECRET is not configured; refusing cron request');
-      return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 });
-    }
-    if (!hasValidCronSecret(request)) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const qrzUpload: StationLegResult[] = [];
