@@ -577,7 +577,7 @@ export default function NewStationPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="qrz_api_key">QRZ.com API Key</Label>
+                  <Label htmlFor="qrz_api_key">QRZ.com Logbook API Key</Label>
                   <Input
                     id="qrz_api_key"
                     type="password"
@@ -595,6 +595,7 @@ export default function NewStationPage() {
                     >
                       QRZ.com API documentation
                     </a>
+                    . Required for QRZ logbook upload/download sync.
                   </p>
                 </div>
 

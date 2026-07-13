@@ -9,7 +9,7 @@
 import { User } from '@/models/User';
 import { Contact } from '@/models/Contact';
 import { Station } from '@/models/Station';
-import { syncContactToQrz } from '@/lib/qrz-sync-service';
+import { syncContactToQrz, writeSyncLog } from '@/lib/qrz-sync-service';
 import { logger } from '@/lib/logger';
 
 export async function autoSyncContactToQRZ(contactId: number, userId: number): Promise<void> {
@@ -45,7 +45,19 @@ export async function autoSyncContactToQRZ(contactId: number, userId: number): P
     const outcome = await syncContactToQrz(contact, station);
     if (outcome.status === 'failed') {
       // syncContactToQrz already logged the upload error and marked the
-      // contact 'R'; nothing more to do here.
+      // contact 'R'; record a sync-activity row so the failure is visible
+      // on the /sync page.
+      await writeSyncLog({
+        user_id: userId,
+        station_id: station.id,
+        service: 'qrz',
+        direction: 'upload',
+        trigger: 'auto',
+        status: 'failed',
+        qso_count: 1,
+        error_message: outcome.error,
+        details: { contact_id: contact.id, callsign: contact.callsign },
+      });
       return;
     }
   } catch (error) {

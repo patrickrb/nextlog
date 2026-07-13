@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 interface LotwSyncIndicatorProps {
   // Upload status
-  lotwQslSent?: string; // 'Y', 'N', 'R' (Yes, No, Requested)
+  lotwQslSent?: string; // 'Y', 'N', 'R', 'M', 'I' (Yes, No, Requested, Modified, Ignored)
 
   // Download/confirmation status
   lotwQslRcvd?: string; // 'Y', 'N' (Yes, No)
@@ -125,6 +125,10 @@ export default function LotwSyncIndicator({
       return { status: 'uploaded', color: 'text-ok', icon: Upload, tooltip: 'Uploaded to LoTW' };
     } else if (lotwQslSent === 'R') {
       return { status: 'requested', color: 'text-warn', icon: Clock, tooltip: 'Upload requested' };
+    } else if (lotwQslSent === 'M') {
+      return { status: 'modified', color: 'text-warn', icon: Upload, tooltip: 'Modified — pending re-upload to LoTW' };
+    } else if (lotwQslSent === 'I') {
+      return { status: 'ignored', color: 'text-fg-2', icon: Upload, tooltip: 'Excluded from LoTW sync (unsupported propagation mode)' };
     } else {
       return { status: 'not-uploaded', color: 'text-bad', icon: Upload, tooltip: 'Not uploaded to LoTW' };
     }
