@@ -23,11 +23,13 @@ interface WorldBackdropProps extends React.HTMLAttributes<HTMLDivElement> {
   grid?: boolean
 }
 
-/** Equirectangular projection: lon/lat degrees -> map viewBox units (0-1000 x 0-500). */
+/** Equirectangular projection: lon/lat degrees -> map viewBox units (0-1000 x 0-500). Inputs are clamped to [-180,180] / [-90,90]. */
 function projectLonLat(lon: number, lat: number): { x: number; y: number } {
+  const clampedLon = Math.min(180, Math.max(-180, lon))
+  const clampedLat = Math.min(90, Math.max(-90, lat))
   return {
-    x: ((lon + 180) * 1000) / 360,
-    y: ((90 - lat) * 500) / 180,
+    x: ((clampedLon + 180) * 1000) / 360,
+    y: ((90 - clampedLat) * 500) / 180,
   }
 }
 
@@ -123,7 +125,7 @@ const WorldBackdrop = React.forwardRef<HTMLDivElement, WorldBackdropProps>(
       <svg
         viewBox="0 0 1000 500"
         preserveAspectRatio="xMidYMid slice"
-        className="absolute inset-0 w-full h-full"
+        className="absolute inset-0 w-full h-full pointer-events-none"
         aria-hidden="true"
       >
         <g
