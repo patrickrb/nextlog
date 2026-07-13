@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
 import { hasValidCronSecret } from '@/lib/cron-auth';
+import { performLotwUpload, performLotwDownload } from '@/lib/lotw-sync';
 import {
   uploadPendingForStation,
   downloadConfirmationsForStation,
@@ -80,27 +81,6 @@ async function ranRecently(logTable: 'lotw_upload_logs' | 'lotw_download_logs', 
   return result.rows.length > 0;
 }
 
-// Invoke the LoTW upload/download API routes internally. They own the
-// lotw_upload_logs / lotw_download_logs bookkeeping; cron mode is authorized
-// by the CRON_SECRET Bearer header.
-async function callLotwRoute(
-  path: '/api/lotw/upload' | '/api/lotw/download',
-  body: Record<string, unknown>
-): Promise<{ ok: boolean; data: Record<string, unknown> }> {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  const response = await fetch(`${baseUrl}${path}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Cron-Job': 'true',
-      'Authorization': `Bearer ${process.env.CRON_SECRET}`,
-    },
-    body: JSON.stringify(body),
-  });
-  const data = await response.json();
-  return { ok: response.ok, data };
-}
-
 export async function GET(request: NextRequest) {
   try {
     // Auth gates first: fail closed when CRON_SECRET is unset and reject bad
@@ -163,19 +143,24 @@ export async function GET(request: NextRequest) {
           lotwUpload.push({ station_id: station.id, callsign: station.callsign, status: 'skipped', reason: 'uploaded_recently' });
           continue;
         }
-        const { ok, data } = await callLotwRoute('/api/lotw/upload', {
-          station_id: station.id,
-          upload_method: 'automatic',
+        // In-process call — the lib owns the lotw_upload_logs bookkeeping.
+        // (Previously this self-fetched /api/lotw/upload over HTTP, which
+        // breaks in serverless environments where localhost isn't listening.)
+        const { status, body } = await performLotwUpload({
+          stationId: station.id,
+          uploadMethod: 'automatic',
         });
+        const ok = status >= 200 && status < 300;
+        const errorMessage = 'error' in body ? body.error : body.error_message;
         if (!ok) {
-          console.error(`LoTW upload failed for station ${station.callsign}:`, data.error ?? data.error_message);
+          console.error(`LoTW upload failed for station ${station.callsign}:`, errorMessage);
         }
         lotwUpload.push({
           station_id: station.id,
           callsign: station.callsign,
           status: ok ? 'success' : 'error',
-          qso_count: data.qso_count ?? 0,
-          error: ok ? null : (data.error ?? data.error_message ?? 'Unknown error'),
+          qso_count: ('qso_count' in body ? body.qso_count : 0) ?? 0,
+          error: ok ? null : (errorMessage ?? 'Unknown error'),
         });
       } catch (error) {
         console.error(`Error processing LoTW upload for station ${station.callsign}:`, error);
@@ -218,20 +203,23 @@ export async function GET(request: NextRequest) {
           lotwDownload.push({ station_id: station.id, callsign: station.callsign, status: 'skipped', reason: 'downloaded_recently' });
           continue;
         }
-        const { ok, data } = await callLotwRoute('/api/lotw/download', {
-          station_id: station.id,
-          download_method: 'automatic',
+        // In-process call — the lib owns the lotw_download_logs bookkeeping.
+        const { status, body } = await performLotwDownload({
+          stationId: station.id,
+          downloadMethod: 'automatic',
         });
+        const ok = status >= 200 && status < 300;
+        const errorMessage = 'error' in body ? body.error : body.error_message;
         if (!ok) {
-          console.error(`LoTW download failed for station ${station.callsign}:`, data.error ?? data.error_message);
+          console.error(`LoTW download failed for station ${station.callsign}:`, errorMessage);
         }
         lotwDownload.push({
           station_id: station.id,
           callsign: station.callsign,
           status: ok ? 'success' : 'error',
-          confirmations_found: data.confirmations_found ?? 0,
-          confirmations_matched: data.confirmations_matched ?? 0,
-          error: ok ? null : (data.error ?? data.error_message ?? 'Unknown error'),
+          confirmations_found: ('confirmations_found' in body ? body.confirmations_found : 0) ?? 0,
+          confirmations_matched: ('confirmations_matched' in body ? body.confirmations_matched : 0) ?? 0,
+          error: ok ? null : (errorMessage ?? 'Unknown error'),
         });
       } catch (error) {
         console.error(`Error processing LoTW download for station ${station.callsign}:`, error);
