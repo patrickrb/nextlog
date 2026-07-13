@@ -290,13 +290,11 @@ export async function POST(request: NextRequest) {
         }
         // qsl_lotw_date is assigned exactly once — Postgres rejects an UPDATE
         // that sets the same column twice. Prefer LoTW's own QSL date
-        // (YYYY-MM-DD already); fall back to today.
-        if (conf.qsl_rcvd_date) {
-          params.push(conf.qsl_rcvd_date);
-          sets.push(`qsl_lotw_date = $${params.length}::date`);
-        } else {
-          sets.push('qsl_lotw_date = NOW()::date');
-        }
+        // (YYYY-MM-DD already); fall back to today (UTC) so the applied date
+        // still advances the incremental-download watermark below.
+        const qslDate = conf.qsl_rcvd_date || new Date().toISOString().slice(0, 10);
+        params.push(qslDate);
+        sets.push(`qsl_lotw_date = $${params.length}::date`);
 
         params.push(match.contact.id);
         try {
@@ -306,7 +304,7 @@ export async function POST(request: NextRequest) {
           );
           matchedCount++;
           unmatchedCount--;
-          if (conf.qsl_rcvd_date) appliedQslDates.push(conf.qsl_rcvd_date);
+          appliedQslDates.push(qslDate);
         } catch (applyError) {
           // Isolate per-row failures so one bad row can't discard the batch.
           failedCount++;
