@@ -25,7 +25,7 @@ export default function AdminDashboard() {
       setSyncMessage(null);
 
       // First, get all contacts not sent to QRZ
-      const response = await fetch('/api/contacts?qrz_sync_status=not_synced');
+      const response = await fetch('/api/contacts?qrz_filter=not_sent');
       if (!response.ok) {
         throw new Error('Failed to fetch contacts');
       }

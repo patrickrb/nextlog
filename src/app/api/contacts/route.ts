@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { Contact } from '@/models/Contact';
 import { verifyToken } from '@/lib/auth';
-import { backgroundAutoSync } from '@/lib/qrz-auto-sync';
+import { autoSyncContactToQRZ } from '@/lib/qrz-auto-sync';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
     const since = searchParams.get('since');
     const countOnly = searchParams.get('countOnly') === 'true';
-    const qrzSyncStatus = searchParams.get('qrz_sync_status');
+    const qrzFilter = searchParams.get('qrz_filter');
 
     const userId = typeof user.userId === 'string' ? parseInt(user.userId, 10) : user.userId;
     
@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ count });
     }
 
-    // Handle QRZ sync status filtering (for admin bulk sync - get ALL contacts, no limit)
-    if (qrzSyncStatus === 'not_synced') {
+    // Handle QRZ filter (for admin bulk sync - get ALL contacts, no limit)
+    if (qrzFilter === 'not_sent') {
       const contacts = await Contact.findQrzNotSent(userId); // No limit - get all not sent to QRZ
       return NextResponse.json({
         contacts,
@@ -70,8 +70,12 @@ export async function POST(request: NextRequest) {
       user_id: user.userId
     });
 
-    // Trigger auto-sync in background if enabled
-    backgroundAutoSync(contact.id, parseInt(user.userId, 10));
+    // Trigger auto-sync after the response is sent. after() keeps the
+    // serverless function alive until the sync finishes — a bare
+    // fire-and-forget promise is frozen mid-flight on Vercel as soon as the
+    // response returns.
+    const userId = parseInt(user.userId, 10);
+    after(() => autoSyncContactToQRZ(contact.id, userId));
 
     return NextResponse.json(contact, { status: 201 });
   } catch (error) {

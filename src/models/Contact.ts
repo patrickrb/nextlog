@@ -42,11 +42,6 @@ export interface ContactData {
   qrz_qsl_rcvd?: string;
   qrz_qsl_sent_date?: Date;
   qrz_qsl_rcvd_date?: Date;
-  // QRZ sync fields
-  qrz_sync_status?: 'not_synced' | 'synced' | 'error' | 'already_exists';
-  qrz_sync_date?: Date;
-  qrz_logbook_id?: number;
-  qrz_sync_error?: string;
   // Additional fields
   qso_date_off?: Date;
   time_off?: string;
@@ -389,21 +384,44 @@ export class Contact {
     return result.rows[0] || null;
   }
 
-  static async findQrzNotSent(userId: number, limit?: number): Promise<ContactData[]> {
+  // Contacts pending QRZ upload: never sent (NULL/'N'), previously failed
+  // ('R' — retried on every sweep), or modified since upload ('M'). Excludes
+  // 'I' (permanently ignored) and 'Q' (queued elsewhere).
+  static async findQrzNotSent(userId: number, limit?: number, stationId?: number): Promise<ContactData[]> {
     let sql = `
-      SELECT * FROM contacts 
-      WHERE user_id = $1 AND (qrz_qsl_sent IS NULL OR qrz_qsl_sent != 'Y')
-      ORDER BY datetime DESC
+      SELECT * FROM contacts
+      WHERE user_id = $1 AND (qrz_qsl_sent IS NULL OR qrz_qsl_sent IN ('N', 'R', 'M'))
     `;
     const params = [userId];
-    
+
+    if (stationId !== undefined) {
+      sql += ` AND station_id = $${params.length + 1}`;
+      params.push(stationId);
+    }
+
+    sql += ` ORDER BY datetime DESC`;
+
     if (limit) {
       sql += ` LIMIT $${params.length + 1}`;
       params.push(limit);
     }
-    
+
     const result = await query(sql, params);
     return result.rows;
+  }
+
+  // Flag a contact for re-upload after its core QSO fields changed: services
+  // that already shipped it ('Y') get wavelog's 'M' (modified) marker, which
+  // the QRZ path re-uploads with OPTION=REPLACE and the LoTW path re-signs.
+  static async flagForReupload(id: number): Promise<void> {
+    await query(
+      `UPDATE contacts SET
+         qrz_qsl_sent = CASE WHEN qrz_qsl_sent = 'Y' THEN 'M' ELSE qrz_qsl_sent END,
+         lotw_qsl_sent = CASE WHEN lotw_qsl_sent = 'Y' THEN 'M' ELSE lotw_qsl_sent END,
+         updated_at = NOW()
+       WHERE id = $1`,
+      [id]
+    );
   }
 
   static async findQrzSentNotConfirmed(userId: number, limit?: number): Promise<ContactData[]> {
@@ -423,67 +441,4 @@ export class Contact {
     return result.rows;
   }
 
-  // Helper function to match QSO records by callsign, date, and time
-  static matchQSO(contact: ContactData, qrzQSO: { call: string; qso_date: string; time_on: string }): boolean {
-    if (!contact.callsign || !qrzQSO.call) return false;
-    
-    // Normalize callsigns for comparison
-    const contactCall = contact.callsign.toUpperCase().trim();
-    const qrzCall = qrzQSO.call.toUpperCase().trim();
-    
-    if (contactCall !== qrzCall) return false;
-    
-    // Compare dates
-    const contactDate = new Date(contact.datetime).toISOString().split('T')[0].replace(/-/g, '');
-    const qrzDate = qrzQSO.qso_date.replace(/-/g, '');
-    
-    if (contactDate !== qrzDate) return false;
-    
-    // Compare times (within a few minutes tolerance)
-    const contactTime = new Date(contact.datetime).toISOString().split('T')[1].substring(0, 5).replace(':', '');
-    const qrzTime = qrzQSO.time_on.replace(':', '');
-    
-    // Allow 5 minute tolerance
-    const contactMinutes = parseInt(contactTime.substring(0, 2)) * 60 + parseInt(contactTime.substring(2));
-    const qrzMinutes = parseInt(qrzTime.substring(0, 2)) * 60 + parseInt(qrzTime.substring(2));
-    
-    return Math.abs(contactMinutes - qrzMinutes) <= 5;
-  }
-
-  // QRZ sync status management
-  static async updateQrzSyncStatus(
-    id: number, 
-    status: 'not_synced' | 'synced' | 'error' | 'already_exists',
-    logbookId?: number,
-    error?: string
-  ): Promise<ContactData | null> {
-    const updates = ['qrz_sync_status = $2', 'qrz_sync_date = NOW()'];
-    const values: (number | string)[] = [id, status];
-    let paramCount = 3;
-
-    if (logbookId !== undefined) {
-      updates.push(`qrz_logbook_id = $${paramCount}`);
-      values.push(logbookId);
-      paramCount++;
-    }
-
-    if (error !== undefined) {
-      updates.push(`qrz_sync_error = $${paramCount}`);
-      values.push(error);
-      paramCount++;
-    } else if (status === 'synced' || status === 'already_exists') {
-      // Clear error on successful sync
-      updates.push('qrz_sync_error = NULL');
-    }
-
-    const sql = `
-      UPDATE contacts 
-      SET ${updates.join(', ')}
-      WHERE id = $1
-      RETURNING *
-    `;
-
-    const result = await query(sql, values);
-    return result.rows[0] || null;
-  }
 }

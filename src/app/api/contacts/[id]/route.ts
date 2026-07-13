@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { Contact } from '@/models/Contact';
 import { verifyToken } from '@/lib/auth';
-import { backgroundAutoSync } from '@/lib/qrz-auto-sync';
+import { autoSyncContactToQRZ } from '@/lib/qrz-auto-sync';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -57,11 +57,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
-    // Trigger auto-sync in background if enabled
-    // Reset sync status when contact is updated so it can be re-synced
+    // Core QSO fields changed: flag already-uploaded copies for re-upload
+    // ('Y' → 'M', wavelog's modified marker) and auto-sync after the response.
     if (data.callsign || data.datetime || data.frequency || data.mode || data.band) {
-      await Contact.updateQrzSyncStatus(parseInt(id), 'not_synced');
-      backgroundAutoSync(parseInt(id), parseInt(user.userId, 10));
+      await Contact.flagForReupload(parseInt(id));
+      const userId = parseInt(user.userId, 10);
+      after(() => autoSyncContactToQRZ(parseInt(id), userId));
     }
 
     return NextResponse.json(contact);
