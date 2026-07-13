@@ -36,7 +36,13 @@ export async function syncContactToQrz(
     return { status: 'skipped', message: 'Excluded from QRZ sync', contact };
   }
 
-  const replace = contact.qrz_qsl_sent === 'M';
+  // Re-upload with OPTION=REPLACE for locally-modified rows ('M') and for
+  // failed retries ('R') of contacts that already shipped once (they have a
+  // qrz_qsl_sent_date) — a plain insert would be deduped by QRZ and the
+  // modified QSO would never actually update.
+  const replace =
+    contact.qrz_qsl_sent === 'M' ||
+    (contact.qrz_qsl_sent === 'R' && !!contact.qrz_qsl_sent_date);
 
   // If QRZ already confirmed this QSO it necessarily exists in the logbook —
   // mark it sent without re-uploading (unless it was modified locally).
@@ -166,10 +172,8 @@ export async function downloadConfirmationsForStation(
   // Contacts for this station that were sent to QRZ but not yet confirmed,
   // annotated with the station callsign so the matcher can cross-check
   // against QRZ's STATION_CALLSIGN field.
-  const unconfirmed = await Contact.findQrzSentNotConfirmed(userId);
-  const stationContacts = unconfirmed
-    .filter(c => c.station_id === station.id)
-    .map(c => ({ ...c, station_callsign: station.callsign }));
+  const unconfirmed = await Contact.findQrzSentNotConfirmed(userId, undefined, station.id);
+  const stationContacts = unconfirmed.map(c => ({ ...c, station_callsign: station.callsign }));
 
   let confirmationsFound = 0;
 

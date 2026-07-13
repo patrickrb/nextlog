@@ -2,9 +2,11 @@
 // user has qrz_auto_sync enabled. Uses the station's QRZ Logbook API key via
 // qrz-sync-service — the logbook API does not accept username/password.
 //
-// Never throws: every failure is logged (and recorded on the contact as
-// qrz_qsl_sent='R' by the service) so callers can fire-and-forget inside
-// next/server's after() without swallowing errors silently.
+// Never throws, so callers can fire-and-forget inside next/server's after()
+// without swallowing errors silently. Upload failures are logged and recorded
+// on the contact as qrz_qsl_sent='R' by the service; pre-flight skips (sync
+// disabled, missing station or API key) are logged only and leave the
+// contact untouched.
 
 import { User } from '@/models/User';
 import { Contact } from '@/models/Contact';
