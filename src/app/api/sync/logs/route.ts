@@ -15,8 +15,12 @@ export async function GET(request: NextRequest) {
 
     const userId = typeof user.userId === 'string' ? parseInt(user.userId, 10) : user.userId;
     const { searchParams } = new URL(request.url);
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200);
-    const offset = parseInt(searchParams.get('offset') || '0');
+    // Fall back to defaults on non-numeric/negative input instead of passing
+    // NaN into LIMIT/OFFSET and 500ing.
+    const parsedLimit = parseInt(searchParams.get('limit') || '', 10);
+    const limit = Number.isNaN(parsedLimit) || parsedLimit < 1 ? 50 : Math.min(parsedLimit, 200);
+    const parsedOffset = parseInt(searchParams.get('offset') || '', 10);
+    const offset = Number.isNaN(parsedOffset) || parsedOffset < 0 ? 0 : parsedOffset;
 
     const result = await query(
       `SELECT * FROM (
