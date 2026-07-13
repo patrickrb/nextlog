@@ -160,6 +160,24 @@ See `/tests/README.md` for detailed testing documentation.
 3. **Log Contacts**: Add new contacts with frequency, mode, RST, and other details
 4. **View Logbook**: Browse your logged contacts on the dashboard
 
+## Scheduled sync
+
+The cron endpoints (`/api/cron/*`) upload pending QSOs to LoTW and download
+confirmations on a schedule. They require a `CRON_SECRET` environment variable
+and reject every request that does not carry it — if the secret is unset the
+endpoints fail closed with a 500.
+
+- **Vercel**: set `CRON_SECRET` in the project's environment variables. Vercel
+  automatically attaches `Authorization: Bearer $CRON_SECRET` to the cron
+  invocations defined in `vercel.json`; no other setup is needed.
+- **Self-hosted**: set `CRON_SECRET` in your environment and call the
+  endpoints from your scheduler, e.g. a crontab entry:
+
+  ```cron
+  0 * * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://your-host/api/cron/lotw-upload
+  30 * * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://your-host/api/cron/lotw-download
+  ```
+
 ## Cloudlog API Compatibility
 
 Nextlog provides full compatibility with Cloudlog's API, allowing you to use any third-party amateur radio software that supports Cloudlog integration.

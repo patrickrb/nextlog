@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
+import { hasValidCronSecret } from '@/lib/cron-auth';
 import { query } from '@/lib/db';
 import {
   buildSignedTq8,
@@ -28,10 +29,16 @@ const LOTW_UPLOAD_ACCEPTED_REGEX = /<!--\s*\.UPL\.\s*accepted\s*-->/i;
 
 export async function POST(request: NextRequest) {
   try {
-    // Check if this is a cron job request
-    const isCronJob = request.headers.get('X-Cron-Job') === 'true';
+    // Cron mode requires the valid CRON_SECRET Bearer token — the X-Cron-Job
+    // header is only a mode discriminator and grants nothing by itself
+    // (it is spoofable by any caller).
+    const cronHeaderPresent = request.headers.get('X-Cron-Job') === 'true';
+    const isCronJob = cronHeaderPresent && hasValidCronSecret(request);
+    if (cronHeaderPresent && !isCronJob) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     let user = null;
-    
+
     if (isCronJob) {
       // For cron jobs, we'll get the user from the station_id
       user = null; // Will be set later
