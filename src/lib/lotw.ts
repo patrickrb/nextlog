@@ -29,7 +29,11 @@ export function decryptString(encryptedText: string): string {
 // network errors are retried; a 2xx is returned as-is because LoTW encodes
 // auth and other failures inside a 200 body, not the status line.
 const LOTW_MAX_ATTEMPTS = 3;
-const LOTW_BACKOFF_MS = [2000, 4000, 8000];
+// Exponential backoff derived from the attempt number, so there are no unused
+// slots to fall out of sync with LOTW_MAX_ATTEMPTS: retry N waits base·2^(N-1).
+// With 3 attempts that's a 2s wait after the 1st failure and 4s after the 2nd.
+const LOTW_BACKOFF_BASE_MS = 2000;
+const lotwBackoffMs = (attempt: number): number => LOTW_BACKOFF_BASE_MS * 2 ** (attempt - 1);
 
 // Present as an ordinary browser. Some WAF front ends 503 on unusual
 // (non-browser) user agents; a browser UA looks the least like a bot.
@@ -55,7 +59,10 @@ export async function fetchLotwWithRetry(
         console.warn(
           `[LoTW] ${label} returned ${response.status}; retrying (attempt ${attempt}/${LOTW_MAX_ATTEMPTS})`
         );
-        await sleep(LOTW_BACKOFF_MS[attempt - 1]);
+        // Drain the discarded response so undici can reuse the connection
+        // instead of leaking sockets across retries.
+        try { await response.body?.cancel(); } catch { /* already consumed/closed */ }
+        await sleep(lotwBackoffMs(attempt));
         continue;
       }
       return response;
@@ -67,7 +74,7 @@ export async function fetchLotwWithRetry(
           `[LoTW] ${label} network error; retrying (attempt ${attempt}/${LOTW_MAX_ATTEMPTS}):`,
           error instanceof Error ? error.message : error
         );
-        await sleep(LOTW_BACKOFF_MS[attempt - 1]);
+        await sleep(lotwBackoffMs(attempt));
         continue;
       }
     }
