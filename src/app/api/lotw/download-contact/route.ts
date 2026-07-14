@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/db';
-import { parseLoTWAdif, matchLoTWConfirmations, buildLoTWDownloadUrl, decryptString } from '@/lib/lotw';
+import { parseLoTWAdif, matchLoTWConfirmations, buildLoTWDownloadUrl, decryptString, fetchLotwWithRetry, LOTW_USER_AGENT } from '@/lib/lotw';
 import { ContactWithLoTW } from '@/types/lotw';
 
 export async function POST(request: NextRequest) {
@@ -115,12 +115,14 @@ export async function POST(request: NextRequest) {
     // Download confirmations from LoTW
     let adifContent: string;
     try {
-      const downloadResponse = await fetch(downloadUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Nextlog/1.0.0',
-        },
-      });
+      const downloadResponse = await fetchLotwWithRetry(
+        () =>
+          fetch(downloadUrl, {
+            method: 'GET',
+            headers: { 'User-Agent': LOTW_USER_AGENT },
+          }),
+        'download'
+      );
 
       if (!downloadResponse.ok) {
         throw new Error(`LoTW download failed: ${downloadResponse.status} ${downloadResponse.statusText}`);

@@ -9,6 +9,8 @@ import {
   decryptString,
   readCertMetadata,
   isQsoWithinCertDateRange,
+  fetchLotwWithRetry,
+  LOTW_USER_AGENT,
 } from '@/lib/lotw';
 import { ContactWithLoTW, LotwQso, LotwStationProfile } from '@/types/lotw';
 
@@ -197,10 +199,18 @@ export async function POST(request: NextRequest) {
 
     let lotwResponse = '';
     try {
-      const fd = new FormData();
-      const blob = new Blob([new Uint8Array(tq8)], { type: 'application/octet-stream' });
-      fd.append('upfile', blob, `${stationProfile.callsign}.tq8`);
-      const uploadResponse = await fetch(LOTW_UPLOAD_URL, { method: 'POST', body: fd });
+      const uploadResponse = await fetchLotwWithRetry(() => {
+        const fd = new FormData();
+        const blob = new Blob([new Uint8Array(tq8)], { type: 'application/octet-stream' });
+        fd.append('upfile', blob, `${stationProfile.callsign}.tq8`);
+        // Only set User-Agent — fetch sets the multipart Content-Type (with
+        // boundary) from the FormData body, so don't override it.
+        return fetch(LOTW_UPLOAD_URL, {
+          method: 'POST',
+          body: fd,
+          headers: { 'User-Agent': LOTW_USER_AGENT },
+        });
+      }, 'upload');
       lotwResponse = await uploadResponse.text();
       if (!uploadResponse.ok) {
         throw new Error(`LoTW upload HTTP ${uploadResponse.status}: ${lotwResponse.slice(0, 500)}`);
