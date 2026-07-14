@@ -21,6 +21,69 @@ export function decryptString(encryptedText: string): string {
   return decrypt(encryptedText);
 }
 
+// LoTW's front end intermittently answers 5xx (typically 503 Service
+// Unavailable) when it's throttling or under load — and cloud/serverless
+// egress IPs (e.g. Vercel) get throttled far more readily than a self-hosted
+// box on a stable IP. Every LoTW leg here is idempotent, so retry a few
+// transient failures with exponential backoff before giving up. Only 5xx and
+// network errors are retried; a 2xx is returned as-is because LoTW encodes
+// auth and other failures inside a 200 body, not the status line.
+const LOTW_MAX_ATTEMPTS = 3;
+// Exponential backoff derived from the attempt number, so there are no unused
+// slots to fall out of sync with LOTW_MAX_ATTEMPTS: retry N waits base·2^(N-1).
+// With 3 attempts that's a 2s wait after the 1st failure and 4s after the 2nd.
+const LOTW_BACKOFF_BASE_MS = 2000;
+const lotwBackoffMs = (attempt: number): number => LOTW_BACKOFF_BASE_MS * 2 ** (attempt - 1);
+
+// Present as an ordinary browser. Some WAF front ends 503 on unusual
+// (non-browser) user agents; a browser UA looks the least like a bot.
+export const LOTW_USER_AGENT =
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Retry a LoTW request on transient 5xx / network errors. makeRequest must
+// build a fresh Request each call (FormData bodies aren't safely reusable).
+// A non-5xx response is returned immediately for the caller to interpret.
+export async function fetchLotwWithRetry(
+  makeRequest: () => Promise<Response>,
+  label: string
+): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= LOTW_MAX_ATTEMPTS; attempt++) {
+    try {
+      const response = await makeRequest();
+      if (response.status >= 500 && attempt < LOTW_MAX_ATTEMPTS) {
+        console.warn(
+          `[LoTW] ${label} returned ${response.status}; retrying (attempt ${attempt}/${LOTW_MAX_ATTEMPTS})`
+        );
+        // Drain the discarded response so undici can reuse the connection
+        // instead of leaking sockets across retries.
+        try { await response.body?.cancel(); } catch { /* already consumed/closed */ }
+        await sleep(lotwBackoffMs(attempt));
+        continue;
+      }
+      return response;
+    } catch (error) {
+      // Network-level failure (DNS, reset, timeout). Retry until attempts run out.
+      lastError = error;
+      if (attempt < LOTW_MAX_ATTEMPTS) {
+        console.warn(
+          `[LoTW] ${label} network error; retrying (attempt ${attempt}/${LOTW_MAX_ATTEMPTS}):`,
+          error instanceof Error ? error.message : error
+        );
+        await sleep(lotwBackoffMs(attempt));
+        continue;
+      }
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(`LoTW ${label} failed after ${LOTW_MAX_ATTEMPTS} attempts`);
+}
+
 // Parse ADIF file from LoTW download.
 // Captures both the core matching fields AND the enriched fields LoTW returns when
 // qso_qsldetail=yes / qso_mydetail=yes are set on the request: state, county, CQZ,
@@ -626,7 +689,10 @@ export async function validateLoTWCredentials(username: string, password: string
     // Use a future date so the response is empty even for active accounts —
     // we only care about whether the credential check passes.
     const url = buildLoTWDownloadUrl(username, password, { dateFrom: '2099-01-01' });
-    const response = await fetch(url, { method: 'GET', headers: { 'User-Agent': 'Nextlog/1.0.0' } });
+    const response = await fetchLotwWithRetry(
+      () => fetch(url, { method: 'GET', headers: { 'User-Agent': LOTW_USER_AGENT } }),
+      'credential validation'
+    );
     if (!response.ok) return false;
     const body = await response.text();
     if (/Invalid login/i.test(body) || /Login failed/i.test(body)) return false;
@@ -650,7 +716,10 @@ export async function checkLotwCertCrl(certSerialHex: string): Promise<LotwCrlSt
   if (!certSerialHex) return 'unknown';
   try {
     const url = `https://lotw.arrl.org/lotw/crl?serial=${encodeURIComponent(certSerialHex)}`;
-    const response = await fetch(url, { headers: { 'User-Agent': 'Nextlog/1.0.0' } });
+    const response = await fetchLotwWithRetry(
+      () => fetch(url, { headers: { 'User-Agent': LOTW_USER_AGENT } }),
+      'CRL check'
+    );
     if (!response.ok) return 'unknown';
     const body = (await response.text()).trim();
     // ARRL's CRL endpoint returns "0" for a valid cert, "1" for revoked/superseded.

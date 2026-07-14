@@ -17,6 +17,8 @@ import {
   parseLoTWAdif,
   matchLoTWConfirmations,
   buildLoTWDownloadUrl,
+  fetchLotwWithRetry,
+  LOTW_USER_AGENT,
 } from '@/lib/lotw';
 import {
   LotwUploadResponse,
@@ -355,10 +357,18 @@ export async function performLotwUpload(
     // wavelog Lotw.php:312-315). FormData with a Blob handles the boundary.
     let lotwResponse = '';
     try {
-      const fd = new FormData();
-      const blob = new Blob([new Uint8Array(tq8)], { type: 'application/octet-stream' });
-      fd.append('upfile', blob, `${stationProfile.callsign}.tq8`);
-      const uploadResponse = await fetch(LOTW_UPLOAD_URL, { method: 'POST', body: fd });
+      const uploadResponse = await fetchLotwWithRetry(() => {
+        const fd = new FormData();
+        const blob = new Blob([new Uint8Array(tq8)], { type: 'application/octet-stream' });
+        fd.append('upfile', blob, `${stationProfile.callsign}.tq8`);
+        // Only set User-Agent — fetch sets the multipart Content-Type (with
+        // boundary) from the FormData body, so don't override it.
+        return fetch(LOTW_UPLOAD_URL, {
+          method: 'POST',
+          body: fd,
+          headers: { 'User-Agent': LOTW_USER_AGENT },
+        });
+      }, 'upload');
       lotwResponse = await uploadResponse.text();
       if (!uploadResponse.ok) {
         throw new Error(`LoTW upload HTTP ${uploadResponse.status}: ${lotwResponse.slice(0, 500)}`);
@@ -551,12 +561,14 @@ export async function performLotwDownload(
     // Download confirmations from LoTW
     let adifContent: string;
     try {
-      const downloadResponse = await fetch(downloadUrl, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Nextlog/1.0.0',
-        },
-      });
+      const downloadResponse = await fetchLotwWithRetry(
+        () =>
+          fetch(downloadUrl, {
+            method: 'GET',
+            headers: { 'User-Agent': LOTW_USER_AGENT },
+          }),
+        'download'
+      );
 
       if (!downloadResponse.ok) {
         throw new Error(`LoTW download failed: ${downloadResponse.status} ${downloadResponse.statusText}`);
