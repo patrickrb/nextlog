@@ -129,4 +129,46 @@ test.describe('generateAdif', () => {
     expect(adif).toContain('<qsl_rcvd:1>Y');
     expect(adif).toContain('<lotw_qsl_rcvd:1>Y');
   });
+
+  // Satellite and IOTA data is stored on every contact but used to be dropped on
+  // export, so a satellite QSO lost its bird/propagation identity (breaking LoTW
+  // satellite awards) and IOTA references never round-tripped. Guard that these
+  // survive export, uppercased like other designators.
+  test('includes satellite, split and IOTA fields', () => {
+    const adif = generateAdif([
+      baseContact({
+        prop_mode: 'sat',
+        sat_name: 'so-50',
+        band_rx: '70cm',
+        freq_rx: 435.795,
+        iota: 'na-001',
+      }),
+    ]);
+
+    expect(adif).toContain('<prop_mode:3>SAT');
+    expect(adif).toContain('<sat_name:5>SO-50');
+    expect(adif).toContain('<band_rx:4>70CM');
+    expect(adif).toContain('<freq_rx:7>435.795');
+    expect(adif).toContain('<iota:6>NA-001');
+  });
+
+  test('round-trips satellite/IOTA fields back through the parser', () => {
+    const adif = generateAdif([
+      baseContact({
+        prop_mode: 'SAT',
+        sat_name: 'RS-44',
+        band_rx: '2M',
+        freq_rx: 435.01,
+        iota: 'EU-005',
+      }),
+    ]);
+
+    const [record] = parseAdifRecords(adif);
+
+    expect(record.fields.prop_mode).toBe('SAT');
+    expect(record.fields.sat_name).toBe('RS-44');
+    expect(record.fields.band_rx).toBe('2M');
+    expect(record.fields.freq_rx).toBe('435.01');
+    expect(record.fields.iota).toBe('EU-005');
+  });
 });
