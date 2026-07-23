@@ -37,6 +37,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { frequencyToBand, AMATEUR_BANDS } from '@/lib/bands';
+import { gridToLatLon, distanceKm, bearingDeg, compassPoint, kmToMiles } from '@/lib/grid';
 
 void _PageHeader;
 
@@ -442,6 +443,7 @@ export default function NewContactPage() {
           grid_locator: formData.gridLocator,
           latitude: formData.latitude,
           longitude: formData.longitude,
+          distance: pathInfo ? Math.round(pathInfo.km) : undefined,
           frequency: parseFloat(formData.frequency),
           power: formData.power ? parseFloat(formData.power) : undefined,
           datetime: new Date(formData.datetime).toISOString(),
@@ -479,6 +481,28 @@ export default function NewContactPage() {
   }, [formData.datetime]);
 
   const station = stations.find((s) => s.id.toString() === selectedStationId);
+
+  // Distance and bearing from the operator's home grid to the contact — the
+  // "how far, which way" readout hams expect while logging. Prefers the
+  // contact's explicit coordinates (from a QRZ lookup) and falls back to the
+  // grid square typed into the form; renders nothing until both endpoints
+  // resolve, so a half-typed grid never shows a bogus reading.
+  const pathInfo = (() => {
+    const from = currentUser?.grid_locator
+      ? gridToLatLon(currentUser.grid_locator)
+      : null;
+    const to =
+      formData.latitude !== undefined && formData.longitude !== undefined
+        ? { lat: formData.latitude, lon: formData.longitude }
+        : formData.gridLocator
+          ? gridToLatLon(formData.gridLocator)
+          : null;
+    if (!from || !to) return null;
+    return {
+      km: distanceKm(from.lat, from.lon, to.lat, to.lon),
+      bearing: bearingDeg(from.lat, from.lon, to.lat, to.lon),
+    };
+  })();
 
   return (
     <div className="min-h-screen">
@@ -944,6 +968,32 @@ export default function NewContactPage() {
                     user={currentUser}
                     height="240px"
                   />
+                  {pathInfo ? (
+                    <dl className="mt-4 grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-0.5">
+                        <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Distance
+                        </dt>
+                        <dd className="font-mono text-lg font-semibold tabular-nums">
+                          {Math.round(pathInfo.km).toLocaleString()} km
+                          <span className="ml-1.5 text-sm font-normal text-muted-foreground">
+                            {Math.round(kmToMiles(pathInfo.km)).toLocaleString()} mi
+                          </span>
+                        </dd>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Bearing
+                        </dt>
+                        <dd className="font-mono text-lg font-semibold tabular-nums">
+                          {Math.round(pathInfo.bearing)}°
+                          <span className="ml-1.5 text-sm font-normal text-muted-foreground">
+                            {compassPoint(pathInfo.bearing)}
+                          </span>
+                        </dd>
+                      </div>
+                    </dl>
+                  ) : null}
                 </div>
               </Card>
 

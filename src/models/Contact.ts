@@ -67,6 +67,7 @@ export class Contact {
     grid_locator?: string;
     latitude?: number;
     longitude?: number;
+    distance?: number;
     notes?: string;
   }): Promise<ContactData> {
     const {
@@ -84,18 +85,19 @@ export class Contact {
       grid_locator,
       latitude,
       longitude,
+      distance,
       notes
     } = contactData;
-    
+
     const sql = `
       INSERT INTO contacts (
         user_id, station_id, callsign, name, frequency, mode, band, datetime,
-        rst_sent, rst_received, qth, grid_locator, latitude, longitude, notes
+        rst_sent, rst_received, qth, grid_locator, latitude, longitude, distance, notes
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
       RETURNING *
     `;
-    
+
     const result = await query(sql, [
       user_id,
       station_id || null,
@@ -111,6 +113,7 @@ export class Contact {
       grid_locator ? grid_locator.toUpperCase().trim() : null,
       latitude || null,
       longitude || null,
+      distance ?? null,
       notes ? notes.trim() : null
     ]);
     
