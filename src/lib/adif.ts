@@ -196,6 +196,156 @@ function adifDateTimeToUtc(adifDate: string, adifTime: string): Date | null {
   }
 }
 
+/**
+ * Shape of a contact row (joined with its station) as exported to ADIF.
+ * Mirrors the columns selected by the /api/adif/export route.
+ */
+export interface AdifExportContact {
+  callsign: string;
+  name?: string | null;
+  frequency?: number | null;
+  mode?: string | null;
+  band?: string | null;
+  datetime: Date | string;
+  rst_sent?: string | null;
+  rst_received?: string | null;
+  qth?: string | null;
+  grid_locator?: string | null;
+  notes?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  country?: string | null;
+  dxcc?: number | null;
+  cont?: string | null;
+  cqz?: number | null;
+  ituz?: number | null;
+  state?: string | null;
+  cnty?: string | null;
+  qsl_rcvd?: string | null;
+  qsl_sent?: string | null;
+  qsl_via?: string | null;
+  eqsl_qsl_rcvd?: string | null;
+  eqsl_qsl_sent?: string | null;
+  lotw_qsl_rcvd?: string | null;
+  lotw_qsl_sent?: string | null;
+  qso_date_off?: Date | string | null;
+  time_off?: string | null;
+  operator?: string | null;
+  distance?: number | null;
+  // Station ("my") fields.
+  station_callsign?: string | null;
+  my_gridsquare?: string | null;
+  my_city?: string | null;
+  my_state?: string | null;
+  my_country?: string | null;
+  my_dxcc?: number | null;
+  my_itu_zone?: number | null;
+  my_cq_zone?: number | null;
+  tx_pwr?: number | null;
+}
+
+/**
+ * Format one ADIF field as `<name:byteLength>value`.
+ *
+ * ADIF declares each field's length as the number of octets (UTF-8 bytes) of
+ * its data — NOT the number of Unicode code points. Using JS `String.length`
+ * (UTF-16 code units) under-counts multi-byte characters (accents, ø, CJK,
+ * emoji), so a name like "José" was exported as `<name:4>José` when the data is
+ * 5 bytes. Strict ADIF readers (LoTW/TQSL, Cloudlog, N1MM) then truncate or
+ * mis-align the field. We count UTF-8 bytes so the declared length is correct.
+ *
+ * Returns '' for empty/nullish values (and for numeric 0) so optional fields
+ * are omitted rather than emitted blank — matching the export's prior gating.
+ */
+export function adifField(name: string, value: string | number | null | undefined): string {
+  if (value === null || value === undefined || value === '' || value === 0) {
+    return '';
+  }
+  const str = String(value);
+  const byteLength = Buffer.byteLength(str, 'utf8');
+  return `<${name}:${byteLength}>${str}\n`;
+}
+
+/**
+ * Serialize contacts to an ADIF 3.1.5 document. Field selection and value
+ * transforms (callsign/mode/band/grid uppercasing, freq in MHz, etc.) mirror
+ * what other logging software expects on import.
+ */
+export function generateAdif(contacts: AdifExportContact[]): string {
+  const createdTimestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const header =
+    'ADIF Export from Nextlog\n\n' +
+    adifField('adif_ver', '3.1.5') +
+    adifField('programid', 'Nextlog') +
+    adifField('created_timestamp', createdTimestamp) +
+    '<eoh>\n\n';
+
+  let records = '';
+
+  for (const contact of contacts) {
+    const datetime = new Date(contact.datetime);
+    const qsoDate = datetime.toISOString().split('T')[0].replace(/-/g, '');
+    const timeOn = datetime.toISOString().split('T')[1].split('.')[0].replace(/:/g, '');
+
+    let record = '';
+    record += adifField('call', contact.callsign.toUpperCase());
+    record += adifField('qso_date', qsoDate);
+    record += adifField('time_on', timeOn);
+
+    record += adifField('name', contact.name);
+    record += adifField('freq', contact.frequency);
+    record += adifField('mode', contact.mode ? contact.mode.toUpperCase() : contact.mode);
+    record += adifField('band', contact.band ? contact.band.toUpperCase() : contact.band);
+    record += adifField('rst_sent', contact.rst_sent);
+    record += adifField('rst_rcvd', contact.rst_received);
+    record += adifField('qth', contact.qth);
+    record += adifField('gridsquare', contact.grid_locator ? contact.grid_locator.toUpperCase() : contact.grid_locator);
+    record += adifField('notes', contact.notes);
+    record += adifField('lat_n', contact.latitude);
+    record += adifField('lon_w', contact.longitude);
+
+    // Station ("my") information.
+    record += adifField('station_callsign', contact.station_callsign ? contact.station_callsign.toUpperCase() : contact.station_callsign);
+    record += adifField('my_gridsquare', contact.my_gridsquare ? contact.my_gridsquare.toUpperCase() : contact.my_gridsquare);
+    record += adifField('my_city', contact.my_city);
+    record += adifField('my_state', contact.my_state);
+    record += adifField('my_country', contact.my_country);
+    record += adifField('my_dxcc', contact.my_dxcc);
+    record += adifField('my_itu_zone', contact.my_itu_zone);
+    record += adifField('my_cq_zone', contact.my_cq_zone);
+    record += adifField('tx_pwr', contact.tx_pwr);
+
+    // Additional contact fields.
+    record += adifField('country', contact.country);
+    record += adifField('dxcc', contact.dxcc);
+    record += adifField('cont', contact.cont);
+    record += adifField('cqz', contact.cqz);
+    record += adifField('ituz', contact.ituz);
+    record += adifField('state', contact.state);
+    record += adifField('cnty', contact.cnty);
+    record += adifField('qsl_rcvd', contact.qsl_rcvd);
+    record += adifField('qsl_sent', contact.qsl_sent);
+    record += adifField('qsl_via', contact.qsl_via);
+    record += adifField('eqsl_qsl_rcvd', contact.eqsl_qsl_rcvd);
+    record += adifField('eqsl_qsl_sent', contact.eqsl_qsl_sent);
+    record += adifField('lotw_qsl_rcvd', contact.lotw_qsl_rcvd);
+    record += adifField('lotw_qsl_sent', contact.lotw_qsl_sent);
+
+    if (contact.qso_date_off) {
+      const qsoDateOff = new Date(contact.qso_date_off).toISOString().split('T')[0].replace(/-/g, '');
+      record += adifField('qso_date_off', qsoDateOff);
+    }
+    record += adifField('time_off', contact.time_off ? contact.time_off.replace(/:/g, '') : contact.time_off);
+    record += adifField('operator', contact.operator);
+    record += adifField('distance', contact.distance);
+
+    record += '<eor>\n\n';
+    records += record;
+  }
+
+  return header + records;
+}
+
 // Map an operating frequency (MHz) to its amateur band. Ranges follow the ADIF
 // Band Enumeration rather than any single region's allocation, so an import from
 // a foreign logger lands on the right band regardless of where the QSO was made.
