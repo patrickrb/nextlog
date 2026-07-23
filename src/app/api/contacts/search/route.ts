@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/db';
+import { generateAdif, type AdifExportContact } from '@/lib/adif';
 
 interface SearchFilters {
   callsign?: string;
@@ -114,61 +115,22 @@ export async function GET(request: NextRequest) {
       `;
 
       const exportResult = await query(exportSql, queryParams);
-      const contacts = exportResult.rows;
+      const contacts = exportResult.rows as AdifExportContact[];
 
-      // Generate ADIF content
-      let adifContent = 'ADIF Export from Nextlog\n';
-      adifContent += `Generated on ${new Date().toISOString()}\n`;
-      adifContent += '<EOH>\n\n';
-
-      contacts.forEach((contact: {
-        callsign: string;
-        datetime: string;
-        frequency: number;
-        mode: string;
-        band: string;
-        rst_sent?: string;
-        rst_received?: string;
-        name?: string;
-        qth?: string;
-        grid_locator?: string;
-        notes?: string;
-      }) => {
-        adifContent += `<CALL:${contact.callsign.length}>${contact.callsign}`;
-        adifContent += `<QSO_DATE:8>${new Date(contact.datetime).toISOString().slice(0, 10).replace(/-/g, '')}`;
-        adifContent += `<TIME_ON:6>${new Date(contact.datetime).toISOString().slice(11, 16).replace(':', '')}00`;
-        adifContent += `<FREQ:${contact.frequency.toString().length}>${contact.frequency}`;
-        adifContent += `<MODE:${contact.mode.length}>${contact.mode}`;
-        adifContent += `<BAND:${contact.band.length}>${contact.band}`;
-        
-        if (contact.rst_sent) {
-          adifContent += `<RST_SENT:${contact.rst_sent.length}>${contact.rst_sent}`;
-        }
-        if (contact.rst_received) {
-          adifContent += `<RST_RCVD:${contact.rst_received.length}>${contact.rst_received}`;
-        }
-        if (contact.name) {
-          adifContent += `<NAME:${contact.name.length}>${contact.name}`;
-        }
-        if (contact.qth) {
-          adifContent += `<QTH:${contact.qth.length}>${contact.qth}`;
-        }
-        if (contact.grid_locator) {
-          adifContent += `<GRIDSQUARE:${contact.grid_locator.length}>${contact.grid_locator}`;
-        }
-        if (contact.notes) {
-          adifContent += `<NOTES:${contact.notes.length}>${contact.notes}`;
-        }
-        
-        adifContent += '<EOR>\n';
-      });
+      // Reuse the shared ADIF serializer used by the main export. The previous
+      // hand-rolled generator here declared field lengths with JS String.length
+      // (UTF-16 code units) instead of the UTF-8 byte count ADIF requires (the
+      // bug fixed for the main export in #228), crashed with a 500 when a
+      // contact had a null frequency/mode/band, and dropped most fields (DXCC,
+      // QSL status, country, station info). generateAdif fixes all three.
+      const adifContent = generateAdif(contacts);
 
       const filename = `nextlog-search-results-${new Date().toISOString().slice(0, 10)}.adi`;
-      
+
       return new NextResponse(adifContent, {
         status: 200,
         headers: {
-          'Content-Type': 'text/plain',
+          'Content-Type': 'application/octet-stream',
           'Content-Disposition': `attachment; filename="${filename}"`,
         },
       });

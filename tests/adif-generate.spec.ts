@@ -93,4 +93,40 @@ test.describe('generateAdif', () => {
     expect(adif).not.toContain('<notes:');
     expect(adif).not.toContain('<gridsquare:');
   });
+
+  // The search-results export (/api/contacts/search?export=true) feeds raw
+  // contact rows straight into generateAdif. Contacts imported without a
+  // frequency/mode/band leave those columns null, so the exporter must tolerate
+  // nullish values instead of throwing (the old hand-rolled generator called
+  // .toString()/.length on them and 500'd the whole export).
+  test('tolerates null frequency, mode and band without throwing', () => {
+    const adif = generateAdif([
+      baseContact({ mode: null, band: null, frequency: null }),
+    ]);
+
+    expect(adif).toContain('<call:4>W1AW');
+    expect(adif).not.toContain('<mode:');
+    expect(adif).not.toContain('<band:');
+    expect(adif).not.toContain('<freq:');
+    expect(adif.trimEnd().endsWith('<eor>')).toBe(true);
+  });
+
+  // The same export path carries DXCC / QSL / country data the hand-rolled
+  // generator used to drop. Guard that these survive so award and QSL tooling
+  // downstream can consume search exports.
+  test('includes DXCC, QSL and country fields for the search export', () => {
+    const adif = generateAdif([
+      baseContact({
+        dxcc: 291,
+        country: 'United States',
+        qsl_rcvd: 'Y',
+        lotw_qsl_rcvd: 'Y',
+      }),
+    ]);
+
+    expect(adif).toContain('<dxcc:3>291');
+    expect(adif).toContain('<country:13>United States');
+    expect(adif).toContain('<qsl_rcvd:1>Y');
+    expect(adif).toContain('<lotw_qsl_rcvd:1>Y');
+  });
 });
