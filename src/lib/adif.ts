@@ -196,9 +196,17 @@ function adifDateTimeToUtc(adifDate: string, adifTime: string): Date | null {
   }
 }
 
+// Map an operating frequency (MHz) to its amateur band. Ranges follow the ADIF
+// Band Enumeration rather than any single region's allocation, so an import from
+// a foreign logger lands on the right band regardless of where the QSO was made.
+// The names mirror the uppercase form used across the app (charts, filters,
+// export); anything outside a known band falls back to 'OTHER'.
 export function frequencyToBand(frequency: number): string {
+  if (frequency >= 0.1357 && frequency <= 0.1378) return '2200M';
+  if (frequency >= 0.472 && frequency <= 0.479) return '630M';
   if (frequency >= 1.8 && frequency <= 2.0) return '160M';
   if (frequency >= 3.5 && frequency <= 4.0) return '80M';
+  if (frequency >= 5.06 && frequency <= 5.45) return '60M';
   if (frequency >= 7.0 && frequency <= 7.3) return '40M';
   if (frequency >= 10.1 && frequency <= 10.15) return '30M';
   if (frequency >= 14.0 && frequency <= 14.35) return '20M';
@@ -207,10 +215,13 @@ export function frequencyToBand(frequency: number): string {
   if (frequency >= 24.89 && frequency <= 24.99) return '12M';
   if (frequency >= 28.0 && frequency <= 29.7) return '10M';
   if (frequency >= 50.0 && frequency <= 54.0) return '6M';
+  if (frequency >= 70.0 && frequency <= 71.0) return '4M';
   if (frequency >= 144.0 && frequency <= 148.0) return '2M';
+  if (frequency >= 222.0 && frequency <= 225.0) return '1.25M';
   if (frequency >= 420.0 && frequency <= 450.0) return '70CM';
   if (frequency >= 902.0 && frequency <= 928.0) return '33CM';
   if (frequency >= 1240.0 && frequency <= 1300.0) return '23CM';
+  if (frequency >= 2300.0 && frequency <= 2450.0) return '13CM';
 
   return 'OTHER';
 }
