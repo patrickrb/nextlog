@@ -39,12 +39,19 @@ export function parseAdifRecords(content: string): AdifRecord[] {
 
 function parseSingleRecord(recordString: string): AdifRecord | null {
   const fields: { [key: string]: string } = {};
-  const fieldRegex = /<([^:>]+):(\d+)>([^<]*)/gi;
+  // ADIF field spec: <fieldname:length[:type]>data
+  // The optional data-type indicator (e.g. <QSO_DATE:8:D>, <TIME_ON:6:T>,
+  // <FREQ:8:N>) is emitted by WSJT-X, N1MM, Log4OM and most modern loggers.
+  // The previous regex required '>' immediately after the length, so any
+  // type-qualified field was silently dropped on import — and when that field
+  // was QSO_DATE or TIME_ON the whole QSO was rejected as "missing date/time".
+  // We now skip an optional ':type' segment; name + length still drive parsing.
+  const fieldRegex = /<([^:>]+):(\d+)(?::[^>]*)?>([^<]*)/gi;
   let match;
 
   while ((match = fieldRegex.exec(recordString)) !== null) {
     const fieldName = match[1].toLowerCase();
-    const length = parseInt(match[2]);
+    const length = parseInt(match[2], 10);
     let value = match[3];
 
     if (value.length > length) {
