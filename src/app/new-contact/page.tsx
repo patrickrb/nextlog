@@ -36,6 +36,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { frequencyToBand, AMATEUR_BANDS } from '@/lib/bands';
 
 void _PageHeader;
 
@@ -60,27 +61,7 @@ interface PreviousContact {
 }
 
 const MODES = ['SSB', 'CW', 'FT8', 'FT4', 'RTTY', 'PSK31', 'AM', 'FM'] as const;
-const BAND_PILLS = [
-  '160M', '80M', '60M', '40M', '30M', '20M', '17M', '15M', '12M', '10M', '6M', '2M', '1.25M', '70CM',
-] as const;
-
-function freqToBand(freq: number): string {
-  if (freq >= 1.8 && freq <= 2.0) return '160M';
-  if (freq >= 3.5 && freq <= 4.0) return '80M';
-  if (freq >= 5.33 && freq <= 5.408) return '60M';
-  if (freq >= 7.0 && freq <= 7.3) return '40M';
-  if (freq >= 10.1 && freq <= 10.15) return '30M';
-  if (freq >= 14.0 && freq <= 14.35) return '20M';
-  if (freq >= 18.068 && freq <= 18.168) return '17M';
-  if (freq >= 21.0 && freq <= 21.45) return '15M';
-  if (freq >= 24.89 && freq <= 24.99) return '12M';
-  if (freq >= 28.0 && freq <= 29.7) return '10M';
-  if (freq >= 50.0 && freq <= 54.0) return '6M';
-  if (freq >= 144.0 && freq <= 148.0) return '2M';
-  if (freq >= 219.0 && freq <= 225.0) return '1.25M';
-  if (freq >= 420.0 && freq <= 450.0) return '70CM';
-  return '';
-}
+const BAND_PILLS = AMATEUR_BANDS;
 
 // QRZ XML license-class codes — used to give the chip a human-readable label.
 const LICENSE_CLASS_LABELS: Record<string, string> = {
@@ -364,7 +345,7 @@ export default function NewContactPage() {
     const freq = parseFloat(frequency);
     if (Number.isNaN(freq) || freq < 0.1 || freq > 300000)
       return 'Frequency must be between 0.1 and 300000 MHz';
-    if (!freqToBand(freq)) return 'Frequency is outside amateur radio bands';
+    if (frequencyToBand(freq) === 'OTHER') return 'Frequency is outside amateur radio bands';
     return null;
   };
 
@@ -426,8 +407,8 @@ export default function NewContactPage() {
     if (name === 'frequency') {
       const freq = parseFloat(value);
       if (freq) {
-        const band = freqToBand(freq);
-        if (band) setFormData((prev) => ({ ...prev, band }));
+        const band = frequencyToBand(freq);
+        if (band !== 'OTHER') setFormData((prev) => ({ ...prev, band }));
       }
     }
   };
