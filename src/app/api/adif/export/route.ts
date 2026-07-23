@@ -55,9 +55,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
              c.rst_sent, c.rst_received, c.qth, c.grid_locator, c.notes, 
              c.latitude, c.longitude, c.country, c.dxcc, c.cont, c.cqz, c.ituz, 
              c.state, c.cnty, c.qsl_rcvd, c.qsl_sent, c.qsl_via, c.eqsl_qsl_rcvd, 
-             c.eqsl_qsl_sent, c.lotw_qsl_rcvd, c.lotw_qsl_sent, c.qso_date_off, 
-             c.time_off, c.operator, c.distance,
-             s.callsign as station_callsign, s.grid_locator as my_gridsquare, 
+             c.eqsl_qsl_sent, c.lotw_qsl_rcvd, c.lotw_qsl_sent, c.qso_date_off,
+             c.time_off, c.operator, c.distance, c.prop_mode, c.sat_name,
+             c.band_rx, c.freq_rx, c.iota,
+             s.callsign as station_callsign, s.grid_locator as my_gridsquare,
              s.city as my_city, s.state_province as my_state, s.country as my_country,
              s.dxcc_entity_code as my_dxcc, s.itu_zone as my_itu_zone, 
              s.cq_zone as my_cq_zone, s.power_watts as tx_pwr

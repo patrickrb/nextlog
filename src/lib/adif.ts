@@ -124,6 +124,18 @@ export async function insertAdifRecord(
     qsoDateOff = adifDateTimeToUtc(fields.qso_date_off, fields.time_off);
   }
 
+  // Satellite / split receive frequency → band fallback, mirroring the freq
+  // handling above so a satellite QSO that only carries FREQ_RX still lands on
+  // the right receive band.
+  let freqRx: number | null = null;
+  let bandRx = fields.band_rx || '';
+  if (fields.freq_rx) {
+    freqRx = parseFloat(fields.freq_rx);
+    if (!bandRx && freqRx) {
+      bandRx = frequencyToBand(freqRx);
+    }
+  }
+
   const values = [
     userId,
     stationId,
@@ -158,6 +170,11 @@ export async function insertAdifRecord(
     qsoDateOff ? qsoDateOff.toISOString().split('T')[1].split('.')[0] : null,
     fields.operator || null,
     fields.distance ? parseFloat(fields.distance) : null,
+    fields.prop_mode ? fields.prop_mode.toUpperCase() : null,
+    fields.sat_name ? fields.sat_name.toUpperCase() : null,
+    bandRx || null,
+    freqRx,
+    fields.iota ? fields.iota.toUpperCase() : null,
   ];
 
   await query(
@@ -166,10 +183,10 @@ export async function insertAdifRecord(
       rst_sent, rst_received, qth, grid_locator, notes, latitude, longitude,
       country, dxcc, cont, cqz, ituz, state, cnty, qsl_rcvd, qsl_sent, qsl_via,
       eqsl_qsl_rcvd, eqsl_qsl_sent, lotw_qsl_rcvd, lotw_qsl_sent, qso_date_off,
-      time_off, operator, distance
+      time_off, operator, distance, prop_mode, sat_name, band_rx, freq_rx, iota
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
              $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29,
-             $30, $31, $32, $33)`,
+             $30, $31, $32, $33, $34, $35, $36, $37, $38)`,
     values,
   );
 
@@ -232,6 +249,14 @@ export interface AdifExportContact {
   time_off?: string | null;
   operator?: string | null;
   distance?: number | null;
+  // Satellite / split-operation and IOTA fields. These are stored on every
+  // contact but were previously dropped on export, so satellite QSOs lost their
+  // bird/propagation identity and IOTA references never round-tripped.
+  prop_mode?: string | null;
+  sat_name?: string | null;
+  band_rx?: string | null;
+  freq_rx?: number | null;
+  iota?: string | null;
   // Station ("my") fields.
   station_callsign?: string | null;
   my_gridsquare?: string | null;
@@ -338,6 +363,14 @@ export function generateAdif(contacts: AdifExportContact[]): string {
     record += adifField('time_off', contact.time_off ? contact.time_off.replace(/:/g, '') : contact.time_off);
     record += adifField('operator', contact.operator);
     record += adifField('distance', contact.distance);
+
+    // Satellite / split-operation and IOTA fields. Designators (SAT, SO-50,
+    // NA-001) and bands are conventionally uppercase, matching band/gridsquare.
+    record += adifField('prop_mode', contact.prop_mode ? contact.prop_mode.toUpperCase() : contact.prop_mode);
+    record += adifField('sat_name', contact.sat_name ? contact.sat_name.toUpperCase() : contact.sat_name);
+    record += adifField('band_rx', contact.band_rx ? contact.band_rx.toUpperCase() : contact.band_rx);
+    record += adifField('freq_rx', contact.freq_rx);
+    record += adifField('iota', contact.iota ? contact.iota.toUpperCase() : contact.iota);
 
     record += '<eor>\n\n';
     records += record;
