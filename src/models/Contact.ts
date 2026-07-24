@@ -1,4 +1,5 @@
 import { query } from '@/lib/db';
+import { buildContactUpdate } from '@/lib/contact-update';
 
 export interface ContactData {
   id: number;
@@ -153,17 +154,12 @@ export class Contact {
   }
 
   static async update(id: number, contactData: Partial<ContactData>): Promise<ContactData | null> {
-    const fields = [];
-    const values = [];
-    let paramCount = 1;
-
-    for (const [key, value] of Object.entries(contactData)) {
-      if (value !== undefined && key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
-        fields.push(`${key} = $${paramCount}`);
-        values.push(value);
-        paramCount++;
-      }
-    }
+    // Only ever writes columns from a fixed allowlist (see @/lib/contact-update).
+    // The PUT route passes the raw request body straight in, so filtering here
+    // prevents a caller from reassigning the QSO's owner (user_id) or injecting
+    // SQL through a crafted key — both were possible when every key was
+    // interpolated as a column name.
+    const { fields, values } = buildContactUpdate(contactData as Record<string, unknown>);
 
     if (fields.length === 0) {
       return null;
@@ -171,9 +167,9 @@ export class Contact {
 
     values.push(id);
     const sql = `
-      UPDATE contacts 
-      SET ${fields.join(', ')} 
-      WHERE id = $${paramCount}
+      UPDATE contacts
+      SET ${fields.join(', ')}
+      WHERE id = $${values.length}
       RETURNING *
     `;
 
