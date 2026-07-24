@@ -142,6 +142,20 @@ export async function insertAdifRecord(
     }
   }
 
+  // Coordinates: standard ADIF LAT/LON are `XDDD MM.MMM` strings. Older Nextlog
+  // exports wrote raw decimal degrees under the non-standard lat_n/lon_w fields,
+  // so accept those as a fallback for round-tripping previously-exported files.
+  const latitude = fields.lat
+    ? adifCoordToDecimal(fields.lat)
+    : fields.lat_n
+      ? parseFloat(fields.lat_n)
+      : null;
+  const longitude = fields.lon
+    ? adifCoordToDecimal(fields.lon)
+    : fields.lon_w
+      ? parseFloat(fields.lon_w)
+      : null;
+
   const values = [
     userId,
     stationId,
@@ -156,8 +170,8 @@ export async function insertAdifRecord(
     fields.qth || null,
     fields.gridsquare || null,
     fields.notes || fields.comment || null,
-    fields.lat_n ? parseFloat(fields.lat_n) : null,
-    fields.lon_w ? parseFloat(fields.lon_w) : null,
+    latitude,
+    longitude,
     fields.country || null,
     fields.dxcc ? parseInt(fields.dxcc) : null,
     fields.cont || null,
@@ -197,6 +211,41 @@ export async function insertAdifRecord(
   );
 
   return { inserted: true, skipped: false };
+}
+
+/**
+ * Parse an ADIF "Location" value (`XDDD MM.MMM`, e.g. `N040 26.500`) into signed
+ * decimal degrees, or null if it doesn't match the spec. X is the hemisphere
+ * (N/S for latitude, E/W for longitude); southern/western hemispheres are
+ * negative. This is the format LoTW/TQSL, Cloudlog and N1MM emit for LAT/LON —
+ * the previous code read a non-standard `lat_n`/`lon_w` decimal field that no
+ * other logger produces, so imported coordinates were always dropped.
+ */
+export function adifCoordToDecimal(value: string): number | null {
+  const m = /^([NSEW])\s*(\d{1,3})\s+(\d+(?:\.\d+)?)$/i.exec(value.trim());
+  if (!m) return null;
+  const hemi = m[1].toUpperCase();
+  const degrees = parseInt(m[2], 10);
+  const minutes = parseFloat(m[3]);
+  if (minutes >= 60) return null;
+  const decimal = degrees + minutes / 60;
+  if (hemi === 'S' || hemi === 'W') return -decimal;
+  return decimal;
+}
+
+/**
+ * Format signed decimal degrees as an ADIF "Location" value (`XDDD MM.MMM`).
+ * `axis` selects the hemisphere letters: 'lat' → N/S, 'lon' → E/W. Degrees are
+ * zero-padded to three digits and minutes to `MM.MMM`, matching the ADIF grammar
+ * strict readers expect.
+ */
+export function decimalToAdifCoord(decimal: number, axis: 'lat' | 'lon'): string {
+  const isLat = axis === 'lat';
+  const hemisphere = decimal < 0 ? (isLat ? 'S' : 'W') : isLat ? 'N' : 'E';
+  const abs = Math.abs(decimal);
+  const degrees = Math.floor(abs);
+  const minutes = (abs - degrees) * 60;
+  return `${hemisphere}${String(degrees).padStart(3, '0')} ${minutes.toFixed(3).padStart(6, '0')}`;
 }
 
 function adifDateTimeToUtc(adifDate: string, adifTime: string): Date | null {
@@ -332,8 +381,10 @@ export function generateAdif(contacts: AdifExportContact[]): string {
     record += adifField('qth', contact.qth);
     record += adifField('gridsquare', contact.grid_locator ? contact.grid_locator.toUpperCase() : contact.grid_locator);
     record += adifField('notes', contact.notes);
-    record += adifField('lat_n', contact.latitude);
-    record += adifField('lon_w', contact.longitude);
+    // ADIF LAT/LON are `XDDD MM.MMM` strings, not decimal degrees. Emit them via
+    // the formatter (guarding null but allowing an exact 0 = equator/meridian).
+    record += adifField('lat', contact.latitude != null ? decimalToAdifCoord(contact.latitude, 'lat') : null);
+    record += adifField('lon', contact.longitude != null ? decimalToAdifCoord(contact.longitude, 'lon') : null);
 
     // Station ("my") information.
     record += adifField('station_callsign', contact.station_callsign ? contact.station_callsign.toUpperCase() : contact.station_callsign);
