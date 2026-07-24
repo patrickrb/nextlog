@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
       callsign: searchParams.get('callsign') || undefined,
       name: searchParams.get('name') || undefined,
       qth: searchParams.get('qth') || undefined,
+      notes: searchParams.get('notes') || undefined,
       mode: searchParams.get('mode') || undefined,
       band: searchParams.get('band') || undefined,
       gridLocator: searchParams.get('gridLocator') || undefined,

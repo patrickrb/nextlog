@@ -16,6 +16,7 @@ export interface ContactSearchFilters {
   callsign?: string;
   name?: string;
   qth?: string;
+  notes?: string;
   mode?: string;
   band?: string;
   gridLocator?: string;
@@ -92,6 +93,12 @@ export function buildContactSearchQuery(
         break;
       case 'qth':
         conditions.push(`UPPER(qth) LIKE UPPER($${bind(`%${value}%`)})`);
+        break;
+      case 'notes':
+        // Free-text remarks — POTA/SOTA references, contest exchanges, personal
+        // notes. Contains-match like the other text fields so operators can find
+        // a QSO by whatever they jotted down.
+        conditions.push(`UPPER(notes) LIKE UPPER($${bind(`%${value}%`)})`);
         break;
       case 'mode':
         conditions.push(`UPPER(mode) = UPPER($${bind(value)})`);
