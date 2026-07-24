@@ -165,6 +165,24 @@ export function gridPath(from: string, to: string): PathInfo | null {
   };
 }
 
+// Pick the operator's transmitting grid for the distance/bearing readout on the
+// logging form. A QSO is made from the *station actually on the air*, which for
+// a POTA/portable/rover operator is often a different grid than their home
+// account — so the on-air station's locator wins, falling back to the account
+// home grid. A blank or malformed value at either level is ignored (rather than
+// yielding a bogus origin), and the winner is normalized to trimmed uppercase so
+// it feeds gridToLatLon like any other locator. Returns null when neither
+// resolves, so the readout simply shows nothing.
+export function resolveOriginGrid(
+  stationGrid: string | null | undefined,
+  homeGrid: string | null | undefined,
+): string | null {
+  for (const grid of [stationGrid, homeGrid]) {
+    if (grid && isValidGrid(grid)) return grid.trim().toUpperCase();
+  }
+  return null;
+}
+
 const KM_PER_MILE = 1.609344;
 
 // Kilometers → statute miles (US operators log distance in miles as often as km).
