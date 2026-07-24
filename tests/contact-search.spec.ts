@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { buildContactSearchQuery } from '@/lib/contact-search';
+import { buildContactSearchQuery, CONFIRMED_QSL_SQL } from '@/lib/contact-search';
 
 // Pure-function tests for the contact-search WHERE-clause builder. This is the
 // shared query builder behind GET /api/contacts/search — it turns the filter
@@ -50,16 +50,34 @@ test.describe('buildContactSearchQuery', () => {
     expect(params).toEqual([1, 291]);
   });
 
+  // There is no `confirmed` column — a QSO is "confirmed" when any QSL source
+  // (LoTW, QRZ, paper, eQSL) confirms it, mirroring Contact.countConfirmedByUserId.
+  // The filter emits that real expression rather than a nonexistent column, and
+  // the "not confirmed" case negates it (NULL-safe, so unconfirmed rows with NULL
+  // QSL fields still match).
   test('qsl status adds a predicate but no bound parameter', () => {
     const confirmed = buildContactSearchQuery(1, { qslStatus: 'confirmed' });
-    expect(confirmed.whereClause).toBe('user_id = $1 AND confirmed = true');
+    expect(confirmed.whereClause).toBe(`user_id = $1 AND ${CONFIRMED_QSL_SQL}`);
     expect(confirmed.params).toEqual([1]);
 
     const notConfirmed = buildContactSearchQuery(1, { qslStatus: 'not_confirmed' });
-    expect(notConfirmed.whereClause).toBe(
-      'user_id = $1 AND (confirmed = false OR confirmed IS NULL)'
-    );
+    expect(notConfirmed.whereClause).toBe(`user_id = $1 AND NOT ${CONFIRMED_QSL_SQL}`);
     expect(notConfirmed.params).toEqual([1]);
+  });
+
+  // The confirmed expression must reference only real columns and never a bare
+  // `confirmed` (the column that never existed and 500'd every QSL-status search).
+  test('the confirmed predicate references real columns, not a `confirmed` column', () => {
+    expect(CONFIRMED_QSL_SQL).not.toMatch(/\bconfirmed\b/);
+    for (const col of [
+      'qsl_lotw',
+      'lotw_qsl_rcvd',
+      'qrz_qsl_rcvd',
+      'qsl_rcvd',
+      'eqsl_qsl_rcvd',
+    ]) {
+      expect(CONFIRMED_QSL_SQL).toContain(col);
+    }
   });
 
   test('an unrecognized qsl status contributes nothing', () => {
@@ -75,7 +93,7 @@ test.describe('buildContactSearchQuery', () => {
       qslStatus: 'confirmed',
       dxcc: '291',
     });
-    expect(whereClause).toBe('user_id = $1 AND confirmed = true AND dxcc = $2');
+    expect(whereClause).toBe(`user_id = $1 AND ${CONFIRMED_QSL_SQL} AND dxcc = $2`);
     expect(params).toEqual([1, 291]);
 
     // Every `$N` referenced in the clause must have a corresponding param.
