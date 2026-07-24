@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Station } from '@/models/Station';
 import { verifyToken } from '@/lib/auth';
+import { gridLocatorError } from '@/lib/grid';
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,14 +48,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate grid locator if provided
+    // Validate grid locator if provided. Uses the canonical validator so an
+    // 8-char extended locator (the on-air grid a VHF/microwave op transmits from,
+    // and the origin of the logging-form distance readout) saves rather than 400s.
     if (data.grid_locator) {
-      const gridRegex = /^[A-R]{2}[0-9]{2}([A-X]{2})?$/;
-      if (!gridRegex.test(data.grid_locator.toUpperCase())) {
-        return NextResponse.json(
-          { error: 'Invalid grid locator format' },
-          { status: 400 }
-        );
+      const gridError = gridLocatorError(data.grid_locator);
+      if (gridError) {
+        return NextResponse.json({ error: gridError }, { status: 400 });
       }
     }
 

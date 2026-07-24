@@ -23,6 +23,19 @@ export function isValidGrid(grid: string): boolean {
   return GRID_RE.test(grid.trim().toUpperCase());
 }
 
+// Validation helper for form/API inputs where the grid is optional: returns null
+// when the field is blank OR a well-formed locator, and a human-readable error
+// message otherwise. Centralizing this on isValidGrid keeps the logging form and
+// the stations API from re-deriving their own regex — which is how they drifted
+// behind the 8-char (extended) locators the rest of the app already accepts,
+// silently rejecting a valid VHF/microwave grid on save.
+export function gridLocatorError(grid: string): string | null {
+  if (!grid.trim()) return null;
+  return isValidGrid(grid)
+    ? null
+    : 'Invalid grid locator format (e.g., FN31, FN31pr, or FN31pr55)';
+}
+
 // Convert a Maidenhead locator to the latitude/longitude of the *center* of the
 // square (4-char), subsquare (6-char), or extended square (8-char). Returns
 // null for anything that isn't a valid locator. Centering matches
