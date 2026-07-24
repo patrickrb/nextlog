@@ -2,19 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { generateAdif, type AdifExportContact } from '@/lib/adif';
-
-interface SearchFilters {
-  callsign?: string;
-  name?: string;
-  qth?: string;
-  mode?: string;
-  band?: string;
-  gridLocator?: string;
-  startDate?: string;
-  endDate?: string;
-  qslStatus?: string;
-  dxcc?: string;
-}
+import { buildContactSearchQuery } from '@/lib/contact-search';
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,8 +19,11 @@ export async function GET(request: NextRequest) {
 
     const userId = typeof user.userId === 'string' ? parseInt(user.userId, 10) : user.userId;
 
-    // Extract search filters
-    const filters: SearchFilters = {
+    // Build the parameterized WHERE clause from the query-string filters. The
+    // builder numbers placeholders off the params array so a predicate-only
+    // filter (QSL status) can't shift a later value-bound filter (DXCC) onto a
+    // nonexistent `$N` — the bug that used to 500 confirmed-status + DXCC searches.
+    const { whereClause, params: queryParams } = buildContactSearchQuery(userId, {
       callsign: searchParams.get('callsign') || undefined,
       name: searchParams.get('name') || undefined,
       qth: searchParams.get('qth') || undefined,
@@ -43,68 +34,7 @@ export async function GET(request: NextRequest) {
       endDate: searchParams.get('endDate') || undefined,
       qslStatus: searchParams.get('qslStatus') || undefined,
       dxcc: searchParams.get('dxcc') || undefined,
-    };
-
-    // Build the WHERE clause and parameters
-    const whereConditions: string[] = ['user_id = $1'];
-    const queryParams: (string | number)[] = [userId];
-    let paramCount = 1;
-
-    // Add search conditions
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value && value.trim() !== '' && value !== 'all') {
-        paramCount++;
-        switch (key) {
-          case 'callsign':
-            whereConditions.push(`UPPER(callsign) LIKE UPPER($${paramCount})`);
-            queryParams.push(`%${value}%`);
-            break;
-          case 'name':
-            whereConditions.push(`UPPER(name) LIKE UPPER($${paramCount})`);
-            queryParams.push(`%${value}%`);
-            break;
-          case 'qth':
-            whereConditions.push(`UPPER(qth) LIKE UPPER($${paramCount})`);
-            queryParams.push(`%${value}%`);
-            break;
-          case 'mode':
-            whereConditions.push(`UPPER(mode) = UPPER($${paramCount})`);
-            queryParams.push(value);
-            break;
-          case 'band':
-            whereConditions.push(`UPPER(band) = UPPER($${paramCount})`);
-            queryParams.push(value);
-            break;
-          case 'gridLocator':
-            whereConditions.push(`UPPER(grid_locator) LIKE UPPER($${paramCount})`);
-            queryParams.push(`%${value}%`);
-            break;
-          case 'startDate':
-            whereConditions.push(`DATE(datetime) >= $${paramCount}`);
-            queryParams.push(value);
-            break;
-          case 'endDate':
-            whereConditions.push(`DATE(datetime) <= $${paramCount}`);
-            queryParams.push(value);
-            break;
-          case 'qslStatus':
-            // For now, we'll implement basic QSL status filtering
-            // This can be expanded when QSL fields are added to the schema
-            if (value === 'confirmed') {
-              whereConditions.push(`confirmed = true`);
-            } else if (value === 'not_confirmed') {
-              whereConditions.push(`(confirmed = false OR confirmed IS NULL)`);
-            }
-            break;
-          case 'dxcc':
-            whereConditions.push(`dxcc = $${paramCount}`);
-            queryParams.push(parseInt(value));
-            break;
-        }
-      }
     });
-
-    const whereClause = whereConditions.join(' AND ');
 
     if (isExport) {
       // Export all matching contacts as ADIF
