@@ -37,7 +37,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { frequencyToBand, AMATEUR_BANDS } from '@/lib/bands';
-import { AMATEUR_MODES, defaultRstForMode } from '@/lib/modes';
+import { AMATEUR_MODES, defaultRstForMode, isDbReportMode } from '@/lib/modes';
 import {
   gridToLatLon,
   gridLocatorError,
@@ -134,8 +134,12 @@ function rstToBars(rst: string | undefined, mode: string): number {
   // Digital values like -10 / +12 — map to 5 bars across -25..+10 dB
   const numeric = Number.parseInt(rst.replace(/[^-\d]/g, ''), 10);
   if (Number.isNaN(numeric)) return 0;
-  const isDigital = ['FT8', 'FT4', 'PSK31', 'RTTY', 'MFSK', 'OLIVIA', 'CONTESTIA'].includes(mode);
-  if (isDigital) {
+  // dB-report modes (the WSJT-X / weak-signal family, plus the keyboard PSK/RTTY
+  // group) carry a "-10"-style SNR, not an RST — scale them on the dB axis.
+  // Sourced from the canonical classifier so this stays in step with the report
+  // the form pre-fills; a hard-coded list here previously omitted JS8/FST4/JT65/
+  // JT9/Q65/MSK144/PSK63, whose "-10" default then rendered a wrong 1-bar meter.
+  if (isDbReportMode(mode)) {
     const clamped = Math.min(10, Math.max(-25, numeric));
     return Math.round(((clamped + 25) / 35) * 5);
   }

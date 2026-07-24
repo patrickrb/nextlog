@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { AMATEUR_MODES, defaultRstForMode } from '@/lib/modes';
+import { AMATEUR_MODES, defaultRstForMode, isDbReportMode } from '@/lib/modes';
 
 // The mode list is the canonical set of operating modes Nextlog can store, and
 // the single source of truth the contact-search mode dropdown draws from. These
@@ -93,6 +93,15 @@ test.describe('defaultRstForMode', () => {
     }
   });
 
+  test('agrees with isDbReportMode for every canonical mode', () => {
+    // defaultRstForMode and isDbReportMode share one classification: a mode
+    // defaults to a -10 dB report exactly when it is a dB-report mode.
+    for (const mode of AMATEUR_MODES) {
+      if (mode === 'CW') continue; // CW is RST (599), not a dB report
+      expect(defaultRstForMode(mode) === '-10').toBe(isDbReportMode(mode));
+    }
+  });
+
   test('is case-insensitive', () => {
     expect(defaultRstForMode('cw')).toBe('599');
     expect(defaultRstForMode('ft8')).toBe('-10');
@@ -103,5 +112,37 @@ test.describe('defaultRstForMode', () => {
     for (const mode of AMATEUR_MODES) {
       expect(['59', '599', '-10']).toContain(defaultRstForMode(mode));
     }
+  });
+});
+
+test.describe('isDbReportMode', () => {
+  test('classifies the WSJT-X / weak-signal digital family as dB-report modes', () => {
+    // These pre-fill a "-10" report in the logging forms, so any consumer that
+    // renders a signal-strength meter must scale them on the dB axis, not read
+    // the leading digit as an RST readability. The signal-strength bars on the
+    // new-contact form previously hard-coded a shorter list that omitted JS8,
+    // FST4, JT65, JT9, Q65, MSK144 and PSK63, so those modes rendered a
+    // misleading 1-bar meter.
+    for (const mode of [
+      'FT8', 'FT4', 'JS8', 'FST4', 'JT65', 'JT9', 'Q65', 'MSK144',
+      'PSK31', 'PSK63', 'RTTY', 'MFSK', 'OLIVIA', 'CONTESTIA',
+    ]) {
+      expect(isDbReportMode(mode)).toBe(true);
+    }
+  });
+
+  test('classifies phone, CW, digital-voice and image modes as non-dB modes', () => {
+    for (const mode of [
+      'SSB', 'CW', 'AM', 'FM', 'DMR', 'DSTAR', 'C4FM', 'YSF', 'M17', 'FREEDV',
+      'SSTV', 'PACKET', 'ATV',
+    ]) {
+      expect(isDbReportMode(mode)).toBe(false);
+    }
+  });
+
+  test('is case-insensitive and tolerates surrounding whitespace', () => {
+    expect(isDbReportMode('ft8')).toBe(true);
+    expect(isDbReportMode('  JS8 ')).toBe(true);
+    expect(isDbReportMode('ssb')).toBe(false);
   });
 });
