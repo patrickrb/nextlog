@@ -6,8 +6,8 @@
 //
 // Placeholders ($2, $3, …) are numbered off the length of the `params` array as
 // each value is pushed, so they can never drift out of step with the values.
-// The subtle bug this prevents: a predicate-only filter (`qslStatus` adds
-// `confirmed = true` with no bound value) must not advance the placeholder
+// The subtle bug this prevents: a predicate-only filter (`qslStatus` adds a QSL
+// confirmation expression with no bound value) must not advance the placeholder
 // counter — otherwise a later value-bound filter (`dxcc`) references a `$N`
 // that has no matching parameter, 500-ing the COUNT query and mis-binding the
 // paginated one.
@@ -24,6 +24,24 @@ export interface ContactSearchFilters {
   qslStatus?: string;
   dxcc?: string;
 }
+
+/**
+ * SQL boolean expression that is true when a QSO has been confirmed by any QSL
+ * source — LoTW (either the boolean sync flag or an ADIF-style 'Y'), QRZ, paper,
+ * or eQSL. There is no `confirmed` column; this mirrors the canonical definition
+ * in Contact.countConfirmedByUserId (the dashboard "QSL Confirmed" stat) so the
+ * search filter and the stat card agree on what "confirmed" means.
+ *
+ * Each term is wrapped so the whole expression is a plain boolean that is never
+ * NULL — that lets it be negated cleanly (`NOT ...`) for the "not confirmed"
+ * filter without a NULL QSL column silently dropping an unconfirmed row.
+ */
+export const CONFIRMED_QSL_SQL =
+  "(COALESCE(qsl_lotw, false) " +
+  "OR COALESCE(lotw_qsl_rcvd, '') = 'Y' " +
+  "OR COALESCE(qrz_qsl_rcvd, '') = 'Y' " +
+  "OR COALESCE(qsl_rcvd, '') = 'Y' " +
+  "OR COALESCE(eqsl_qsl_rcvd, '') = 'Y')";
 
 export interface ContactSearchQuery {
   /** The full WHERE clause, always anchored on `user_id = $1`. */
@@ -78,10 +96,13 @@ export function buildContactSearchQuery(
         break;
       case 'qslStatus':
         // Predicate-only: adds SQL but binds no value, so it must NOT call bind().
+        // There is no `confirmed` column — expand to the real QSL-source check
+        // (see CONFIRMED_QSL_SQL). The old `confirmed = true` 500'd every
+        // QSL-status search with "column confirmed does not exist".
         if (value === 'confirmed') {
-          conditions.push('confirmed = true');
+          conditions.push(CONFIRMED_QSL_SQL);
         } else if (value === 'not_confirmed') {
-          conditions.push('(confirmed = false OR confirmed IS NULL)');
+          conditions.push(`NOT ${CONFIRMED_QSL_SQL}`);
         }
         break;
       case 'dxcc': {
