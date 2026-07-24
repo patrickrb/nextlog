@@ -65,6 +65,13 @@ export function gridToLatLon(grid: string): LatLon | null {
   return { lat, lon };
 }
 
+const EARTH_RADIUS_KM = 6371;
+
+// Length of a full great circle around the Earth (2πR). The short path between
+// two points and its long-path complement always sum to this, so long-path
+// distance is just `EARTH_CIRCUMFERENCE_KM - shortPathKm`.
+export const EARTH_CIRCUMFERENCE_KM = 2 * Math.PI * EARTH_RADIUS_KM;
+
 const toRad = (deg: number): number => (deg * Math.PI) / 180;
 const toDeg = (rad: number): number => (rad * 180) / Math.PI;
 
@@ -75,7 +82,7 @@ export function distanceKm(
   lat2: number,
   lon2: number
 ): number {
-  const R = 6371;
+  const R = EARTH_RADIUS_KM;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   const a =
@@ -113,10 +120,29 @@ export function compassPoint(bearing: number): string {
   return COMPASS_POINTS[idx];
 }
 
+// Long-path bearing: the heading around the *other* side of the globe, exactly
+// 180° opposed to the short-path bearing. HF DX frequently arrives long-path, so
+// operators swing the beam this way when the short path is dead. Normalized into
+// [0, 360) so it feeds compassPoint like any other bearing.
+export function longPathBearingDeg(shortBearing: number): number {
+  return ((shortBearing + 180) % 360 + 360) % 360;
+}
+
+// Long-path distance: the rest of the great circle once the short path is
+// removed. short + long always sums to the Earth's circumference.
+export function longPathKm(shortKm: number): number {
+  return EARTH_CIRCUMFERENCE_KM - shortKm;
+}
+
 export interface PathInfo {
   distanceKm: number;
   bearingDeg: number;
   compass: string;
+  // Long-path complement — the beam heading and arc the other way around the
+  // globe, for the HF openings that favor the long path.
+  longPathKm: number;
+  longPathBearingDeg: number;
+  longPathCompass: string;
 }
 
 // Distance/bearing between two Maidenhead locators. Returns null unless both
@@ -127,10 +153,15 @@ export function gridPath(from: string, to: string): PathInfo | null {
   const b = gridToLatLon(to);
   if (!a || !b) return null;
   const bearing = bearingDeg(a.lat, a.lon, b.lat, b.lon);
+  const dist = distanceKm(a.lat, a.lon, b.lat, b.lon);
+  const lpBearing = longPathBearingDeg(bearing);
   return {
-    distanceKm: distanceKm(a.lat, a.lon, b.lat, b.lon),
+    distanceKm: dist,
     bearingDeg: bearing,
     compass: compassPoint(bearing),
+    longPathKm: longPathKm(dist),
+    longPathBearingDeg: lpBearing,
+    longPathCompass: compassPoint(lpBearing),
   };
 }
 

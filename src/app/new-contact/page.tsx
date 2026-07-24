@@ -38,7 +38,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { frequencyToBand, AMATEUR_BANDS } from '@/lib/bands';
 import { AMATEUR_MODES, defaultRstForMode } from '@/lib/modes';
-import { gridToLatLon, distanceKm, bearingDeg, compassPoint, kmToMiles } from '@/lib/grid';
+import {
+  gridToLatLon,
+  distanceKm,
+  bearingDeg,
+  compassPoint,
+  kmToMiles,
+  longPathBearingDeg,
+  longPathKm,
+} from '@/lib/grid';
 
 void _PageHeader;
 
@@ -972,6 +980,9 @@ export default function NewContactPage() {
                             {Math.round(kmToMiles(pathInfo.km)).toLocaleString()} mi
                           </span>
                         </dd>
+                        <div className="font-mono text-xs text-muted-foreground tabular-nums">
+                          LP {Math.round(longPathKm(pathInfo.km)).toLocaleString()} km
+                        </div>
                       </div>
                       <div className="flex flex-col gap-0.5">
                         <dt className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -983,6 +994,10 @@ export default function NewContactPage() {
                             {compassPoint(pathInfo.bearing)}
                           </span>
                         </dd>
+                        <div className="font-mono text-xs text-muted-foreground tabular-nums">
+                          LP {Math.round(longPathBearingDeg(pathInfo.bearing))}°{' '}
+                          {compassPoint(longPathBearingDeg(pathInfo.bearing))}
+                        </div>
                       </div>
                     </dl>
                   ) : null}

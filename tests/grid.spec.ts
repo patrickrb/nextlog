@@ -7,6 +7,9 @@ import {
   compassPoint,
   gridPath,
   kmToMiles,
+  longPathBearingDeg,
+  longPathKm,
+  EARTH_CIRCUMFERENCE_KM,
 } from '@/lib/grid';
 
 // Pure-function tests for the Maidenhead grid / great-circle math that powers
@@ -131,6 +134,36 @@ test.describe('compassPoint', () => {
   });
 });
 
+test.describe('longPathBearingDeg', () => {
+  test('is 180° opposed to the short-path bearing', () => {
+    expect(longPathBearingDeg(0)).toBeCloseTo(180, 6);
+    expect(longPathBearingDeg(90)).toBeCloseTo(270, 6);
+    expect(longPathBearingDeg(200)).toBeCloseTo(20, 6); // wraps past 360
+    expect(longPathBearingDeg(359)).toBeCloseTo(179, 6);
+  });
+
+  test('always returns a value in [0, 360)', () => {
+    for (const b of [0, 45, 179, 180, 270, 359.9]) {
+      const lp = longPathBearingDeg(b);
+      expect(lp).toBeGreaterThanOrEqual(0);
+      expect(lp).toBeLessThan(360);
+    }
+  });
+});
+
+test.describe('longPathKm', () => {
+  test('is the remainder of the great circle after the short path', () => {
+    expect(longPathKm(0)).toBeCloseTo(EARTH_CIRCUMFERENCE_KM, 6);
+    // A short + long path always sums to the Earth's circumference.
+    const shortKm = 5500;
+    expect(shortKm + longPathKm(shortKm)).toBeCloseTo(EARTH_CIRCUMFERENCE_KM, 6);
+  });
+
+  test('EARTH_CIRCUMFERENCE_KM is ~40030 km (2πR, R = 6371 km)', () => {
+    expect(EARTH_CIRCUMFERENCE_KM).toBeCloseTo(40030.17, 1);
+  });
+});
+
 test.describe('gridPath', () => {
   test('reports the transatlantic hop from Connecticut to London', () => {
     // FN31 → IO91 is a classic east-coast-US to England path, ~5500 km NE.
@@ -139,6 +172,24 @@ test.describe('gridPath', () => {
     expect(path!.distanceKm).toBeGreaterThan(5000);
     expect(path!.distanceKm).toBeLessThan(6000);
     expect(path!.compass).toBe('NE');
+  });
+
+  test('reports the long path as the opposite beam heading and the far arc', () => {
+    // The short path from Connecticut to London is NE; the long path leaves the
+    // antenna pointed SW, around the other side of the globe, and covers the
+    // rest of the great circle (~34500 km).
+    const path = gridPath('FN31', 'IO91');
+    expect(path).not.toBeNull();
+    expect(path!.longPathBearingDeg).toBeCloseTo(
+      (path!.bearingDeg + 180) % 360,
+      6,
+    );
+    expect(path!.longPathCompass).toBe('SW');
+    expect(path!.distanceKm + path!.longPathKm).toBeCloseTo(
+      EARTH_CIRCUMFERENCE_KM,
+      6,
+    );
+    expect(path!.longPathKm).toBeGreaterThan(path!.distanceKm);
   });
 
   test('returns null when either locator is invalid', () => {
