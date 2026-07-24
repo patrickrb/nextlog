@@ -248,10 +248,16 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
         body: JSON.stringify({
           ...formData,
           datetime: formData.datetime ? new Date(formData.datetime).toISOString() : undefined,
-          // Blank power clears the field (null), not an empty string a numeric
-          // column would reject.
+          // Blank/absent power clears the field (null), not an empty string a
+          // numeric column would reject. `== null` catches both a cleared input
+          // (undefined/'') and a contact loaded with no power (JSON null) — the
+          // latter must stay null, not become Number(null) === 0, which would
+          // otherwise overwrite NULL with 0 and defeat the export's
+          // COALESCE(c.tx_pwr, s.power_watts) station-power fallback.
           tx_pwr:
-            formData.tx_pwr === undefined || (formData.tx_pwr as unknown) === ''
+            formData.tx_pwr == null ||
+            (formData.tx_pwr as unknown) === '' ||
+            Number.isNaN(Number(formData.tx_pwr))
               ? null
               : Number(formData.tx_pwr),
         }),
