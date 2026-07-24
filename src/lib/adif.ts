@@ -248,11 +248,21 @@ export function decimalToAdifCoord(decimal: number, axis: 'lat' | 'lon'): string
   return `${hemisphere}${String(degrees).padStart(3, '0')} ${minutes.toFixed(3).padStart(6, '0')}`;
 }
 
-function adifDateTimeToUtc(adifDate: string, adifTime: string): Date | null {
+/**
+ * Convert an ADIF QSO_DATE (`YYYYMMDD`) + TIME_ON/TIME_OFF into a UTC Date, or
+ * null if either is unparseable. The ADIF Time type is `HHMMSS` *or* `HHMM`
+ * (seconds omitted), so a 4-digit time is read as `HH:MM:00` — the missing
+ * seconds are appended, not right-aligned. Reading `2359` as `00:23:59` would
+ * silently shift the QSO to the wrong time of day (and, near midnight, the
+ * wrong date).
+ */
+export function adifDateTimeToUtc(adifDate: string, adifTime: string): Date | null {
   try {
-    // ADIF date format: YYYYMMDD, time format: HHMMSS or HHMM (pad)
+    // ADIF date format: YYYYMMDD, time format: HHMMSS or HHMM. A 4-digit HHMM
+    // time omits the seconds, so pad on the *right* (append "00" seconds) — not
+    // the left, which would misread 1230 as 00:12:30 instead of 12:30:00.
     const dateStr = adifDate.padStart(8, '0');
-    const timeStr = adifTime.padStart(6, '0');
+    const timeStr = adifTime.length >= 6 ? adifTime.slice(0, 6) : adifTime.padEnd(6, '0');
 
     const year = parseInt(dateStr.substring(0, 4));
     const month = parseInt(dateStr.substring(4, 6)) - 1;
