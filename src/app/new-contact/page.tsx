@@ -37,6 +37,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { frequencyToBand, AMATEUR_BANDS } from '@/lib/bands';
+import { AMATEUR_MODES, defaultRstForMode } from '@/lib/modes';
 import { gridToLatLon, distanceKm, bearingDeg, compassPoint, kmToMiles } from '@/lib/grid';
 
 void _PageHeader;
@@ -61,7 +62,7 @@ interface PreviousContact {
   notes?: string;
 }
 
-const MODES = ['SSB', 'CW', 'FT8', 'FT4', 'RTTY', 'PSK31', 'AM', 'FM'] as const;
+const MODES = AMATEUR_MODES;
 const BAND_PILLS = AMATEUR_BANDS;
 
 // QRZ XML license-class codes — used to give the chip a human-readable label.
@@ -381,20 +382,8 @@ export default function NewContactPage() {
   };
 
   const handleSelectMode = (value: string) => {
-    setFormData((prev) => {
-      const next = { ...prev, mode: value };
-      if (value === 'CW') {
-        next.rst_sent = '599';
-        next.rst_received = '599';
-      } else if (['SSB', 'FM', 'AM'].includes(value)) {
-        next.rst_sent = '59';
-        next.rst_received = '59';
-      } else if (['FT8', 'FT4', 'PSK31', 'RTTY', 'MFSK', 'OLIVIA', 'CONTESTIA'].includes(value)) {
-        next.rst_sent = '-10';
-        next.rst_received = '-10';
-      }
-      return next;
-    });
+    const rst = defaultRstForMode(value);
+    setFormData((prev) => ({ ...prev, mode: value, rst_sent: rst, rst_received: rst }));
   };
 
   const handleSelectBand = (value: string) => {

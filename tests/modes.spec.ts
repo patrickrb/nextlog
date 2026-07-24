@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { AMATEUR_MODES } from '@/lib/modes';
+import { AMATEUR_MODES, defaultRstForMode } from '@/lib/modes';
 
 // The mode list is the canonical set of operating modes Nextlog can store, and
 // the single source of truth the contact-search mode dropdown draws from. These
@@ -52,5 +52,56 @@ test.describe('modes module', () => {
   test('leads with the everyday phone and CW modes so the dropdown is fast to scan', () => {
     // Operators reach for SSB/CW/FT8 far more than Olivia; keep them at the top.
     expect(AMATEUR_MODES.slice(0, 4)).toEqual(['SSB', 'CW', 'FT8', 'FT4']);
+  });
+});
+
+test.describe('defaultRstForMode', () => {
+  test('CW gets a 599 signal report', () => {
+    expect(defaultRstForMode('CW')).toBe('599');
+  });
+
+  test('phone modes get a 59 signal report', () => {
+    for (const mode of ['SSB', 'AM', 'FM']) {
+      expect(defaultRstForMode(mode)).toBe('59');
+    }
+  });
+
+  test('digital dB-report modes default to -10', () => {
+    // WSJT-X / weak-signal families report a dB SNR, and Nextlog has always
+    // defaulted its PSK/RTTY/MFSK/Olivia/Contestia menu entries the same way.
+    const dbModes = [
+      'FT8', 'FT4', 'JS8', 'FST4', 'JT65', 'JT9', 'Q65', 'MSK144',
+      'PSK31', 'PSK63', 'RTTY', 'MFSK', 'OLIVIA', 'CONTESTIA',
+    ];
+    for (const mode of dbModes) {
+      expect(defaultRstForMode(mode)).toBe('-10');
+    }
+  });
+
+  test('preserves the exact classification the logging forms used before centralizing', () => {
+    // The two logging forms each carried their own copy of this heuristic; the
+    // shared helper must not change the default for any mode they both handled.
+    expect(defaultRstForMode('CW')).toBe('599');
+    for (const mode of ['FT8', 'FT4', 'PSK31', 'RTTY', 'MFSK', 'OLIVIA', 'CONTESTIA']) {
+      expect(defaultRstForMode(mode)).toBe('-10');
+    }
+  });
+
+  test('digital-voice and image modes fall back to 59', () => {
+    for (const mode of ['DMR', 'DSTAR', 'C4FM', 'YSF', 'M17', 'FREEDV', 'SSTV', 'PACKET', 'ATV']) {
+      expect(defaultRstForMode(mode)).toBe('59');
+    }
+  });
+
+  test('is case-insensitive', () => {
+    expect(defaultRstForMode('cw')).toBe('599');
+    expect(defaultRstForMode('ft8')).toBe('-10');
+    expect(defaultRstForMode('ssb')).toBe('59');
+  });
+
+  test('returns a default for every canonical mode', () => {
+    for (const mode of AMATEUR_MODES) {
+      expect(['59', '599', '-10']).toContain(defaultRstForMode(mode));
+    }
   });
 });

@@ -38,3 +38,27 @@ export const AMATEUR_MODES = [
 ] as const;
 
 export type AmateurMode = (typeof AMATEUR_MODES)[number];
+
+// Modes whose signal report is conventionally a dB SNR (e.g. "-10") rather than
+// an RST. Both logging forms carried their own copy of this list; keeping it
+// here as the single source of truth stops the two from drifting apart (and from
+// falling behind AMATEUR_MODES) as new digital modes become loggable.
+//
+// The WSJT-X / weak-signal family (FT8, FT4, JS8, FST4, JT65, JT9, Q65, MSK144)
+// genuinely reports dB. The keyboard PSK/RTTY/MFSK/Olivia/Contestia group is
+// grouped here to preserve the default Nextlog has always applied to those menu
+// entries — not because RTTY is a dB mode.
+const DB_REPORT_MODES = new Set<string>([
+  'FT8', 'FT4', 'JS8', 'FST4', 'JT65', 'JT9', 'Q65', 'MSK144',
+  'PSK31', 'PSK63', 'RTTY', 'MFSK', 'OLIVIA', 'CONTESTIA',
+]);
+
+// The signal report a logging form should pre-fill when an operator picks `mode`.
+// CW takes RST with a tone digit (599); dB-report digital modes take -10; every
+// other mode (phone, digital voice, image, packet) takes a 59 RS(T).
+export function defaultRstForMode(mode: string): string {
+  const m = mode.trim().toUpperCase();
+  if (m === 'CW') return '599';
+  if (DB_REPORT_MODES.has(m)) return '-10';
+  return '59';
+}
