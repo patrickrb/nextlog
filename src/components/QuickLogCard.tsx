@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { frequencyToBand, AMATEUR_BANDS } from '@/lib/bands';
+import { AMATEUR_MODES, defaultRstForMode } from '@/lib/modes';
 
 interface Station {
   id: number;
@@ -39,14 +40,8 @@ interface LookupResult {
   error?: string;
 }
 
-const MODES = ['SSB', 'CW', 'FT8', 'FT4', 'RTTY', 'PSK31', 'AM', 'FM'] as const;
+const MODES = AMATEUR_MODES;
 const BANDS = AMATEUR_BANDS;
-
-function defaultRstForMode(mode: string): string {
-  if (mode === 'CW') return '599';
-  if (['FT8', 'FT4', 'PSK31', 'RTTY', 'MFSK', 'OLIVIA', 'CONTESTIA'].includes(mode)) return '-10';
-  return '59';
-}
 
 function formatUtcClock(d: Date): string {
   const hh = String(d.getUTCHours()).padStart(2, '0');
