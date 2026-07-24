@@ -541,6 +541,7 @@ export const contacts = pgTable("contacts", {
 	timeOff: time("time_off"),
 	operator: varchar({ length: 50 }),
 	distance: numeric({ precision: 10, scale:  2 }),
+	txPwr: numeric("tx_pwr", { precision: 10, scale:  2 }),
 	notes: text(),
 	createdAt: timestamp("created_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
 	updatedAt: timestamp("updated_at", { mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),

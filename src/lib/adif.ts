@@ -216,6 +216,10 @@ export async function insertAdifRecord(
     qsoDateOff ? qsoDateOff.toISOString().split('T')[1].split('.')[0] : null,
     fields.operator || null,
     fields.distance ? parseFloat(fields.distance) : null,
+    // Transmit power (ADIF TX_PWR, watts). Kept as a per-QSO value so a log
+    // imported from another program preserves the power each contact was made
+    // with instead of falling back to a single station default.
+    fields.tx_pwr ? parseFloat(fields.tx_pwr) : null,
     fields.prop_mode ? fields.prop_mode.toUpperCase() : null,
     fields.sat_name ? fields.sat_name.toUpperCase() : null,
     bandRx || null,
@@ -229,10 +233,11 @@ export async function insertAdifRecord(
       rst_sent, rst_received, qth, grid_locator, notes, latitude, longitude,
       country, dxcc, cont, cqz, ituz, state, cnty, qsl_rcvd, qsl_sent, qsl_via,
       eqsl_qsl_rcvd, eqsl_qsl_sent, lotw_qsl_rcvd, lotw_qsl_sent, qso_date_off,
-      time_off, operator, distance, prop_mode, sat_name, band_rx, freq_rx, iota
+      time_off, operator, distance, tx_pwr, prop_mode, sat_name, band_rx,
+      freq_rx, iota
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
              $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29,
-             $30, $31, $32, $33, $34, $35, $36, $37, $38)`,
+             $30, $31, $32, $33, $34, $35, $36, $37, $38, $39)`,
     values,
   );
 

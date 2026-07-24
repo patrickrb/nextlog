@@ -61,7 +61,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
              s.callsign as station_callsign, s.grid_locator as my_gridsquare,
              s.city as my_city, s.state_province as my_state, s.country as my_country,
              s.dxcc_entity_code as my_dxcc, s.itu_zone as my_itu_zone, 
-             s.cq_zone as my_cq_zone, s.power_watts as tx_pwr
+             s.cq_zone as my_cq_zone,
+             COALESCE(c.tx_pwr, s.power_watts) as tx_pwr
       FROM contacts c
       JOIN stations s ON c.station_id = s.id
       WHERE c.user_id = $1 AND c.station_id = $2

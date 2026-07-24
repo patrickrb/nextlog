@@ -1,0 +1,1 @@
+ALTER TABLE "contacts" ADD COLUMN "tx_pwr" numeric(10, 2);
