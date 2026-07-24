@@ -22,6 +22,7 @@ import QRZSyncIndicator from '@/components/QRZSyncIndicator';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import { useUser } from '@/contexts/UserContext';
 import { AMATEUR_BANDS } from '@/lib/bands';
+import { AMATEUR_MODES } from '@/lib/modes';
 
 interface Contact {
   id: number;
@@ -81,7 +82,13 @@ interface PaginationInfo {
   pages: number;
 }
 
-const MODES = ['AM', 'FM', 'FT8', 'MFSK', 'RTTY', 'SSB', 'CW', 'FT4', 'PSK31', 'DMR', 'DSTAR', 'YSF'];
+// Mode options come from the canonical mode list (@/lib/modes) — the set of
+// modes Nextlog can store. The previous hard-coded list knew only
+// FT4/FT8/PSK31/MFSK among the digital modes, so a QSO whose mode was promoted
+// from a WSJT-X / fldigi SUBMODE on import (JS8, FST4, JT65, Q65, PSK63, Olivia,
+// Contestia, …) could never be filtered by mode. Matching is case-insensitive
+// on the server (UPPER(mode) = UPPER($n)), so the uppercase values match stored data.
+const MODES = AMATEUR_MODES;
 // Band options come from the canonical band plan (@/lib/bands) — the same list
 // the logging forms (new-contact, QuickLogCard) store — so every band an
 // operator can log is also filterable here. The previous hard-coded lowercase
