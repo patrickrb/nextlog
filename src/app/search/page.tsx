@@ -21,6 +21,7 @@ import LotwSyncIndicator from '@/components/LotwSyncIndicator';
 import QRZSyncIndicator from '@/components/QRZSyncIndicator';
 import DynamicContactMap from '@/components/DynamicContactMap';
 import { useUser } from '@/contexts/UserContext';
+import { AMATEUR_BANDS } from '@/lib/bands';
 
 interface Contact {
   id: number;
@@ -81,7 +82,13 @@ interface PaginationInfo {
 }
 
 const MODES = ['AM', 'FM', 'FT8', 'MFSK', 'RTTY', 'SSB', 'CW', 'FT4', 'PSK31', 'DMR', 'DSTAR', 'YSF'];
-const BANDS = ['2m', '6m', '10m', '12m', '15m', '17m', '20m', '30m', '40m', '60m', '80m', '160m', '70cm', '23cm'];
+// Band options come from the canonical band plan (@/lib/bands) — the same list
+// the logging forms (new-contact, QuickLogCard) store — so every band an
+// operator can log is also filterable here. The previous hard-coded lowercase
+// list had drifted and silently omitted 2200M, 630M, 4M, 1.25M, 33CM and 13CM,
+// making QSOs on those bands unsearchable. Matching is case-insensitive on the
+// server (UPPER(band) = UPPER($n)), so the uppercase values match stored data.
+const BANDS = AMATEUR_BANDS;
 
 interface FilterChip {
   key: keyof SearchFilters;

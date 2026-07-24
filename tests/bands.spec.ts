@@ -46,4 +46,24 @@ test.describe('bands module', () => {
     expect(frequencyToBand(100.0)).toBe('OTHER');
     expect(AMATEUR_BANDS).not.toContain('OTHER');
   });
+
+  test('covers every band the search filter must offer, including the six the old list dropped', () => {
+    // The contact-search band dropdown sources its options from AMATEUR_BANDS
+    // (the same list the logging forms store), so an operator can always filter
+    // for a band they were able to log. It previously hard-coded a shorter
+    // lowercase list that omitted these six — a 4M or 630M QSO could be logged
+    // from a one-click pill but never filtered back out in search.
+    const previouslyUnfilterable = ['2200M', '630M', '4M', '1.25M', '33CM', '13CM'];
+    for (const band of previouslyUnfilterable) {
+      expect(AMATEUR_BANDS).toContain(band);
+    }
+    // And the bands the old list did have are still present, so nothing regressed.
+    const legacySearchBands = [
+      '2M', '6M', '10M', '12M', '15M', '17M', '20M', '30M', '40M', '60M', '80M',
+      '160M', '70CM', '23CM',
+    ];
+    for (const band of legacySearchBands) {
+      expect(AMATEUR_BANDS).toContain(band);
+    }
+  });
 });
