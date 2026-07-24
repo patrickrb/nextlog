@@ -53,12 +53,21 @@ const DB_REPORT_MODES = new Set<string>([
   'PSK31', 'PSK63', 'RTTY', 'MFSK', 'OLIVIA', 'CONTESTIA',
 ]);
 
+// Whether `mode`'s signal report is conventionally a dB SNR ("-10") rather than
+// an RST. Exposed as the single source of truth so UI that interprets a report
+// value — the pre-filled default, a signal-strength meter — classifies a mode
+// the same way everywhere instead of each call site carrying its own drifting
+// copy of the digital-mode list.
+export function isDbReportMode(mode: string): boolean {
+  return DB_REPORT_MODES.has(mode.trim().toUpperCase());
+}
+
 // The signal report a logging form should pre-fill when an operator picks `mode`.
 // CW takes RST with a tone digit (599); dB-report digital modes take -10; every
 // other mode (phone, digital voice, image, packet) takes a 59 RS(T).
 export function defaultRstForMode(mode: string): string {
   const m = mode.trim().toUpperCase();
   if (m === 'CW') return '599';
-  if (DB_REPORT_MODES.has(m)) return '-10';
+  if (isDbReportMode(m)) return '-10';
   return '59';
 }
