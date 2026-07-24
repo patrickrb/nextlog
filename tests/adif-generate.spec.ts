@@ -240,4 +240,27 @@ test.describe('generateAdif', () => {
     expect(record.fields.freq_rx).toBe('435.01');
     expect(record.fields.iota).toBe('EU-005');
   });
+
+  // Transmit power is captured per QSO on the logging form (and carried in the
+  // ADIF TX_PWR field by most loggers). It used to be dropped on save — there was
+  // no column and no export field — so an operator's power record vanished. Guard
+  // that a per-contact tx_pwr survives export and round-trips back through the
+  // parser. An integer stays integral; a fractional QRP value keeps its decimals.
+  test('emits per-QSO transmit power and round-trips it', () => {
+    const adif = generateAdif([baseContact({ tx_pwr: 100 })]);
+    expect(adif).toContain('<tx_pwr:3>100');
+
+    const [record] = parseAdifRecords(adif);
+    expect(record.fields.tx_pwr).toBe('100');
+  });
+
+  test('preserves a fractional QRP power value', () => {
+    const adif = generateAdif([baseContact({ tx_pwr: 0.5 })]);
+    expect(adif).toContain('<tx_pwr:3>0.5');
+  });
+
+  test('omits tx_pwr when a contact has no power', () => {
+    const adif = generateAdif([baseContact()]);
+    expect(adif).not.toContain('<tx_pwr:');
+  });
 });

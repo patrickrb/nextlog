@@ -30,6 +30,7 @@ interface Contact {
   notes?: string;
   latitude?: number;
   longitude?: number;
+  tx_pwr?: number;
   confirmed?: boolean;
 }
 
@@ -246,7 +247,13 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
         },
         body: JSON.stringify({
           ...formData,
-          datetime: formData.datetime ? new Date(formData.datetime).toISOString() : undefined
+          datetime: formData.datetime ? new Date(formData.datetime).toISOString() : undefined,
+          // Blank power clears the field (null), not an empty string a numeric
+          // column would reject.
+          tx_pwr:
+            formData.tx_pwr === undefined || (formData.tx_pwr as unknown) === ''
+              ? null
+              : Number(formData.tx_pwr),
         }),
       });
 
@@ -449,6 +456,22 @@ export default function EditContactDialog({ contact, isOpen, onClose, onSave, on
                 id="grid_locator"
                 value={formData.grid_locator || ''}
                 onChange={(e) => handleInputChange('grid_locator', e.target.value.toUpperCase())}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="tx_pwr">Power (W)</Label>
+              <Input
+                id="tx_pwr"
+                type="number"
+                min={0}
+                step="any"
+                value={formData.tx_pwr ?? ''}
+                onChange={(e) =>
+                  handleInputChange('tx_pwr', e.target.value === '' ? '' : Number(e.target.value))
+                }
               />
             </div>
           </div>

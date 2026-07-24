@@ -47,6 +47,9 @@ export interface ContactData {
   time_off?: string;
   operator?: string;
   distance?: number;
+  // Transmit power for this QSO, in watts (ADIF TX_PWR). Distinct from the
+  // station's default power — a single station may run different power per QSO.
+  tx_pwr?: number;
   created_at: Date;
   updated_at: Date;
 }
@@ -68,6 +71,7 @@ export class Contact {
     latitude?: number;
     longitude?: number;
     distance?: number;
+    tx_pwr?: number;
     notes?: string;
   }): Promise<ContactData> {
     const {
@@ -86,15 +90,17 @@ export class Contact {
       latitude,
       longitude,
       distance,
+      tx_pwr,
       notes
     } = contactData;
 
     const sql = `
       INSERT INTO contacts (
         user_id, station_id, callsign, name, frequency, mode, band, datetime,
-        rst_sent, rst_received, qth, grid_locator, latitude, longitude, distance, notes
+        rst_sent, rst_received, qth, grid_locator, latitude, longitude, distance,
+        tx_pwr, notes
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *
     `;
 
@@ -114,6 +120,7 @@ export class Contact {
       latitude || null,
       longitude || null,
       distance ?? null,
+      tx_pwr ?? null,
       notes ? notes.trim() : null
     ]);
     

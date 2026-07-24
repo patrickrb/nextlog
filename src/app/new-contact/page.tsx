@@ -434,7 +434,10 @@ export default function NewContactPage() {
           longitude: formData.longitude,
           distance: pathInfo ? Math.round(pathInfo.km) : undefined,
           frequency: parseFloat(formData.frequency),
-          power: formData.power ? parseFloat(formData.power) : undefined,
+          // Component-local state calls it `power`; the wire/DB field is the
+          // ADIF-standard `tx_pwr` (watts). Previously sent as `power`, which no
+          // column consumed — so the operator's power was silently dropped.
+          tx_pwr: formData.power ? parseFloat(formData.power) : undefined,
           datetime: new Date(formData.datetime).toISOString(),
         }),
       });
