@@ -70,6 +70,32 @@ function parseSingleRecord(recordString: string): AdifRecord | null {
   return { fields };
 }
 
+// SSB's ADIF submodes are the sideband, not a distinct operating mode — a phone
+// QSO must stay "SSB" so it still matches the SSB filter and phone statistics.
+const VOICE_SUBMODES = new Set(['USB', 'LSB']);
+
+/**
+ * Collapse an ADIF MODE/SUBMODE pair into the single effective mode Nextlog
+ * stores (the `contacts.mode` column is flat — there is no submode column).
+ *
+ * WSJT-X, JTDX and JS8Call log the meaningful mode as a SUBMODE beneath a
+ * generic parent: FT4/JS8/FST4 under `MFSK`, PSK31 under `PSK`. Keeping only the
+ * parent MODE collapsed all of those into "MFSK"/"PSK", which the mode filter and
+ * mode statistics treat as first-class modes distinct from FT4/JS8/PSK31 — so an
+ * FT4 run imported from WSJT-X silently dropped out of the FT4 filter. We promote
+ * the submode when present, EXCEPT the voice sidebands (USB/LSB) which stay SSB.
+ * Everything is normalized to uppercase to match how modes are stored/exported.
+ */
+export function resolveAdifMode(
+  mode: string | undefined,
+  submode: string | undefined,
+): string {
+  const m = mode?.trim().toUpperCase() ?? '';
+  const sub = submode?.trim().toUpperCase() ?? '';
+  if (sub && !VOICE_SUBMODES.has(sub)) return sub;
+  return m || 'SSB';
+}
+
 /**
  * Insert one parsed ADIF record into the contacts table for the given user +
  * station. Returns a discriminated result describing what happened:
@@ -162,7 +188,7 @@ export async function insertAdifRecord(
     callsign,
     fields.name || null,
     frequency,
-    fields.mode || fields.submode || 'SSB',
+    resolveAdifMode(fields.mode, fields.submode),
     band || null,
     datetime,
     fields.rst_sent || null,
