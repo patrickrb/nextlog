@@ -25,6 +25,12 @@ test.describe('buildContactSearchQuery', () => {
     expect(params).toEqual([1, '%w1aw%']);
   });
 
+  test('notes/comment text is matched with case-insensitive contains', () => {
+    const { whereClause, params } = buildContactSearchQuery(1, { notes: 'POTA K-1234' });
+    expect(whereClause).toBe('user_id = $1 AND UPPER(notes) LIKE UPPER($2)');
+    expect(params).toEqual([1, '%POTA K-1234%']);
+  });
+
   test('mode and band match exactly (case-insensitive)', () => {
     const { whereClause, params } = buildContactSearchQuery(1, { mode: 'ft8', band: '20m' });
     expect(whereClause).toBe(
@@ -140,6 +146,7 @@ test.describe('buildContactSearchQuery', () => {
       callsign: 'dl',
       name: 'hans',
       qth: 'berlin',
+      notes: 'field day',
       mode: 'cw',
       band: '15m',
       gridLocator: 'jo',
@@ -149,15 +156,15 @@ test.describe('buildContactSearchQuery', () => {
       dxcc: '230',
     });
 
-    // 10 filters supplied, but qslStatus binds no value → 9 bound params + userId.
+    // 11 filters supplied, but qslStatus binds no value → 10 bound params + userId.
     expect(params).toEqual([
-      42, '%dl%', '%hans%', '%berlin%', 'cw', '15m', '%jo%',
+      42, '%dl%', '%hans%', '%berlin%', '%field day%', 'cw', '15m', '%jo%',
       '2024-06-01', '2024-06-30', 230,
     ]);
 
     const referenced = [...whereClause.matchAll(/\$(\d+)/g)].map(m => Number(m[1]));
     // Placeholders must be exactly $1..$params.length with no gaps or overshoot.
-    expect(referenced).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(referenced).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
     expect(Math.max(...referenced)).toBe(params.length);
   });
 });

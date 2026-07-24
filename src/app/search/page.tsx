@@ -56,6 +56,7 @@ interface SearchFilters {
   callsign: string;
   name: string;
   qth: string;
+  notes: string;
   mode: string;
   band: string;
   gridLocator: string;
@@ -112,6 +113,15 @@ const getActiveFilterChips = (filters: SearchFilters, dxccEntities: DXCCEntity[]
     });
   }
   
+  if (filters.notes.trim()) {
+    chips.push({
+      key: 'notes',
+      label: 'Notes',
+      value: filters.notes,
+      displayValue: filters.notes
+    });
+  }
+
   if (filters.qth.trim()) {
     chips.push({
       key: 'qth',
@@ -260,6 +270,7 @@ export default function SearchPage() {
     callsign: '',
     name: '',
     qth: '',
+    notes: '',
     mode: 'all',
     band: 'all',
     gridLocator: '',
@@ -442,6 +453,7 @@ export default function SearchPage() {
       callsign: '',
       name: '',
       qth: '',
+      notes: '',
       mode: 'all',
       band: 'all',
       gridLocator: '',
@@ -856,7 +868,18 @@ export default function SearchPage() {
                   <hr className="border-border" />
                   <div className="space-y-4">
                     <Label className="text-base font-medium">Advanced Filters</Label>
-                    
+
+                    {/* Notes / Comments */}
+                    <div className="space-y-2">
+                      <Label htmlFor="notes">Notes</Label>
+                      <Input
+                        id="notes"
+                        placeholder="e.g., POTA K-1234, contest exchange, QSL note"
+                        value={filters.notes}
+                        onChange={(e) => handleFilterChange('notes', e.target.value)}
+                      />
+                    </div>
+
                     {/* Date Range */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
