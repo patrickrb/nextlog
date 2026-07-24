@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import {
   adifField,
+  adifCoordToDecimal,
+  decimalToAdifCoord,
   generateAdif,
   parseAdifRecords,
   type AdifExportContact,
@@ -35,6 +37,52 @@ test.describe('adifField', () => {
   test('serializes numbers', () => {
     expect(adifField('dxcc', 291)).toBe('<dxcc:3>291\n');
     expect(adifField('freq', 14.074)).toBe('<freq:6>14.074\n');
+  });
+});
+
+// The ADIF "Location" data type is `XDDD MM.MMM` (hemisphere letter, 3-digit
+// degrees, minutes) — NOT decimal degrees. Nextlog previously round-tripped raw
+// decimals through non-standard lat_n/lon_w fields, so coordinates never
+// interoperated with LoTW/TQSL, Cloudlog or N1MM. These guard the conversion.
+test.describe('adifCoordToDecimal', () => {
+  test('parses the four hemispheres into signed decimal degrees', () => {
+    expect(adifCoordToDecimal('N040 26.500')).toBeCloseTo(40.44167, 4);
+    expect(adifCoordToDecimal('S040 26.500')).toBeCloseTo(-40.44167, 4);
+    expect(adifCoordToDecimal('E073 58.000')).toBeCloseTo(73.96667, 4);
+    expect(adifCoordToDecimal('W073 58.000')).toBeCloseTo(-73.96667, 4);
+  });
+
+  test('handles the origin and is case/whitespace tolerant', () => {
+    expect(adifCoordToDecimal('N000 00.000')).toBe(0);
+    expect(adifCoordToDecimal('  w000 30.000  ')).toBeCloseTo(-0.5, 6);
+  });
+
+  test('rejects malformed values', () => {
+    expect(adifCoordToDecimal('40.44')).toBeNull(); // plain decimal, no hemisphere
+    expect(adifCoordToDecimal('X040 26.500')).toBeNull(); // bad hemisphere letter
+    expect(adifCoordToDecimal('N040 60.000')).toBeNull(); // minutes must be < 60
+    expect(adifCoordToDecimal('')).toBeNull();
+  });
+});
+
+test.describe('decimalToAdifCoord', () => {
+  test('formats signed decimals with padded degrees/minutes', () => {
+    expect(decimalToAdifCoord(40.44167, 'lat')).toBe('N040 26.500');
+    expect(decimalToAdifCoord(-40.44167, 'lat')).toBe('S040 26.500');
+    expect(decimalToAdifCoord(-73.96667, 'lon')).toBe('W073 58.000');
+    expect(decimalToAdifCoord(0, 'lat')).toBe('N000 00.000');
+  });
+
+  test('round-trips decimal → ADIF → decimal within a metre', () => {
+    for (const [dec, axis] of [
+      [51.4779, 'lat'],
+      [-0.0015, 'lon'],
+      [-33.8688, 'lat'],
+      [151.2093, 'lon'],
+    ] as const) {
+      const parsed = adifCoordToDecimal(decimalToAdifCoord(dec, axis));
+      expect(parsed).toBeCloseTo(dec, 4);
+    }
   });
 });
 
@@ -150,6 +198,27 @@ test.describe('generateAdif', () => {
     expect(adif).toContain('<band_rx:4>70CM');
     expect(adif).toContain('<freq_rx:7>435.795');
     expect(adif).toContain('<iota:6>NA-001');
+  });
+
+  // Coordinates must export as standard ADIF LAT/LON in `XDDD MM.MMM` form so
+  // other loggers and mapping tools can read them — not the old non-standard
+  // decimal lat_n/lon_w fields no external software recognized.
+  test('emits latitude/longitude as standard ADIF LAT/LON', () => {
+    const adif = generateAdif([
+      baseContact({ latitude: 40.44167, longitude: -73.96667 }),
+    ]);
+
+    expect(adif).toContain('<lat:11>N040 26.500');
+    expect(adif).toContain('<lon:11>W073 58.000');
+    // The legacy non-standard field names must be gone.
+    expect(adif).not.toContain('lat_n');
+    expect(adif).not.toContain('lon_w');
+  });
+
+  test('omits LAT/LON when a contact has no coordinates', () => {
+    const adif = generateAdif([baseContact()]);
+    expect(adif).not.toContain('<lat:');
+    expect(adif).not.toContain('<lon:');
   });
 
   test('round-trips satellite/IOTA fields back through the parser', () => {
