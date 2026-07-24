@@ -46,6 +46,7 @@ import {
   kmToMiles,
   longPathBearingDeg,
   longPathKm,
+  resolveOriginGrid,
 } from '@/lib/grid';
 
 void _PageHeader;
@@ -55,6 +56,10 @@ interface Station {
   callsign: string;
   station_name: string;
   is_default: boolean;
+  // The station's own Maidenhead locator — the grid the QSO is actually
+  // transmitted from, used as the origin for the distance/bearing readout so a
+  // portable/POTA op isn't measured from their home account grid.
+  grid_locator?: string;
 }
 
 interface PreviousContact {
@@ -482,15 +487,20 @@ export default function NewContactPage() {
 
   const station = stations.find((s) => s.id.toString() === selectedStationId);
 
-  // Distance and bearing from the operator's home grid to the contact — the
-  // "how far, which way" readout hams expect while logging. Prefers the
-  // contact's explicit coordinates (from a QRZ lookup) and falls back to the
-  // grid square typed into the form; renders nothing until both endpoints
-  // resolve, so a half-typed grid never shows a bogus reading.
+  // Distance and bearing from the operator's transmitting grid to the contact —
+  // the "how far, which way" readout hams expect while logging. The origin is
+  // the *selected station's* grid (where the QSO is actually made) and only
+  // falls back to the account home grid when the station has none, so a
+  // portable/POTA op isn't measured from home. Prefers the contact's explicit
+  // coordinates (from a QRZ lookup) and falls back to the grid square typed into
+  // the form; renders nothing until both endpoints resolve, so a half-typed grid
+  // never shows a bogus reading.
   const pathInfo = (() => {
-    const from = currentUser?.grid_locator
-      ? gridToLatLon(currentUser.grid_locator)
-      : null;
+    const originGrid = resolveOriginGrid(
+      station?.grid_locator,
+      currentUser?.grid_locator,
+    );
+    const from = originGrid ? gridToLatLon(originGrid) : null;
     const to =
       formData.latitude !== undefined && formData.longitude !== undefined
         ? { lat: formData.latitude, lon: formData.longitude }

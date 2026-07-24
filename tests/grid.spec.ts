@@ -9,6 +9,7 @@ import {
   kmToMiles,
   longPathBearingDeg,
   longPathKm,
+  resolveOriginGrid,
   EARTH_CIRCUMFERENCE_KM,
 } from '@/lib/grid';
 
@@ -212,5 +213,35 @@ test.describe('kmToMiles', () => {
   test('converts kilometers to statute miles', () => {
     expect(kmToMiles(1.609344)).toBeCloseTo(1, 6);
     expect(kmToMiles(100)).toBeCloseTo(62.137, 2);
+  });
+});
+
+test.describe('resolveOriginGrid', () => {
+  test('prefers the on-air station grid over the account home grid', () => {
+    // A POTA/portable op logging from a station in a different grid than their
+    // home account — the readout origin must follow the station on the air.
+    expect(resolveOriginGrid('IO91wm', 'FN31pr')).toBe('IO91WM');
+  });
+
+  test('falls back to the home grid when the station has none', () => {
+    expect(resolveOriginGrid(undefined, 'FN31pr')).toBe('FN31PR');
+    expect(resolveOriginGrid('', 'FN31pr')).toBe('FN31PR');
+    expect(resolveOriginGrid(null, 'FN31pr')).toBe('FN31PR');
+  });
+
+  test('normalizes to trimmed uppercase', () => {
+    expect(resolveOriginGrid(' fn31 ', undefined)).toBe('FN31');
+  });
+
+  test('skips a malformed grid at either level', () => {
+    // A half-configured station locator must not override a valid home grid…
+    expect(resolveOriginGrid('nope', 'FN31pr')).toBe('FN31PR');
+    // …and an invalid home grid with no station grid resolves to nothing.
+    expect(resolveOriginGrid(undefined, 'nope')).toBeNull();
+  });
+
+  test('returns null when neither grid resolves', () => {
+    expect(resolveOriginGrid(undefined, undefined)).toBeNull();
+    expect(resolveOriginGrid('', '')).toBeNull();
   });
 });
