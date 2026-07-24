@@ -15,11 +15,13 @@ import {
 // equatorial arc) with tolerances that allow for the great-circle model.
 
 test.describe('isValidGrid', () => {
-  test('accepts 4- and 6-character locators, case-insensitively', () => {
+  test('accepts 4-, 6-, and 8-character locators, case-insensitively', () => {
     expect(isValidGrid('FN31')).toBe(true);
     expect(isValidGrid('FN31pr')).toBe(true);
+    expect(isValidGrid('FN31pr55')).toBe(true); // 8-char extended locator
     expect(isValidGrid('io91')).toBe(true);
     expect(isValidGrid(' JN58 ')).toBe(true);
+    expect(isValidGrid('jn58td99')).toBe(true);
   });
 
   test('rejects malformed locators', () => {
@@ -29,6 +31,9 @@ test.describe('isValidGrid', () => {
     expect(isValidGrid('FN31YZ')).toBe(false); // subsquare past X
     expect(isValidGrid('FNXY')).toBe(false); // square must be digits
     expect(isValidGrid('FN31p')).toBe(false); // odd length
+    expect(isValidGrid('FN31pr5')).toBe(false); // odd length (extended pair)
+    expect(isValidGrid('FN31prAB')).toBe(false); // extended square must be digits
+    expect(isValidGrid('FN3155')).toBe(false); // can't skip the subsquare level
   });
 });
 
@@ -58,6 +63,23 @@ test.describe('gridToLatLon', () => {
     expect(sub!.lat).toBeLessThan(42);
     expect(sub!.lon).toBeGreaterThan(-74);
     expect(sub!.lon).toBeLessThan(-72);
+  });
+
+  test('8-character locator refines within its parent subsquare', () => {
+    // The FN31pr subsquare spans lon [-72.75, -72.6667), lat [41.7083, 41.75).
+    // An extended locator must resolve to a point inside that box, close to the
+    // 6-char center — the extra precision VHF/microwave operators log.
+    const ext = gridToLatLon('FN31pr55');
+    const sub = gridToLatLon('FN31pr');
+    expect(ext).not.toBeNull();
+    expect(sub).not.toBeNull();
+    expect(ext!.lon).toBeGreaterThanOrEqual(-72.75);
+    expect(ext!.lon).toBeLessThan(-72.6667);
+    expect(ext!.lat).toBeGreaterThanOrEqual(41.7083);
+    expect(ext!.lat).toBeLessThan(41.75);
+    // Center-ish extended square lands near the subsquare center.
+    expect(ext!.lon).toBeCloseTo(sub!.lon, 1);
+    expect(ext!.lat).toBeCloseTo(sub!.lat, 1);
   });
 
   test('returns null for invalid input', () => {
@@ -122,6 +144,16 @@ test.describe('gridPath', () => {
   test('returns null when either locator is invalid', () => {
     expect(gridPath('FN31', 'nope')).toBeNull();
     expect(gridPath('', 'IO91')).toBeNull();
+  });
+
+  test('accepts an 8-character locator on either end', () => {
+    // Same transatlantic hop, but with an extended locator for the far end —
+    // the distance/bearing readout should resolve rather than showing nothing.
+    const path = gridPath('FN31pr55', 'IO91wm55');
+    expect(path).not.toBeNull();
+    expect(path!.distanceKm).toBeGreaterThan(5000);
+    expect(path!.distanceKm).toBeLessThan(6000);
+    expect(path!.compass).toBe('NE');
   });
 });
 

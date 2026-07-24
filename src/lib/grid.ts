@@ -11,17 +11,22 @@ export interface LatLon {
   lon: number;
 }
 
-const GRID_RE = /^[A-R]{2}[0-9]{2}([A-X]{2})?$/;
+// 4-char (field+square), 6-char (+subsquare), or 8-char (+extended square)
+// Maidenhead locator. The extended-square pair can only follow a subsquare —
+// you can't skip a level (e.g. `FN3155` is invalid).
+const GRID_RE = /^[A-R]{2}[0-9]{2}([A-X]{2}([0-9]{2})?)?$/;
 
-// True for a well-formed 4- or 6-character Maidenhead locator (case-insensitive).
+// True for a well-formed 4-, 6-, or 8-character Maidenhead locator
+// (case-insensitive). VHF/UHF/microwave and satellite operators log 8-char
+// (extended) locators for the extra precision, so they must validate too.
 export function isValidGrid(grid: string): boolean {
   return GRID_RE.test(grid.trim().toUpperCase());
 }
 
 // Convert a Maidenhead locator to the latitude/longitude of the *center* of the
-// square (4-char) or subsquare (6-char). Returns null for anything that isn't a
-// valid locator. Centering matches @/components/ContactLocationMap so the map
-// pin and the distance readout agree.
+// square (4-char), subsquare (6-char), or extended square (8-char). Returns
+// null for anything that isn't a valid locator. Centering matches
+// @/components/ContactLocationMap so the map pin and the distance readout agree.
 export function gridToLatLon(grid: string): LatLon | null {
   const g = grid.trim().toUpperCase();
   if (!GRID_RE.test(g)) return null;
@@ -34,11 +39,24 @@ export function gridToLatLon(grid: string): LatLon | null {
   let lon = -180 + lonField * 20 + lonSquare * 2;
   let lat = -90 + latField * 10 + latSquare * 1;
 
-  if (g.length === 6) {
-    const lonSub = g.charCodeAt(4) - 65; // A–X → 0–23, 5' wide
-    const latSub = g.charCodeAt(5) - 65; // A–X → 0–23, 2.5' tall
-    lon += lonSub * (2 / 24) + 1 / 24; // + half a subsquare to center
-    lat += latSub * (1 / 24) + 1 / 48;
+  if (g.length >= 6) {
+    const lonSub = g.charCodeAt(4) - 65; // A–X → 0–23, 5' wide (2°/24)
+    const latSub = g.charCodeAt(5) - 65; // A–X → 0–23, 2.5' tall (1°/24)
+    lon += lonSub * (2 / 24);
+    lat += latSub * (1 / 24);
+  }
+
+  if (g.length === 8) {
+    // Extended square: 2 digits (0–9) dividing the subsquare into a 10×10 grid,
+    // so each cell is 30" lon × 15" lat. Offset to the digit, then half a cell
+    // more to land on the center.
+    const lonExt = Number(g[6]); // 0–9, 2°/240 wide
+    const latExt = Number(g[7]); // 0–9, 1°/240 tall
+    lon += lonExt * (2 / 240) + 1 / 240; // + half an extended square to center
+    lat += latExt * (1 / 240) + 1 / 480;
+  } else if (g.length === 6) {
+    lon += 1 / 24; // + half a subsquare to center
+    lat += 1 / 48;
   } else {
     lon += 1; // + half a square (2°) to center
     lat += 0.5; // + half a square (1°) to center
