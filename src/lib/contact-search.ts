@@ -43,6 +43,20 @@ export const CONFIRMED_QSL_SQL =
   "OR COALESCE(qsl_rcvd, '') = 'Y' " +
   "OR COALESCE(eqsl_qsl_rcvd, '') = 'Y')";
 
+/**
+ * SQL boolean expression that is true when a QSL has been sent, requested, or
+ * queued on any channel — paper, eQSL, LoTW, or QRZ. Per the ADIF QSL-status
+ * enumeration these fields hold 'Y' (sent), 'R' (requested), or 'Q' (queued);
+ * 'N'/'I' and NULL mean nothing is outstanding. Like CONFIRMED_QSL_SQL it is
+ * COALESCE-wrapped so the whole expression is a plain, never-NULL boolean and
+ * composes cleanly inside the "pending" predicate.
+ */
+export const SENT_QSL_SQL =
+  "(COALESCE(qsl_sent, '') IN ('Y', 'R', 'Q') " +
+  "OR COALESCE(eqsl_qsl_sent, '') IN ('Y', 'R', 'Q') " +
+  "OR COALESCE(lotw_qsl_sent, '') IN ('Y', 'R', 'Q') " +
+  "OR COALESCE(qrz_qsl_sent, '') IN ('Y', 'R', 'Q'))";
+
 export interface ContactSearchQuery {
   /** The full WHERE clause, always anchored on `user_id = $1`. */
   whereClause: string;
@@ -103,6 +117,12 @@ export function buildContactSearchQuery(
           conditions.push(CONFIRMED_QSL_SQL);
         } else if (value === 'not_confirmed') {
           conditions.push(`NOT ${CONFIRMED_QSL_SQL}`);
+        } else if (value === 'pending') {
+          // "Awaiting a reply": a QSL was sent/requested/queued on some channel
+          // but no source has confirmed it yet. The search UI offers this option
+          // (QSL Status → Pending); before this case it fell through and matched
+          // every contact. A strict subset of `not_confirmed`.
+          conditions.push(`(${SENT_QSL_SQL} AND NOT ${CONFIRMED_QSL_SQL})`);
         }
         break;
       case 'dxcc': {

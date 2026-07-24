@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { buildContactSearchQuery, CONFIRMED_QSL_SQL } from '@/lib/contact-search';
+import { buildContactSearchQuery, CONFIRMED_QSL_SQL, SENT_QSL_SQL } from '@/lib/contact-search';
 
 // Pure-function tests for the contact-search WHERE-clause builder. This is the
 // shared query builder behind GET /api/contacts/search — it turns the filter
@@ -65,6 +65,29 @@ test.describe('buildContactSearchQuery', () => {
     expect(notConfirmed.params).toEqual([1]);
   });
 
+  // "Pending" is offered in the search UI's QSL-status dropdown. It must mean a
+  // QSO where a QSL was sent/requested on at least one channel but no source has
+  // confirmed it yet — i.e. awaiting a reply. The predicate is the sent-side
+  // expression AND-ed with the negated confirmed expression; still no bound value.
+  // Regression: 'pending' used to fall through the switch and contribute nothing,
+  // so the UI filter silently returned every contact.
+  test('qsl status "pending" filters sent-but-not-confirmed QSOs, with no bound parameter', () => {
+    const pending = buildContactSearchQuery(1, { qslStatus: 'pending' });
+    expect(pending.whereClause).toBe(
+      `user_id = $1 AND (${SENT_QSL_SQL} AND NOT ${CONFIRMED_QSL_SQL})`
+    );
+    expect(pending.params).toEqual([1]);
+  });
+
+  // The sent expression must reference only real "sent" columns (Y/R/Q states),
+  // never a received column or a bare `confirmed`.
+  test('the sent predicate references the real qsl-sent columns', () => {
+    expect(SENT_QSL_SQL).not.toMatch(/\bconfirmed\b/);
+    for (const col of ['qsl_sent', 'eqsl_qsl_sent', 'lotw_qsl_sent', 'qrz_qsl_sent']) {
+      expect(SENT_QSL_SQL).toContain(col);
+    }
+  });
+
   // The confirmed expression must reference only real columns and never a bare
   // `confirmed` (the column that never existed and 500'd every QSL-status search).
   test('the confirmed predicate references real columns, not a `confirmed` column', () => {
@@ -81,7 +104,7 @@ test.describe('buildContactSearchQuery', () => {
   });
 
   test('an unrecognized qsl status contributes nothing', () => {
-    const { whereClause, params } = buildContactSearchQuery(1, { qslStatus: 'pending' });
+    const { whereClause, params } = buildContactSearchQuery(1, { qslStatus: 'bogus' });
     expect(whereClause).toBe('user_id = $1');
     expect(params).toEqual([1]);
   });
