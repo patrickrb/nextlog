@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {
   isValidGrid,
+  gridLocatorError,
   gridToLatLon,
   distanceKm,
   bearingDeg,
@@ -38,6 +39,28 @@ test.describe('isValidGrid', () => {
     expect(isValidGrid('FN31pr5')).toBe(false); // odd length (extended pair)
     expect(isValidGrid('FN31prAB')).toBe(false); // extended square must be digits
     expect(isValidGrid('FN3155')).toBe(false); // can't skip the subsquare level
+  });
+});
+
+test.describe('gridLocatorError', () => {
+  test('treats blank/whitespace as no error (grid is optional)', () => {
+    expect(gridLocatorError('')).toBeNull();
+    expect(gridLocatorError('   ')).toBeNull();
+  });
+
+  test('accepts 4-, 6-, and 8-character locators like isValidGrid', () => {
+    expect(gridLocatorError('FN31')).toBeNull();
+    expect(gridLocatorError('FN31pr')).toBeNull();
+    // The regression this guards: an 8-char extended locator is valid app-wide
+    // (isValidGrid, gridToLatLon) and must not be rejected by form/API checks.
+    expect(gridLocatorError('FN31pr55')).toBeNull();
+    expect(gridLocatorError(' jn58td99 ')).toBeNull();
+  });
+
+  test('returns a helpful message for a malformed locator', () => {
+    expect(gridLocatorError('nope')).toContain('Invalid grid locator');
+    expect(gridLocatorError('FN31p')).toContain('Invalid grid locator');
+    expect(gridLocatorError('FN3155')).toContain('Invalid grid locator');
   });
 });
 

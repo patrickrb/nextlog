@@ -40,6 +40,7 @@ import { frequencyToBand, AMATEUR_BANDS } from '@/lib/bands';
 import { AMATEUR_MODES, defaultRstForMode } from '@/lib/modes';
 import {
   gridToLatLon,
+  gridLocatorError,
   distanceKm,
   bearingDeg,
   compassPoint,
@@ -349,12 +350,9 @@ export default function NewContactPage() {
       ? null
       : 'Invalid callsign format';
   };
-  const validateGridLocator = (grid: string): string | null => {
-    if (!grid.trim()) return null;
-    return /^[A-R]{2}[0-9]{2}([A-X]{2})?$/i.test(grid)
-      ? null
-      : 'Invalid grid locator format (e.g., FN31pr)';
-  };
+  // Delegates to the canonical validator in @/lib/grid so the logging form and
+  // the stations API stay in lockstep and both accept 8-char extended locators.
+  const validateGridLocator = (grid: string): string | null => gridLocatorError(grid);
   const validateFrequency = (frequency: string): string | null => {
     if (!frequency.trim()) return null;
     const freq = parseFloat(frequency);
